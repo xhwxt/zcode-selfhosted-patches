@@ -1,3 +1,18 @@
+<h1 align="center">Z÷</h1>
+
+<div align="center"><pre>
+                      /´¯/)
+                    ,/¯../
+                   /..../
+             /´¯/'...'/´¯¯`·¸
+          /'/.../..../......./¨¯\
+        ('(...´...´.... ¯~/'...')
+         \.................'..../
+          ''...\.......... _.·´
+            \..............(
+             \.............\
+</pre></div>
+
 # ZCode Self-Hosted Web Parity Patches
 
 Enhancements that make a self-hosted [ZCode](https://github.com/zai-org/ZCode) web
