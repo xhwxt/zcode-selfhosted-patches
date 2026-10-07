@@ -118,11 +118,38 @@ self-hosted install is complete:
 - `0004-fix-ui-mobile-drawer-polish-directory-browser-create.patch` — item h
 - `0005-fix-ui-web-round2-mobile-fixes.patch` — item i
 - `0006-fix-ui-web-mobile-header-window-controls-padding-per.patch` — item j
+- `0007-fix-rpc-client-server-websocket-keepalive-liveness.patch` — item k
 - `0003-0004-selfhosted-web-patches-mobile.patch` — items g+h combined (legacy convenience file)
 
-Apply against upstream `v3.14.3` (commit `29628c9`) in order 0001 → 0006
+Apply against upstream `v3.14.3` (commit `29628c9`) in order 0001 → 0007
 (0001+0002 may also be applied as one combined file historically named
 `0001-0002-selfhosted-web-patches.patch`; do not apply the combined file together
 with 0001/0002). All variants are verified with `git apply --check`, and applying
-0001 → 0006 to a clean `29628c9` checkout reproduces the maintainer tree
+0001 → 0007 to a clean `29628c9` checkout reproduces the maintainer tree
 byte-for-byte. `apply-selfhosted-web-patches.sh` runs the full sequence.
+
+### Item k — WebSocket keepalive liveness (half-open detection)
+
+The direct web page previously had zero liveness probes on its browser ↔ server
+WebSocket: `SocketProtocol` silently dropped `KeepAlive` frames, neither end sent
+heartbeats, and the foreground guard probed with an HTTP fetch — which opens a
+*different* connection and cannot detect a half-open one. A dead-but-open socket
+looked normal while every new RPC failed silently.
+
+- `packages/rpc` — `SocketProtocol` now answers a `KeepAlive` probe (`ack=0`)
+  with exactly one echo (`ack=1`); new `sendKeepAlive()` / `onKeepAlive`.
+  Queue/MessagePort transports moved to `port-protocol.ts` (line-limit split).
+- `packages/client` — `connectViaWebSocket` attaches a heartbeat monitor by
+  default (15 s probe / 30 s no-frame deadline). On deadline it closes the
+  socket so the existing guard + soft-reconnect take over; `onHeartbeat` exposes
+  a same-socket liveness handle to the host page.
+- `packages/web` — the visibility guard's foreground check now uses that
+  same-socket handle (fresh timestamp → healthy; stale → one probe + short wait
+  → dead ⇒ soft reconnect) instead of an HTTP fetch.
+- `packages/server` & `packages/zcode-server-cli` — `/ws` connections get an
+  RFC 6455 ping loop (30 s interval, terminate after 2 missed pongs), freeing
+  server-side half-open sockets and triggering the browser `close` path.
+
+Spec: `packages/rpc/specs/socket-keepalive.md`; unit tests:
+`packages/rpc/test/socket-keepalive.test.ts`.
+

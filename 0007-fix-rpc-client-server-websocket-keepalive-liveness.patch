@@ -1,0 +1,1059 @@
+From 96336e91211171eeb035fe21deb187e9ffa7d453 Mon Sep 17 00:00:00 2001
+From: xhwxt <xhwxt@users.noreply.github.com>
+Date: Thu, 8 Oct 2026 02:13:39 +0800
+Subject: [PATCH] fix(rpc,client,server): websocket keepalive liveness for
+ half-open detection
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+直连页链路此前零存活探测（SocketProtocol 丢弃 KeepAlive、两端无心跳、
+HTTP 探测换连接测不出半开），半开连接表现为「表面正常、实际已断」。
+
+- rpc: SocketProtocol 支持 KeepAlive 探针（ack=0）/回显（ack=1）一问一答，
+  新增 sendKeepAlive/onKeepAlive；QueuePair/MessagePort 拆至 port-protocol.ts
+  （原文件触及 400 行上限）
+- client: connectViaWebSocket 默认挂心跳监视器（15s 探针/30s 判死），
+  判死主动 close 交由宿主软重连；onHeartbeat 把手暴露同 socket 活性
+- web: 回前台守卫改用同 socket 判定（时间戳新鲜/补探回显）替代 HTTP fetch
+- server/zcode-server-cli: /ws 增加 RFC6455 ping/pong 清理（30s×2 miss
+  terminate），半开连接不再占用服务端资源
+
+spec: packages/rpc/specs/socket-keepalive.md
+tests: packages/rpc/test/socket-keepalive.test.ts (5/5)
+---
+ packages/client/src/index.ts                  |   7 +-
+ packages/client/src/websocket.ts              | 105 +++++++++++-
+ packages/rpc/specs/socket-keepalive.md        |  77 +++++++++
+ packages/rpc/src/index.ts                     |  13 +-
+ packages/rpc/src/port-protocol.ts             | 114 +++++++++++++
+ packages/rpc/src/protocol.ts                  | 144 ++++++-----------
+ packages/rpc/test/socket-keepalive.test.ts    | 153 ++++++++++++++++++
+ packages/server/src/http.ts                   |  50 ++++++
+ packages/web/src/main.tsx                     |  74 +++++++--
+ .../zcode-server-cli/src/server-core/http.ts  |  49 ++++++
+ 10 files changed, 676 insertions(+), 110 deletions(-)
+ create mode 100644 packages/rpc/specs/socket-keepalive.md
+ create mode 100644 packages/rpc/src/port-protocol.ts
+ create mode 100644 packages/rpc/test/socket-keepalive.test.ts
+
+diff --git a/packages/client/src/index.ts b/packages/client/src/index.ts
+index 6015fc9..5daaada 100644
+--- a/packages/client/src/index.ts
++++ b/packages/client/src/index.ts
+@@ -1,5 +1,10 @@
+ export { RemoteServiceAccess } from "./remoteServiceAccess.js";
+ export { connectViaProtocol, connectViaWebSocket } from "./websocket.js";
+-export type { WebSocketConnectionCloseEvent } from "./websocket.js";
++export type {
++  WebSocketConnectionCloseEvent,
++  WebSocketHeartbeatOptions,
++  WebSocketHeartbeatHandle,
++} from "./websocket.js";
++export { WEB_SOCKET_HEARTBEAT_DEFAULTS } from "./websocket.js";
+ export { connectViaMessagePort, createMessagePortServiceConnection } from "./messageport.js";
+ export type { MessagePortServiceConnection } from "./messageport.js";
+diff --git a/packages/client/src/websocket.ts b/packages/client/src/websocket.ts
+index 2eded6a..f1ac914 100644
+--- a/packages/client/src/websocket.ts
++++ b/packages/client/src/websocket.ts
+@@ -18,8 +18,27 @@ export interface WebSocketConnectionCloseEvent {
+ interface WebSocketConnectionOptions {
+   onClose?: (event: WebSocketConnectionCloseEvent) => void;
+   onOpenSocket?: (socket: WebSocket) => void;
++  /** 连接建立、SocketProtocol 就绪后回调（宿主可据此挂探针桥）。 */
++  onOpenProtocol?: (protocol: SocketProtocol) => void;
++  /** 心跳监视器就绪后回调（宿主保存把手用于同 socket 活性查询/补探）。 */
++  onHeartbeat?: (handle: WebSocketHeartbeatHandle) => void;
+ }
+ 
++/**
++ * 心跳监视器参数：intervalMs 发探针的周期；timeoutMs 无任何帧到达的判死阈值。
++ * timeout 必须 ≥ 2×interval：允许单个探针/回显因瞬态抖动丢失后由下一周期自愈，
++ * 健康连接不会被误判（见 packages/rpc/specs/socket-keepalive.md 回归红线）。
++ */
++export interface WebSocketHeartbeatOptions {
++  intervalMs: number;
++  timeoutMs: number;
++}
++
++export const WEB_SOCKET_HEARTBEAT_DEFAULTS: WebSocketHeartbeatOptions = {
++  intervalMs: 15_000,
++  timeoutMs: 30_000,
++};
++
+ function wrapBrowserWebSocket(ws: WebSocket): ISocket {
+   const onData = new Emitter<VSBuffer>();
+   const onClose = new Emitter<void>();
+@@ -59,13 +78,82 @@ function wrapBrowserWebSocket(ws: WebSocket): ISocket {
+   };
+ }
+ 
++// ── 心跳监视器（同 socket 半开判死）──────────────────────────────────────────
++// 修复依据（/root/DSH/zcode/01-连接恢复-分析与方案.md §1）：半开是 per-connection 的，
++// 换一根连接的 HTTP 探测测不出当前这根已死；必须在应用正在用的 socket 上发帧并等回应。
++// 所有权：每条连接的监视器闭包是 lastReceivedAt 的唯一所有者；探针经 SocketProtocol
++// sendKeepAlive()（ack=0）发出，对端自动回显（ack=1）或触发 onKeepAlive/任何帧更新活性。
++// 事件顺序：interval 到点 → sendKeepAlive → 对端回显 → onKeepAlive → lastReceivedAt 刷新；
++// 检查计时器发现超时 → 主动 close() → 浏览器 close 事件 → 既有的守卫/软重连路径接手。
++// 活性经 onHeartbeat 把手暴露给宿主（packages/web 的页面守卫挂在 window 桥上；
++// 本文件不引用 window/Window——desktop host 的无 DOM 编译会经 @zcode/server/remote
++// → @zcode/client 把本文件源码拖进 lib:es2025 工程，DOM 全局在此不可用）。
++
++/** 心跳监视器把手：宿主经此查询同 socket 活性 / 补发探针。 */
++export interface WebSocketHeartbeatHandle {
++  /** 最近一次收到任何协议帧（含 KeepAlive 回显）的时间戳。 */
++  lastReceivedAt: () => number;
++  /** 立即在当前连接上补发一根 KeepAlive 探针。 */
++  sendKeepAlive: () => void;
++}
++
++interface WebSocketHeartbeatMonitor extends WebSocketHeartbeatHandle {
++  dispose: () => void;
++}
++
++function startWebSocketHeartbeatMonitor(
++  protocol: SocketProtocol,
++  ws: WebSocket,
++  options: WebSocketHeartbeatOptions,
++): WebSocketHeartbeatMonitor {
++  let lastReceivedAt = Date.now();
++  const markAlive = () => {
++    lastReceivedAt = Date.now();
++  };
++  // 任何到达的帧都证明这条 socket 的接收方向是活的（数据帧或 KeepAlive 回显均可）。
++  const keepAliveSubscription = protocol.onKeepAlive(markAlive);
++  const messageSubscription = protocol.onMessage(markAlive);
++
++  const keepAliveTimer: ReturnType<typeof setInterval> = setInterval(() => {
++    protocol.sendKeepAlive();
++  }, options.intervalMs);
++  const checkTimer: ReturnType<typeof setInterval> = setInterval(() => {
++    if (Date.now() - lastReceivedAt > options.timeoutMs) {
++      // 判死：主动关闭本连接。close 事件随后驱动守卫/软重连，
++      // 不在这里重连——重连所有权在宿主（main.tsx 的软重连状态机）。
++      try {
++        ws.close();
++      } catch {
++        // 已处于 CLOSING/CLOSED 时 close() 不应抛错；兜底忽略。
++      }
++    }
++  }, Math.min(options.intervalMs, options.timeoutMs));
++
++  return {
++    lastReceivedAt: () => lastReceivedAt,
++    sendKeepAlive: () => protocol.sendKeepAlive(),
++    dispose: () => {
++      clearInterval(keepAliveTimer);
++      clearInterval(checkTimer);
++      keepAliveSubscription.dispose();
++      messageSubscription.dispose();
++    },
++  };
++}
++
+ export function connectViaWebSocket(
+   wsUrl: string,
+-  options?: WebSocketConnectionOptions,
++  options?: WebSocketConnectionOptions & { heartbeat?: WebSocketHeartbeatOptions },
+ ): Promise<IServiceAccessor> {
+   return new Promise((resolve, reject) => {
+     const ws = new WebSocket(wsUrl);
+     let settled = false;
++    let monitor: WebSocketHeartbeatMonitor | null = null;
++
++    const teardownMonitor = () => {
++      monitor?.dispose();
++      monitor = null;
++    };
+ 
+     ws.addEventListener("error", () => {
+       if (!settled) {
+@@ -73,6 +161,7 @@ export function connectViaWebSocket(
+       }
+     });
+     ws.addEventListener("close", (event) => {
++      teardownMonitor();
+       options?.onClose?.({
+         code: event.code,
+         reason: event.reason,
+@@ -94,7 +183,19 @@ export function connectViaWebSocket(
+       settled = true;
+       options?.onOpenSocket?.(ws);
+       const socket = wrapBrowserWebSocket(ws);
+-      resolve(connectViaProtocol(new SocketProtocol(socket)));
++      const protocol = new SocketProtocol(socket);
++      // 心跳默认开启：浏览器直连链路此前零存活探测（半开永不判死）。
++      // 显式传 heartbeat: null 可关闭（现有调用方均不传，桌面 MessagePort 路径不受影响）。
++      if (options?.heartbeat !== null) {
++        monitor = startWebSocketHeartbeatMonitor(
++          protocol,
++          ws,
++          options?.heartbeat ?? WEB_SOCKET_HEARTBEAT_DEFAULTS,
++        );
++        options?.onHeartbeat?.(monitor);
++      }
++      options?.onOpenProtocol?.(protocol);
++      resolve(connectViaProtocol(protocol));
+     });
+   });
+ }
+diff --git a/packages/rpc/specs/socket-keepalive.md b/packages/rpc/specs/socket-keepalive.md
+new file mode 100644
+index 0000000..25feed4
+--- /dev/null
++++ b/packages/rpc/specs/socket-keepalive.md
+@@ -0,0 +1,77 @@
++# SocketProtocol KeepAlive 探针/回显 —— 直连 web 半开判死
++
++## 背景（用户反馈 + 行号级取证见 /root/DSH/zcode/01-连接恢复-分析与方案.md）
++
++直连页链路（浏览器 ↔ nginx ↔ server `/ws`）此前零存活探测：
++`SocketProtocol.readMessages()` 只对 `Regular` 帧触发 `onMessage`，其余类型直接丢弃；
++两端都没有应用层心跳。半开连接（对端已死、本地不报 close）因此永远不会被发现——
++界面用已加载的数据继续渲染，任何新 RPC 都打到死 socket 上（「表面正常、实际已断」）。
++
++半开是 per-connection 的：换一根连接的探测（HTTP fetch、另开 WS）测不出当前这根已死。
++必须在应用正在用的那条连接上发帧并等回应。
++
++## 规则
++
++### R1 探针帧格式与回显语义（防回显风暴的关键）
++- 探针：`KeepAlive` 帧，`ack=0`，空 body，由 `SocketProtocol.sendKeepAlive()` 发出。
++- 回显：任何一端收到 `ack=0` 的 `KeepAlive`，立即在同一连接上回一帧
++  `KeepAlive`，`ack=1`，空 body，并触发 `onKeepAlive` 事件。
++- 收到 `ack=1` 的 `KeepAlive`（即回显帧）只触发 `onKeepAlive`，**不再回显**。
++  两端共享同一份 `SocketProtocol` 代码时该规则保证恰好一问一答，不会互相无限回显。
++- `KeepAlive` 帧携带非空 body 时，body 被读出并丢弃（不触发 `onMessage`）。
++- 除 KeepAlive 处理外，帧解析行为不变；`Regular` 仍走 `onMessage`，
++  其余类型仍丢弃。`PersistentProtocol` 自带 5s KeepAlive（发出端 ack=incomingAckId），
++  它收到 KeepAlive 只更新活跃时间、不回显——与本机制配对时同样恰好一问一答，
++  不产生风暴。
++
++### R2 客户端心跳监视器（packages/client，浏览器直连路径）
++- `connectViaWebSocket` 在 `SocketProtocol` 外包一层监视器：周期
++  （默认 15s）调用 `sendKeepAlive()`，并把「最近一次收到任何协议帧或 KeepAlive
++  回显」的时间戳作为活性依据。
++- 超过 `timeoutMs`（默认 30s）没有任何帧到达 → 判定连接死亡 → 在**同一 socket 上**
++  主动 `close()`，让应用层的 close 事件路径（既有软重连）接手。
++- 探测必须在应用正在用的那条连接上收发；禁止用 HTTP 探测代替半开判死
++  （HTTP 换了连接，测不出半开）。
++- 关闭事件到达时停止心跳计时器；重连成功后新连接拥有自己的监视器。
++- 活性查询以全局桥 `window.__zcodeWebConnProbe()` 暴露给页面守卫（与既有
++  `window.__zcodeConnGuard` 桥同一模式），始终指向最近一次建立的连接。
++
++### R3 服务端 WS 层 ping/pong 清理（packages/server 与 zcode-server-cli 的 /ws）
++- 对 `/ws`（terminal-client）上的每个连接，服务端每 30s 发 RFC 6455 ping 帧；
++  连续 2 个周期无 pong（65s 内）→ `terminate()`。
++- 浏览器网络栈自动回 pong（不依赖页面 JS 计时器，后台冻结页也能回）；
++  服务端 terminate 使浏览器侧收到 close 事件 → 走既有软重连。
++- 该心跳同时覆盖远控页（relay-v28 的 RPC 也是页面直连 server `/ws`），
++  relay 自身的控制通道 WS 不受影响。
++
++## 状态与事件顺序（所有权）
++
++```text
++客户端监视器（唯一所有者：connectViaWebSocket 内的监视器闭包）
++  sendKeepAlive ──► server SocketProtocol 回显 ──► onKeepAlive → lastReceivedAt
++  计时器发现超时 → ws.close() → close 事件 → handleWebTransportClosed → 软重连
++服务端 ping 循环（每连接独立闭包）
++  ws.ping → 浏览器栈 pong → 'pong' 事件 → alive=true
++  计时器发现连续 miss → ws.terminate() → 浏览器 close 事件
++```
++
++回退语义不变：软重连退避耗尽/重连风暴才整页 reload（见 ui/specs/web-recovery.md R3）。
++
++## 回归红线
++
++- `Regular` 帧、ACK、Disconnect 等 framing 行为不变；桌面 stdio/MessagePort/
++  PersistentProtocol 路径不发探针也不应答探针（ack=0 回显仅由本机制触发），
++  行为零变化。
++- 健康连接不得误判：单个探针丢失（瞬态抖动）由下一个周期自愈，
++  连续两个周期（30s）无任何帧才判死。
++- 桌面端与远控页 bundle 不受本次改动影响（远控页 RPC 仍是同一 server /ws，
++  仅额外获得服务端 ping 清理）。
++
++## 验收
++
++- 单测（packages/rpc/test/socket-keepalive.test.ts，node:test）：
++  探针→回显恰好一问一答；ack=1 不再回显（无风暴）；Regular 消息不受影响。
++- E2E（evidence/连接恢复/direct-recovery/）：静默黑洞（拦下 /ws 双向不转发且
++  不断开）→ 页面 ≤45s 内自动软重连（新 WS 连接），不整页 reload；
++  健康页面 60s 内不产生重连、不误判。
++- `pnpm typecheck` / `pnpm lint` / `pnpm architecture:check --changed` 通过。
+diff --git a/packages/rpc/src/index.ts b/packages/rpc/src/index.ts
+index dc8b205..ec0c129 100644
+--- a/packages/rpc/src/index.ts
++++ b/packages/rpc/src/index.ts
+@@ -57,18 +57,21 @@ export {
+ export {
+   type IMessagePassingProtocol,
+   type ConnectionFlowControl,
+-  type MessagePortFlowControl,
+-  type MessagePortFlowState,
+-  type MessagePortPayload,
+   type ISocket,
+   ChunkStream,
+   SocketProtocol,
+   ProtocolMessageType,
+   ProtocolMessage,
+-  MessagePortProtocol,
++  KEEP_ALIVE_ECHO_ACK,
++} from "./protocol.js";
++export {
++  type MessagePortFlowControl,
++  type MessagePortFlowState,
++  type MessagePortPayload,
+   type MessagePortLike,
++  MessagePortProtocol,
+   createQueuePair,
+-} from "./protocol.js";
++} from "./port-protocol.js";
+ export { PersistentProtocol, type PersistentProtocolOptions } from "./persistent-protocol.js";
+ 
+ // Layer 3: Channel RPC
+diff --git a/packages/rpc/src/port-protocol.ts b/packages/rpc/src/port-protocol.ts
+new file mode 100644
+index 0000000..e81658d
+--- /dev/null
++++ b/packages/rpc/src/port-protocol.ts
+@@ -0,0 +1,114 @@
++/**
++ * MessagePort 传输 —— 从 protocol.ts 拆出（该文件触及 400 行上限）。
++ *
++ * 包含两类不走网络分帧的 IMessagePassingProtocol 实现：
++ * - createQueuePair：内存中的协议对，用于测试与示例；
++ * - MessagePortProtocol：Web Worker / Electron sandbox / utilityProcess 的
++ *   MessagePort 传输（消息自带边界，无需 ChunkStream）。
++ */
++
++import { VSBuffer } from "./buffer.js";
++import { Emitter } from "./foundation.js";
++import {
++  isMessagePortFlowControl,
++  type IMessagePassingProtocol,
++  type MessagePortFlowState,
++  type MessagePortPayload,
++} from "./protocol.js";
++
++// 流控类型归属 protocol.ts（连接级观察面），这里转发导出维持原有包导出路径不变。
++export type {
++  MessagePortFlowControl,
++  MessagePortFlowState,
++  MessagePortPayload,
++} from "./protocol.js";
++
++// ============================================================================
++// QueueProtocol —— 内存中的协议对，用于测试
++// ============================================================================
++
++/**
++ * 创建一对通过内存队列连接的 protocol，
++ * 一端 send 的消息会出现在另一端的 onMessage。
++ * 非常适合单元测试，不需要真正的网络连接。
++ */
++export function createQueuePair(): [IMessagePassingProtocol, IMessagePassingProtocol] {
++  const emitterA = new Emitter<VSBuffer>();
++  const emitterB = new Emitter<VSBuffer>();
++
++  const protocolA: IMessagePassingProtocol = {
++    send: (buffer: VSBuffer) => {
++      // A 发送的消息 → B 收到
++      setTimeout(() => emitterB.fire(buffer), 0);
++    },
++    onMessage: emitterA.event,
++  };
++
++  const protocolB: IMessagePassingProtocol = {
++    send: (buffer: VSBuffer) => {
++      // B 发送的消息 → A 收到
++      setTimeout(() => emitterA.fire(buffer), 0);
++    },
++    onMessage: emitterB.event,
++  };
++
++  return [protocolA, protocolB];
++}
++
++// ============================================================================
++// MessagePort Protocol —— 用于 Web Worker / Electron sandbox
++// ============================================================================
++
++/**
++ * MessagePort 接口的最小声明，
++ * 使得这个 Protocol 可以同时在浏览器和 Electron 中使用。
++ */
++export interface MessagePortLike {
++  addEventListener(type: "message", listener: (e: { data: MessagePortPayload }) => void): void;
++  removeEventListener(type: "message", listener: (e: { data: MessagePortPayload }) => void): void;
++  postMessage(message: MessagePortPayload): void;
++  start(): void;
++  close(): void;
++}
++
++/**
++ * 在 MessagePort 上实现 IMessagePassingProtocol。
++ * 这是最简单的传输实现——不需要分帧，因为 MessagePort 本身就是消息边界的。
++ */
++export class MessagePortProtocol implements IMessagePassingProtocol {
++  private readonly _onMessage = new Emitter<VSBuffer>();
++  readonly onMessage = this._onMessage.event;
++  private readonly _onFlowState = new Emitter<MessagePortFlowState>();
++  readonly onFlowState = this._onFlowState.event;
++
++  private readonly handler: (e: { data: MessagePortPayload }) => void;
++
++  constructor(private port: MessagePortLike) {
++    this.handler = (e: { data: MessagePortPayload }) => {
++      if (isMessagePortFlowControl(e.data)) {
++        this._onFlowState.fire(e.data.state);
++        return;
++      }
++      // MessagePort control object 不能进入 Channel deserialize；未知对象和伪造
++      // connection-flow-v1 一律丢弃，只有真实 Uint8Array 才是 RPC binary。
++      if (e.data instanceof Uint8Array) this._onMessage.fire(VSBuffer.wrap(e.data));
++    };
++    this.port.addEventListener("message", this.handler);
++    this.port.start();
++  }
++
++  send(buffer: VSBuffer): void {
++    this.port.postMessage(buffer.buffer);
++  }
++
++  sendFlowState(state: MessagePortFlowState): void {
++    this.port.postMessage({ __zcodeRpcControl: "connection-flow-v1", state });
++  }
++
++  disconnect(): void {
++    this.port.removeEventListener("message", this.handler);
++    this.port.close();
++    this._onMessage.dispose();
++    this._onFlowState.dispose();
++  }
++}
+diff --git a/packages/rpc/src/protocol.ts b/packages/rpc/src/protocol.ts
+index 883c25e..559593e 100644
+--- a/packages/rpc/src/protocol.ts
++++ b/packages/rpc/src/protocol.ts
+@@ -6,6 +6,8 @@
+  * 它下面是各种具体传输实现（Electron/MessagePort/Socket/ChildProcess）。
+  *
+  * 只要实现 send() 和 onMessage，就能接入整个 RPC 框架。
++ *
++ * MessagePort 传输与内存 QueuePair 在 ./port-protocol.js（本文件触及 400 行上限时拆出）。
+  */
+ 
+ import { VSBuffer } from "./buffer.js";
+@@ -47,7 +49,7 @@ export interface MessagePortFlowControl {
+ 
+ export type MessagePortPayload = Uint8Array | MessagePortFlowControl;
+ 
+-function isMessagePortFlowControl(value: unknown): value is MessagePortFlowControl {
++export function isMessagePortFlowControl(value: unknown): value is MessagePortFlowControl {
+   if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
+   const record = value as Record<string, unknown>;
+   return (
+@@ -206,6 +208,13 @@ export enum ProtocolMessageType {
+ 
+ export const HEADER_SIZE = 13; // 1 + 4 + 4 + 4
+ 
++/**
++ * KeepAlive 回显帧的 ack 值约定：探针帧 ack=0，回显帧 ack=1。
++ * 两端共享同一份 SocketProtocol 代码时，只有探针会被回显——
++ * 该约定保证恰好一问一答，不会互相无限回显（回显风暴）。
++ */
++export const KEEP_ALIVE_ECHO_ACK = 1;
++
+ export class ProtocolMessage {
+   constructor(
+     public readonly type: ProtocolMessageType,
+@@ -237,6 +246,10 @@ export class SocketProtocol implements IMessagePassingProtocol {
+   private readonly _onMessage = new Emitter<VSBuffer>();
+   readonly onMessage = this._onMessage.event;
+ 
++  /** 收到对端 KeepAlive 帧（探针或回显）时触发，作为同 socket 活性依据。 */
++  private readonly _onKeepAlive = new Emitter<void>();
++  readonly onKeepAlive = this._onKeepAlive.event;
++
+   private readonly chunkStream = new ChunkStream();
+   private readonly disposables = new DisposableStore();
+ 
+@@ -253,6 +266,16 @@ export class SocketProtocol implements IMessagePassingProtocol {
+     this.writeMessage(new ProtocolMessage(ProtocolMessageType.Regular, 0, 0, buffer));
+   }
+ 
++  /**
++   * 发出 KeepAlive 探针帧（ack=0，空 body）。
++   * 对端 SocketProtocol 收到后自动回显（ack=1），用于半开连接的同 socket 判死。
++   */
++  sendKeepAlive(): void {
++    this.writeMessage(
++      new ProtocolMessage(ProtocolMessageType.KeepAlive, 0, 0, VSBuffer.alloc(0)),
++    );
++  }
++
+   private writeMessage(msg: ProtocolMessage): void {
+     this.socket.write(writeProtocolMessage(msg));
+   }
+@@ -266,7 +289,7 @@ export class SocketProtocol implements IMessagePassingProtocol {
+ 
+       const type = header.readUInt8(0) as ProtocolMessageType;
+       const _id = header.readUInt32BE(1);
+-      const _ack = header.readUInt32BE(5);
++      const ack = header.readUInt32BE(5);
+       const length = header.readUInt32BE(9);
+ 
+       const totalFrameLength = HEADER_SIZE + length;
+@@ -278,6 +301,20 @@ export class SocketProtocol implements IMessagePassingProtocol {
+ 
+       this.chunkStream.skip(HEADER_SIZE);
+ 
++      if (type === ProtocolMessageType.KeepAlive) {
++        // KeepAlive 帧：body（如有）读出即弃，不进 onMessage。
++        if (length > 0) {
++          this.chunkStream.read(length);
++        }
++        this._onKeepAlive.fire();
++        if (length === 0 && ack === 0) {
++          // 探针帧（ack=0）：立即回显（ack=1）。回显帧（ack=1）不再回显，
++          // 两端共享同一份代码时恰好一问一答，不会互相无限回显。
++          this.echoKeepAlive();
++        }
++        continue;
++      }
++
+       if (length === 0) {
+         if (type === ProtocolMessageType.Regular) {
+           this._onMessage.fire(VSBuffer.alloc(0));
+@@ -296,6 +333,18 @@ export class SocketProtocol implements IMessagePassingProtocol {
+     }
+   }
+ 
++  /** 回显 KeepAlive（ack=1，空 body），应答对端探针（ack=0）。 */
++  private echoKeepAlive(): void {
++    this.writeMessage(
++      new ProtocolMessage(
++        ProtocolMessageType.KeepAlive,
++        0,
++        KEEP_ALIVE_ECHO_ACK,
++        VSBuffer.alloc(0),
++      ),
++    );
++  }
++
+   async drain(): Promise<void> {
+     return this.socket.drain();
+   }
+@@ -303,95 +352,6 @@ export class SocketProtocol implements IMessagePassingProtocol {
+   dispose(): void {
+     this.disposables.dispose();
+     this._onMessage.dispose();
+-  }
+-}
+-
+-// ============================================================================
+-// QueueProtocol —— 内存中的协议对，用于测试
+-// ============================================================================
+-
+-/**
+- * 创建一对通过内存队列连接的 protocol，
+- * 一端 send 的消息会出现在另一端的 onMessage。
+- * 非常适合单元测试，不需要真正的网络连接。
+- */
+-export function createQueuePair(): [IMessagePassingProtocol, IMessagePassingProtocol] {
+-  const emitterA = new Emitter<VSBuffer>();
+-  const emitterB = new Emitter<VSBuffer>();
+-
+-  const protocolA: IMessagePassingProtocol = {
+-    send: (buffer: VSBuffer) => {
+-      // A 发送的消息 → B 收到
+-      setTimeout(() => emitterB.fire(buffer), 0);
+-    },
+-    onMessage: emitterA.event,
+-  };
+-
+-  const protocolB: IMessagePassingProtocol = {
+-    send: (buffer: VSBuffer) => {
+-      // B 发送的消息 → A 收到
+-      setTimeout(() => emitterA.fire(buffer), 0);
+-    },
+-    onMessage: emitterB.event,
+-  };
+-
+-  return [protocolA, protocolB];
+-}
+-
+-// ============================================================================
+-// MessagePort Protocol —— 用于 Web Worker / Electron sandbox
+-// ============================================================================
+-
+-/**
+- * MessagePort 接口的最小声明，
+- * 使得这个 Protocol 可以同时在浏览器和 Electron 中使用。
+- */
+-export interface MessagePortLike {
+-  addEventListener(type: "message", listener: (e: { data: MessagePortPayload }) => void): void;
+-  removeEventListener(type: "message", listener: (e: { data: MessagePortPayload }) => void): void;
+-  postMessage(message: MessagePortPayload): void;
+-  start(): void;
+-  close(): void;
+-}
+-
+-/**
+- * 在 MessagePort 上实现 IMessagePassingProtocol。
+- * 这是最简单的传输实现——不需要分帧，因为 MessagePort 本身就是消息边界的。
+- */
+-export class MessagePortProtocol implements IMessagePassingProtocol {
+-  private readonly _onMessage = new Emitter<VSBuffer>();
+-  readonly onMessage = this._onMessage.event;
+-  private readonly _onFlowState = new Emitter<MessagePortFlowState>();
+-  readonly onFlowState = this._onFlowState.event;
+-
+-  private readonly handler: (e: { data: MessagePortPayload }) => void;
+-
+-  constructor(private port: MessagePortLike) {
+-    this.handler = (e: { data: MessagePortPayload }) => {
+-      if (isMessagePortFlowControl(e.data)) {
+-        this._onFlowState.fire(e.data.state);
+-        return;
+-      }
+-      // MessagePort control object 不能进入 Channel deserialize；未知对象和伪造
+-      // connection-flow-v1 一律丢弃，只有真实 Uint8Array 才是 RPC binary。
+-      if (e.data instanceof Uint8Array) this._onMessage.fire(VSBuffer.wrap(e.data));
+-    };
+-    this.port.addEventListener("message", this.handler);
+-    this.port.start();
+-  }
+-
+-  send(buffer: VSBuffer): void {
+-    this.port.postMessage(buffer.buffer);
+-  }
+-
+-  sendFlowState(state: MessagePortFlowState): void {
+-    this.port.postMessage({ __zcodeRpcControl: "connection-flow-v1", state });
+-  }
+-
+-  disconnect(): void {
+-    this.port.removeEventListener("message", this.handler);
+-    this.port.close();
+-    this._onMessage.dispose();
+-    this._onFlowState.dispose();
++    this._onKeepAlive.dispose();
+   }
+ }
+diff --git a/packages/rpc/test/socket-keepalive.test.ts b/packages/rpc/test/socket-keepalive.test.ts
+new file mode 100644
+index 0000000..3eaa17a
+--- /dev/null
++++ b/packages/rpc/test/socket-keepalive.test.ts
+@@ -0,0 +1,153 @@
++import assert from "node:assert/strict";
++import test from "node:test";
++import {
++  Emitter,
++  VSBuffer,
++  SocketProtocol,
++  ProtocolMessageType,
++  type ISocket,
++} from "../src/index.js";
++import { ProtocolMessage, writeProtocolMessage } from "../src/protocol.js";
++
++/**
++ * 测试用对连线：返回两端 SocketProtocol 与「向指定端手工喂帧」的函数。
++ * write 写出的帧按 wire 格式异步回放给对端（模拟真实 socket），
++ * feed 则绕过 write 直接灌原始字节（用于构造异常/回显帧）。
++ */
++function createLoopbackPair(): {
++  a: SocketProtocol;
++  b: SocketProtocol;
++  feedA: (frame: VSBuffer) => void;
++  feedB: (frame: VSBuffer) => void;
++} {
++  const dataA = new Emitter<VSBuffer>();
++  const dataB = new Emitter<VSBuffer>();
++  const closeA = new Emitter<void>();
++  const closeB = new Emitter<void>();
++  const makeSocket = (incoming: Emitter<VSBuffer>, outgoing: Emitter<VSBuffer>): ISocket => ({
++    onData: incoming.event,
++    onClose: closeA.event,
++    onEnd: closeA.event,
++    write(buffer: VSBuffer) {
++      setTimeout(() => outgoing.fire(buffer), 0);
++    },
++    end() {},
++    drain() {
++      return Promise.resolve();
++    },
++    dispose() {},
++  });
++  void closeB;
++  const a = new SocketProtocol(makeSocket(dataA, dataB));
++  const b = new SocketProtocol(makeSocket(dataB, dataA));
++  return {
++    a,
++    b,
++    feedA: (frame) => dataA.fire(frame),
++    feedB: (frame) => dataB.fire(frame),
++  };
++}
++
++function keepAliveFrame(ack: number): VSBuffer {
++  return writeProtocolMessage(
++    new ProtocolMessage(ProtocolMessageType.KeepAlive, 0, ack, VSBuffer.alloc(0)),
++  );
++}
++
++const flush = () => new Promise((resolve) => setTimeout(resolve, 50));
++
++test("KeepAlive 探针恰好得到一次回显（一问一答，无风暴）", async () => {
++  const { a, b } = createLoopbackPair();
++  let aSeen = 0;
++  let bSeen = 0;
++  a.onKeepAlive(() => {
++    aSeen += 1;
++  });
++  b.onKeepAlive(() => {
++    bSeen += 1;
++  });
++
++  a.sendKeepAlive();
++  await flush();
++  // b 恰好收到 1 根探针；a 恰好收到 1 根回显——任何一侧出现第 2 帧即回显风暴。
++  assert.equal(bSeen, 1, "对端应恰好收到 1 根探针");
++  assert.equal(aSeen, 1, "探针方应恰好收到 1 根回显（不应再被回显）");
++});
++
++test("回显帧（ack=1）不再被回显", async () => {
++  const { b, feedA } = createLoopbackPair();
++  let bSeen = 0;
++  b.onKeepAlive(() => {
++    bSeen += 1;
++  });
++
++  // 直接向 a 灌一根回显帧（ack=1），验证 a 不回显——b 不应收到任何 KeepAlive。
++  feedA(keepAliveFrame(1));
++  await flush();
++  assert.equal(bSeen, 0, "回显帧不应触发再回显");
++});
++
++test("Regular 消息收发不受 KeepAlive 处理影响", async () => {
++  const { a, b } = createLoopbackPair();
++  const received: string[] = [];
++  b.onMessage((body) => received.push(Buffer.from(body.buffer).toString("utf8")));
++
++  // SocketProtocol.send 只接受 VSBuffer（序列化由 ChannelClient 完成，测试直接给字节）。
++  a.send(VSBuffer.fromString("hello"));
++  a.sendKeepAlive();
++  a.send(VSBuffer.fromString("world"));
++  await flush();
++  assert.deepEqual(received, ["hello", "world"]);
++});
++
++test("带 body 的 KeepAlive 帧：body 丢弃且不进 onMessage", async () => {
++  const { b, feedB } = createLoopbackPair();
++  let keepAlives = 0;
++  let messages = 0;
++  b.onKeepAlive(() => {
++    keepAlives += 1;
++  });
++  b.onMessage(() => {
++    messages += 1;
++  });
++
++  // 探针格式（ack=0）携带非空 body：应触发 KeepAlive 事件、body 不进 onMessage。
++  feedB(
++    writeProtocolMessage(
++      new ProtocolMessage(ProtocolMessageType.KeepAlive, 0, 0, VSBuffer.fromString("junk")),
++    ),
++  );
++  await flush();
++  assert.equal(keepAlives, 1, "KeepAlive 事件仍应触发");
++  assert.equal(messages, 0, "KeepAlive body 不得进入 onMessage");
++});
++
++test("分片到达的 KeepAlive 探针也能正确回显", async () => {
++  const dataB = new Emitter<VSBuffer>();
++  let echoed: VSBuffer | null = null;
++  const socketB: ISocket = {
++    onData: dataB.event,
++    onClose: new Emitter<void>().event,
++    onEnd: new Emitter<void>().event,
++    write(buffer: VSBuffer) {
++      echoed = buffer;
++    },
++    end() {},
++    drain() {
++      return Promise.resolve();
++    },
++    dispose() {},
++  };
++  const b = new SocketProtocol(socketB);
++
++  // 把 13 字节帧拆成 5+8 两片喂入，验证 ChunkStream 攒齐后统一处理。
++  const frame = keepAliveFrame(0);
++  dataB.fire(frame.slice(0, 5));
++  dataB.fire(frame.slice(5));
++  await new Promise((resolve) => setTimeout(resolve, 20));
++  assert.ok(echoed, "应回显探针");
++  const echoedFrame = echoed as VSBuffer;
++  assert.equal(echoedFrame.readUInt8(0), ProtocolMessageType.KeepAlive);
++  assert.equal(echoedFrame.readUInt32BE(5), 1, "回显帧 ack 必须为 1");
++  void b;
++});
+diff --git a/packages/server/src/http.ts b/packages/server/src/http.ts
+index 21a0fd7..aa91739 100644
+--- a/packages/server/src/http.ts
++++ b/packages/server/src/http.ts
+@@ -84,11 +84,61 @@ function wrapWebSocket(ws: WebSocket): ISocket {
+ const log = (...args: unknown[]) =>
+   console.log(formatLogPrefix("zcode-server:http", process.pid), ...args);
+ 
++// ── WS 层 ping/pong 死连接清理 ─────────────────────────────────────────────
++// 修复依据（/root/DSH/zcode/01-连接恢复-分析与方案.md §1.5）：这条链路此前零存活探测，
++// 半开连接永远占用服务端资源、也无法通过 terminate 触发浏览器侧 close → 软重连。
++// 浏览器网络栈自动回 pong（不依赖页面 JS 计时器，后台冻结页也能回）；连续 2 个
++// 周期无 pong 即 terminate，浏览器收到 close 事件后走既有守卫/软重连路径。
++// 该心跳同时覆盖直连页与远控页（relay-v28 的 RPC 也是页面直连 server /ws）。
++const WS_PING_INTERVAL_MS = 30_000;
++const WS_PING_MISS_LIMIT = 2;
++
++function startWebSocketPingLoop(ws: WebSocket): () => void {
++  let missedPongs = 0;
++  let alive = false;
++  let stopped = false;
++  const stop = () => {
++    if (stopped) return;
++    stopped = true;
++    clearInterval(timer);
++    ws.off("pong", onPong);
++    ws.off("close", stop);
++    ws.off("error", stop);
++  };
++  const onPong = () => {
++    alive = true;
++  };
++  const timer = setInterval(() => {
++    if (!alive) {
++      missedPongs += 1;
++      if (missedPongs >= WS_PING_MISS_LIMIT) {
++        stop();
++        ws.terminate();
++        return;
++      }
++    } else {
++      missedPongs = 0;
++    }
++    alive = false;
++    try {
++      ws.ping();
++    } catch {
++      stop();
++      ws.terminate();
++    }
++  }, WS_PING_INTERVAL_MS);
++  ws.on("pong", onPong);
++  ws.on("close", stop);
++  ws.on("error", stop);
++  return stop;
++}
++
+ function setupChannelServer(
+   ws: WebSocket,
+   services: ServiceCollection,
+   clientMode: "desktop-continuous" | "web-remote-replayable",
+ ) {
++  startWebSocketPingLoop(ws);
+   const socket = wrapWebSocket(ws);
+   const protocol = new SocketProtocol(socket);
+   const rawServer = new ChannelServer(protocol, "server");
+diff --git a/packages/web/src/main.tsx b/packages/web/src/main.tsx
+index ee0bd8a..ceec191 100644
+--- a/packages/web/src/main.tsx
++++ b/packages/web/src/main.tsx
+@@ -10,7 +10,8 @@ import {
+   type Theme,
+ } from "@zcode/ui";
+ import "@zcode/ui/styles.css";
+-import { connectViaWebSocket } from "@zcode/client";
++import { connectViaProtocol, connectViaWebSocket } from "@zcode/client";
++import type { WebSocketHeartbeatHandle } from "@zcode/client";
+ import { WebCallbackPage } from "./auth/WebCallbackPage.js";
+ import { createWebAuthService } from "./auth/webAuthService.js";
+ import { WEB_ZAI_OAUTH_CONFIG, resolveWebAuthDevReturnTo } from "./auth/webZaiOAuthConfig.js";
+@@ -538,6 +539,52 @@ async function probeServerInfoAlive(): Promise<boolean> {
+   }
+ }
+ 
++// ── 同 socket 半开探测（回前台路径）─────────────────────────────────────────
++// 修复依据（/root/DSH/zcode/01-连接恢复-分析与方案.md §1.2）：半开是 per-connection 的，
++// HTTP 探测换了一根连接，测不出当前这条 socket 已死——「表面正常、实际已断」的根因。
++// 判据全部来自应用正在用的那条连接（connectWebServices 保存的心跳把手）：
++// 1) 把手的 lastReceivedAt（任何收到的帧都算活性）在 HEARTBEAT_PROBE_FRESH_MS 内
++//    → 连接活着，不重连；
++// 2) 时间戳过期 → 补发一根探针，短暂等待回显/数据帧刷新时间戳；
++// 3) 补探后仍未刷新 → 判死，走软重连。
++const HEARTBEAT_PROBE_FRESH_MS = 20_000;
++const HEARTBEAT_PROBE_WAIT_MS = 3_000;
++
++// 最近一次建立的连接的心跳把手（重连成功后覆盖；null = 无监视器，退回 HTTP 探测）。
++let webHeartbeatHandle: WebSocketHeartbeatHandle | null = null;
++
++async function probeConnectionAliveOnSameSocket(): Promise<boolean> {
++  const handle = webHeartbeatHandle;
++  if (!handle) {
++    // 没有监视器（如连接建立中/测试环境）：退回 HTTP 探测，语义与旧行为一致。
++    return probeServerInfoAlive();
++  }
++  const before = handle.lastReceivedAt();
++  if (Date.now() - before <= HEARTBEAT_PROBE_FRESH_MS) {
++    return true;
++  }
++  handle.sendKeepAlive();
++  const ctl = new AbortController();
++  const timer = window.setTimeout(() => ctl.abort(), HEARTBEAT_PROBE_WAIT_MS);
++  try {
++    await new Promise<void>((resolve) => {
++      const poll = window.setInterval(() => {
++        if (handle.lastReceivedAt() !== before) {
++          window.clearInterval(poll);
++          resolve();
++        }
++      }, 250);
++      ctl.signal.addEventListener("abort", () => {
++        window.clearInterval(poll);
++        resolve();
++      });
++    });
++  } finally {
++    window.clearTimeout(timer);
++  }
++  return handle.lastReceivedAt() !== before;
++}
++
+ // ── 软重连状态机 ──────────────────────────────────────────────────────────
+ // 所有权：唯一入口 startWebSoftReconnect；inflight 防并发重入。
+ // 事件顺序：socket close → markSocketDead → visible 触发/回前台触发 →
+@@ -568,9 +615,7 @@ async function attemptSoftReconnectOnce(
+   zh: boolean,
+ ): Promise<boolean> {
+   try {
+-    const services = await connectViaWebSocket(wsUrl, {
+-      onClose: (event) => handleWebTransportClosed(event),
+-    });
++    const services = await connectWebServices(wsUrl);
+     if (!recordSoftReconnectSuccess()) {
+       // 重连风暴保护：60s 内成功过多，交给整页 reload 重置全部客户端状态。
+       reloadWebIfAllowed();
+@@ -646,9 +691,10 @@ function installWebConnectionGuard(): void {
+       void startWebSoftReconnect();
+       return;
+     }
+-    // socket 没报 close 也可能已被静默回收（半开连接）；回前台探测一次。
+-    // 探测通过说明服务端可达、浏览器网络栈健康 —— 不重连，让存活 socket 继续。
+-    void probeServerInfoAlive().then((alive) => {
++    // socket 没报 close 也可能已被静默回收（半开连接）；回前台用同 socket 探测判死。
++    // 判据来自应用正在用的那条连接（心跳时间戳 + 补发探针的回显）——
++    // 不再用 HTTP fetch：换一根连接的探测测不出当前 socket 的半开。
++    void probeConnectionAliveOnSameSocket().then((alive) => {
+       if (!alive) {
+         void startWebSoftReconnect();
+       }
+@@ -670,6 +716,16 @@ function installWebConnectionGuard(): void {
+   window.__zcodeConnGuard = { markSocketDead: () => { socketDiedWhileHidden = true; } };
+ }
+ 
++async function connectWebServices(wsUrl: string): Promise<ReturnType<typeof connectViaProtocol>> {
++  return connectViaWebSocket(wsUrl, {
++    onClose: (event) => handleWebTransportClosed(event),
++    onHeartbeat: (handle) => {
++      // 同 socket 活性把手：守卫回前台时用它判半开（无需换连接探测）。
++      webHeartbeatHandle = handle;
++    },
++  });
++}
++
+ async function bootstrapWebApp() {
+   const params = new URLSearchParams(window.location.search);
+   if (isWebOAuthCallback(params)) {
+@@ -692,9 +748,7 @@ async function bootstrapWebApp() {
+ 
+   try {
+     installWebConnectionGuard();
+-    const services = await connectViaWebSocket(bootstrap.wsUrl, {
+-      onClose: (event) => handleWebTransportClosed(event),
+-    });
++    const services = await connectWebServices(bootstrap.wsUrl);
+     const platform = createWebPlatform();
+     document.title = "ZCode - Web + Server";
+ 
+diff --git a/packages/zcode-server-cli/src/server-core/http.ts b/packages/zcode-server-cli/src/server-core/http.ts
+index 8a8a827..3cf4514 100644
+--- a/packages/zcode-server-cli/src/server-core/http.ts
++++ b/packages/zcode-server-cli/src/server-core/http.ts
+@@ -36,6 +36,54 @@ interface CoreHttpServer {
+ const WEBSOCKET_DRAIN_TIMEOUT_MS = 250;
+ const log = createServiceLogger("server-core");
+ 
++// ── WS 层 ping/pong 死连接清理 ─────────────────────────────────────────────
++// 修复依据（/root/DSH/zcode/01-连接恢复-分析与方案.md §1.5）：这条链路此前零存活探测，
++// 半开连接永远占用服务端资源、也无法通过 terminate 触发浏览器侧 close → 软重连。
++// 浏览器网络栈自动回 pong（不依赖页面 JS 计时器，后台冻结页也能回）；连续 2 个
++// 周期无 pong 即 terminate。与 packages/server/src/http.ts 保持同一参数与语义。
++const WS_PING_INTERVAL_MS = 30_000;
++const WS_PING_MISS_LIMIT = 2;
++
++function startWebSocketPingLoop(ws: WebSocket): () => void {
++  let missedPongs = 0;
++  let alive = false;
++  let stopped = false;
++  const stop = () => {
++    if (stopped) return;
++    stopped = true;
++    clearInterval(timer);
++    ws.off("pong", onPong);
++    ws.off("close", stop);
++    ws.off("error", stop);
++  };
++  const onPong = () => {
++    alive = true;
++  };
++  const timer = setInterval(() => {
++    if (!alive) {
++      missedPongs += 1;
++      if (missedPongs >= WS_PING_MISS_LIMIT) {
++        stop();
++        ws.terminate();
++        return;
++      }
++    } else {
++      missedPongs = 0;
++    }
++    alive = false;
++    try {
++      ws.ping();
++    } catch {
++      stop();
++      ws.terminate();
++    }
++  }, WS_PING_INTERVAL_MS);
++  ws.on("pong", onPong);
++  ws.on("close", stop);
++  ws.on("error", stop);
++  return stop;
++}
++
+ async function closeWebSocketServer(wss: WebSocketServer): Promise<void> {
+   for (const client of wss.clients) {
+     // HTTP server.close() 不会收敛已经 upgrade 的 WebSocket，活跃 desktop
+@@ -90,6 +138,7 @@ function exposeWebSocket(
+   services: ServiceCollection,
+   clientMode: "desktop-continuous" | "web-remote-replayable",
+ ): void {
++  startWebSocketPingLoop(ws);
+   const socket = wrapWebSocket(ws);
+   const protocol = new SocketProtocol(socket);
+   const rawServer = new ChannelServer(protocol, "server");
+-- 
+2.53.0
+
