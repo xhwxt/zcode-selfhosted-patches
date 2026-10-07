@@ -1,15 +1,21 @@
 #!/usr/bin/env bash
 # ZCode 自托管 web 增强补丁 — 一键应用脚本
 # 基线：zai-org/ZCode v3.14.3 (commit 29628c9)
+# 补丁内容：
+#   0001 web parity（5 项：用户名、会话恢复、目录浏览器、draft 输入等）
+#   0002 web 连接守卫（后台断连提示 + 回前台自动恢复）
+#   0003 手机抽屉布局（<768px 左侧栏/右侧面板浮层化 + 左上角开关 + 遮罩）
+#   0004 抽屉打磨 + 目录浏览器新建文件夹（IFileService.createDirectory）
 # 用法：在 ZCode 仓库根目录执行  bash apply-selfhosted-web-patches.sh
 set -euo pipefail
 
-PATCH_FILE="$(cd "$(dirname "$0")" && pwd)/0001-self-hosted-web-parity.patch"
-
-if [[ ! -f "$PATCH_FILE" ]]; then
-  echo "错误: 找不到补丁文件 $PATCH_FILE" >&2
-  exit 1
-fi
+DIR="$(cd "$(dirname "$0")" && pwd)"
+PATCHES=(
+  "$DIR/0001-self-hosted-web-parity.patch"
+  "$DIR/0002-web-connection-guard.patch"
+  "$DIR/0003-feat-ui-mobile-drawer-layout-for-sidebar-and-side-pa.patch"
+  "$DIR/0004-fix-ui-mobile-drawer-polish-directory-browser-create.patch"
+)
 
 echo "==> 检查基线（应为 v3.14.3 / 29628c9，其他版本需自行确认可合并）"
 current="$(git rev-parse --short HEAD)"
@@ -24,14 +30,22 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
 fi
 
 echo "==> 应用补丁"
-if git apply --check "$PATCH_FILE" 2>/dev/null; then
-  git apply "$PATCH_FILE"
-  echo "==> 已应用（未提交）。检查无误后自行提交，或运行: git commit -am 'apply selfhosted web patches'"
-else
-  echo "git apply 冲突，尝试 git am（保留提交信息）"
-  git am "$PATCH_FILE"
-fi
+for p in "${PATCHES[@]}"; do
+  if [[ ! -f "$p" ]]; then
+    echo "错误: 找不到补丁文件 $p" >&2
+    exit 1
+  fi
+  name="$(basename "$p")"
+  if git apply --check "$p" 2>/dev/null; then
+    git apply "$p"
+    echo "    已应用 $name"
+  else
+    echo "错误: $name 无法应用（冲突或基线不符）" >&2
+    exit 1
+  fi
+done
 
-echo "==> 完成。重建发行包:"
-echo "    pnpm install && pnpm build:zcode --base-url https://your-domain/dist/"
+echo "==> 完成（全部未提交）。检查无误后自行提交: git add -A && git commit"
+echo "==> 重建发行包:"
+echo "    pnpm install && pnpm build:zcode"
 echo "    产物在 dist/zcode/releases/<version>/，解压到部署目录后重启服务即可。"

@@ -1,0 +1,725 @@
+From 2fd6c4a95567ed0d699fd6a390cca311a00a2061 Mon Sep 17 00:00:00 2001
+From: xhwxt <197754549+xhwxt@users.noreply.github.com>
+Date: Wed, 7 Oct 2026 11:22:52 +0800
+Subject: [PATCH 3/4] feat(ui): mobile drawer layout for sidebar and side pane
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+问题8+右侧抽屉化：手机直连 web（<768px 视口）下左侧栏与右侧面板
+均为流内分栏，展开时挤压会话区。改为浮层抽屉：
+
+- useIsNarrowViewport：窄屏判定唯一所有者（matchMedia 事件驱动）
+- WorkspaceShellLayout：抽屉视口下侧栏改 absolute 左浮层
+  （min(85vw,480px)，滑入/滑出 200ms），拖拽分隔条不再渲染；
+  任一抽屉打开时渲染全屏遮罩，点击遮罩收起；左右互斥
+- DesktopTopOverlay：补 web 分支左上角侧栏开关（与右上角
+  面板按钮交互对称），浮层宽度不再钉在侧栏内
+- AnimatedSidePanePanel：新增 overlayMode，右侧面板不再进入
+  ResizablePanel 流内分栏，渲染为右侧滑入浮层，内容全复用
+
+桌面端（isNarrowViewport=false）渲染路径不变。
+spec: packages/ui/specs/app-shell-drawer.md
+
+E2E（Playwright 390x844）12/12 通过；桌面 1280x800 无回归。
+---
+ packages/ui/specs/app-shell-drawer.md         | 31 +++++++++++++++
+ packages/ui/src/DesktopTopOverlay.tsx         | 27 +++++++++++--
+ .../src/app-shell/AnimatedSidePanePanel.tsx   | 21 ++++++++++
+ .../ui/src/app-shell/WorkspaceShellLayout.tsx | 39 +++++++++++++++++--
+ packages/ui/src/hooks/useIsNarrowViewport.ts  | 31 +++++++++++++++
+ 5 files changed, 142 insertions(+), 7 deletions(-)
+ create mode 100644 packages/ui/specs/app-shell-drawer.md
+ create mode 100644 packages/ui/src/hooks/useIsNarrowViewport.ts
+
+diff --git a/packages/ui/specs/app-shell-drawer.md b/packages/ui/specs/app-shell-drawer.md
+new file mode 100644
+index 0000000..cd17dd9
+--- /dev/null
++++ b/packages/ui/specs/app-shell-drawer.md
+@@ -0,0 +1,31 @@
++# app-shell 手机端抽屉化（左侧栏 + 右侧面板）
++
++## 背景
++直连 web 手机视口（<768px）下，左侧栏与右侧面板均为流内分栏，展开时挤压
++会话区（用户图3）。需求：手机上全部改为叠层抽屉，会话区恒定全宽；
++桌面端布局不变。左上角需有与右侧面板按钮对称的侧栏开合按钮。
++
++## 规则
++1. 窄屏判定唯一所有者：`useIsNarrowViewport`（matchMedia max-width: 767.5px，
++   事件驱动，SSR 安全）。抽屉模式 = isNarrowViewport === true。
++2. 抽屉模式下侧栏容器脱离 flex 流：`absolute inset-y-0 left-0 z-30`，
++   宽度 = min(85vw, var(--workspace-sidebar-width))；滑入/滑出 200ms。
++   会话列不再被分宽。拖拽分隔条在抽屉模式不渲染。
++3. 抽屉模式下右侧面板不渲染 ResizableHandle/ResizablePanel，
++   改为 `absolute inset-y-0 right-0 z-30 w-[min(85vw,480px)]` 滑入浮层；
++   内容（tabs/browser/git/code-viewer）原样复用。45% 流内分栏不再生效。
++4. 任一抽屉打开时渲染全屏半透明遮罩（z-20，bg-black/40），点击遮罩
++   收起对应抽屉。遮罩属于 WorkspaceShellLayout，不进入内容组件。
++5. 左上角侧栏按钮：DesktopTopOverlay 增加 web 分支（isDesktop 为 false
++   时也渲染侧栏开合按钮），图标 PanelLeftClose/PanelLeftOpen，
++   交互与右上角 WorkspaceSidePaneToggleButton 对称。
++6. 状态所有者不变：isSidebarVisible / isSidePaneOpen 仍由 useAppPanels
++   拥有；抽屉化只改渲染形态，不新增可见性状态、不复制开关命令。
++7. 自动收起逻辑（CONVERSATION_AUTO_COLLAPSE_*）在抽屉模式下天然不触发
++   （会话区恒全宽），保留原实现不动。
++8. 桌面（isNarrowViewport=false）渲染路径与现状逐字节等价。
++
++## 验收
++- 390×844 视口：左右抽屉互斥不挤压会话区；点遮罩/按钮均可收起。
++- 桌面 1280×800：布局与改动前一致（截图对比）。
++- typecheck / lint / architecture:check 通过。
+diff --git a/packages/ui/src/DesktopTopOverlay.tsx b/packages/ui/src/DesktopTopOverlay.tsx
+index a1860fa..1ab1fb4 100644
+--- a/packages/ui/src/DesktopTopOverlay.tsx
++++ b/packages/ui/src/DesktopTopOverlay.tsx
+@@ -1,5 +1,6 @@
+ import type { IPlatformService, UpdateStatePayload } from "@zcode/shared";
+ import { cn } from "@/components/lib/utils.js";
++import { useIsNarrowViewport } from "@/hooks/useIsNarrowViewport.js";
+ import {
+   ArrowLeftIcon,
+   ArrowRightIcon,
+@@ -78,6 +79,10 @@ export function DesktopTopOverlay({
+   const SidebarToggleIcon = isSidebarVisible ? PanelLeftClose : PanelLeftOpen;
+   const isLinuxDesktop = Boolean(isDesktop && !isMacDesktop && !isWindowsDesktop);
+   const usesCustomCaptionArea = isWindowsDesktop || isLinuxDesktop;
++  // 手机直连 web 抽屉视口：左上角按钮常驻浮层，宽度不再钉在（已抽屉化的）侧栏内。
++  // hook 无条件调用（仅结果受 isDesktop 影响），遵守 Hooks 规则。
++  const isNarrowViewport = useIsNarrowViewport();
++  const isWebDrawerViewport = !isDesktop && isNarrowViewport;
+   const toggleSidebarTitle = intl.formatMessage({
+     id: "workspaceSidebar.toggleSidebar",
+   });
+@@ -95,9 +100,12 @@ export function DesktopTopOverlay({
+         paddingRight: WINDOWS_CAPTION_CONTROLS_RIGHT_INSET_VAR,
+       }
+     : undefined;
+-  const topOverlayWidthStyle = isSidebarVisible
+-    ? { width: "var(--workspace-sidebar-panel-width)" }
+-    : undefined;
++  // 桌面端展开态把浮层宽度钉在侧栏内，避免盖到会话区；
++  // 手机 web 抽屉视口侧栏是浮层，浮层按钮组必须保持 w-fit 悬在全宽之上。
++  const topOverlayWidthStyle =
++    isSidebarVisible && !isWebDrawerViewport
++      ? { width: "var(--workspace-sidebar-panel-width)" }
++      : undefined;
+ 
+   return (
+     <div
+@@ -160,6 +168,19 @@ export function DesktopTopOverlay({
+             </DesktopTopOverlayActionButton>
+           )}
+ 
++          {/* 手机直连 web：左上角同样要有侧栏开合按钮，与右上角面板按钮交互对称
++              （spec: packages/ui/specs/app-shell-drawer.md）。桌面分支由上方两段承载。 */}
++          {!isDesktop && !usesCustomCaptionArea && (
++            <DesktopTopOverlayActionButton
++              title={toggleSidebarTitle}
++              shortcut={toggleSidebarShortcutLabel}
++              ariaLabel={toggleSidebarTitle}
++              onClick={onToggleSidebar}
++            >
++              <SidebarToggleIcon className="size-4" />
++            </DesktopTopOverlayActionButton>
++          )}
++
+           {/* 远程控制移动端左上角空间有限，任务前进/后退在这里会与主操作拥挤重叠。*/}
+           {hideTaskNavigationButtons ? null : (
+             <>
+diff --git a/packages/ui/src/app-shell/AnimatedSidePanePanel.tsx b/packages/ui/src/app-shell/AnimatedSidePanePanel.tsx
+index be1a8a6..89b49e1 100644
+--- a/packages/ui/src/app-shell/AnimatedSidePanePanel.tsx
++++ b/packages/ui/src/app-shell/AnimatedSidePanePanel.tsx
+@@ -336,6 +336,9 @@ export function AnimatedSidePanePanel({
+   showWindowControls,
+   onCloseSidePane,
+   toggleSidePaneShortcutLabel,
++  // 手机抽屉视口：右侧面板不进入 ResizablePanel 流内分栏，由父层渲染为右侧浮层
++  // （spec: packages/ui/specs/app-shell-drawer.md）。内容复用同一 panelContent。
++  overlayMode = false,
+ }: {
+   services: IServiceAccessor;
+   frameClassName?: string;
+@@ -343,6 +346,7 @@ export function AnimatedSidePanePanel({
+   showWindowControls?: boolean;
+   onCloseSidePane?: () => void;
+   toggleSidePaneShortcutLabel?: string;
++  overlayMode?: boolean;
+   isDesktop?: boolean;
+   isWindowsDesktop?: boolean;
+   isVisible: boolean;
+@@ -1336,6 +1340,23 @@ export function AnimatedSidePanePanel({
+     );
+   }
+ 
++  // 抽屉视口：不渲染 ResizableHandle/ResizablePanel，改为右侧滑入浮层。
++  // 宽度固定 min(85vw, 480px)，不挤压会话区；收起时整体平移出屏并禁命中。
++  if (overlayMode) {
++    return (
++      <div
++        ref={panelElementRef as RefObject<HTMLDivElement | null>}
++        data-workspace-side-pane-drawer="true"
++        className={cn(
++          "absolute inset-y-0 right-0 z-30 w-[min(85vw,480px)] max-w-full overflow-hidden border-l border-border bg-background shadow-xl duration-200 ease-out transition-transform",
++          isVisible ? "translate-x-0" : "pointer-events-none translate-x-full",
++        )}
++      >
++        {panelContent}
++      </div>
++    );
++  }
++
+   return (
+     <>
+       {isVisible ? (
+diff --git a/packages/ui/src/app-shell/WorkspaceShellLayout.tsx b/packages/ui/src/app-shell/WorkspaceShellLayout.tsx
+index dc21603..52dc18a 100644
+--- a/packages/ui/src/app-shell/WorkspaceShellLayout.tsx
++++ b/packages/ui/src/app-shell/WorkspaceShellLayout.tsx
+@@ -8,6 +8,7 @@ import type {
+ import type { PanelImperativeHandle } from "react-resizable-panels";
+ 
+ import { TID_APP_HEADER } from "@zcode/shared";
++import { useIsNarrowViewport } from "@/hooks/useIsNarrowViewport.js";
+ // 保活：workspace tab 真正关闭时，按 workspaceKey 回收 side pane terminal 的常驻 PTY/xterm。
+ // 对称下侧 Terminal.tsx 的 openWorkspaceKeys 回收。
+ import { sidePaneTerminalSessionRegistry } from "@/terminal/sidePaneTerminalSessionRegistry.js";
+@@ -403,6 +404,13 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
+     );
+   }, [openWorkspaceKeys]);
+   const isSidebarPanelVisible = isSidebarVisible;
++  // 手机直连 web：窄屏下侧栏/右侧面板都改为浮层抽屉（spec: packages/ui/specs/app-shell-drawer.md），
++  // 会话区不再被流内分栏挤压；桌面端保持原有分栏渲染路径不变。
++  const isDrawerViewport = useIsNarrowViewport();
++  // 抽屉打开时互斥：手机上一屏只承载一个浮层，避免左右抽屉同开互相遮挡。
++  const isSidebarDrawerOpen = isDrawerViewport && isSidebarPanelVisible;
++  const isSidePaneDrawerOpen =
++    isDrawerViewport && workspaceMainView === "chat" && isSidePaneOpen && !isSidebarDrawerOpen;
+   const {
+     panelRef: terminalPanelRef,
+     panelElementRef: terminalPanelElementRef,
+@@ -420,6 +428,8 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
+     // 截图 surface 由 browser-use tab 自己的 fixed 承载层提供尺寸，不能再把整个右侧
+     // ResizablePanel 撑开；否则自动化页会闪出空白的 tab 栏，且面板过渡期间 guest surface
+     // 仍可能被 Chromium 判定为不可合成。
++    // 抽屉视口下右侧面板不进入 ResizablePanel 流内布局；open 直接跟随开关状态，
++    // 让 hook 的 isVisible 继续作为抽屉滑入/滑出的唯一信号。
+     open: workspaceMainView === "chat" && isSidePaneOpen,
+     expandedSize: SIDE_PANE_DEFAULT_EXPANDED_SIZE,
+     rememberExpandedSize: true,
+@@ -1428,6 +1438,8 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
+       })}
+       showWindowControls={usesInlineWindowControls}
+       isVisible={isSidePaneVisible}
++      // 抽屉视口：右侧面板由浮层承载，不再作为 ResizablePanel 流内子面板。
++      overlayMode={isDrawerViewport}
+       onCloseSidePane={handleToggleSidePane}
+       toggleSidePaneShortcutLabel={toggleSidePaneShortcutLabel}
+       sidePaneState={sidePaneState}
+@@ -1533,10 +1545,20 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
+           data-workspace-sidebar-panel="true"
+           id="sidebar"
+           className={cn(
+-            "w-[var(--workspace-sidebar-panel-width)] max-w-[50%] flex-none overflow-hidden duration-200 ease-out transition-[width,opacity] data-[workspace-sidebar-resizing=true]:transition-opacity",
++            // 抽屉视口：侧栏脱离 flex 流改为左侧浮层，会话区恒定全宽不再被挤压。
++            isDrawerViewport
++              ? cn(
++                  "absolute inset-y-0 left-0 z-30 h-full overflow-hidden shadow-xl duration-200 ease-out transition-transform",
++                  // 抽屉态不用持久化像素宽度：min(85vw,480px) 自适应，避免窄屏被 min-width 撑爆。
++                  isSidebarDrawerOpen
++                    ? "w-[min(85vw,480px)] translate-x-0"
++                    : "pointer-events-none w-[min(85vw,480px)] -translate-x-full",
++                )
++              : "w-[var(--workspace-sidebar-panel-width)] max-w-[50%] flex-none overflow-hidden duration-200 ease-out transition-[width,opacity] data-[workspace-sidebar-resizing=true]:transition-opacity",
+             // 拖动侧栏宽度时如果继续过渡 width，会让指针移动和实际宽度之间产生滞后。
+             // 拖拽 active 通过 DOM 标记切 transition，避免 pointerdown/up 为了切 class 重渲染整棵 workspace。
+-            isSidebarPanelVisible ? "opacity-100" : "pointer-events-none opacity-0",
++            !isDrawerViewport &&
++              (isSidebarPanelVisible ? "opacity-100" : "pointer-events-none opacity-0"),
+           )}
+         >
+           <aside
+@@ -1608,7 +1630,8 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
+           </aside>
+         </div>
+ 
+-        {isSidebarVisible ? (
++        {/* 抽屉视口没有拖拽语义，分隔条一并移除，避免落点落在浮层侧栏右缘。 */}
++        {isSidebarVisible && !isDrawerViewport ? (
+           <div
+             role="separator"
+             tabIndex={0}
+@@ -1934,6 +1957,14 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
+             {sidePanePanel}
+           </ResizablePanelGroup>
+         </div>
++        {/* 抽屉遮罩：任一抽屉打开时盖住会话区，点击即收起，这是手机抽屉的标准退出路径。 */}
++        {(isSidebarDrawerOpen || isSidePaneDrawerOpen) && (
++          <div
++            data-testid="workspace-drawer-backdrop"
++            className="absolute inset-0 z-20 bg-black/40"
++            onClick={isSidebarDrawerOpen ? handleToggleSidebar : handleToggleSidePane}
++          />
++        )}
+         <ScopedErrorBoundary
+           scope="desktop-top-overlay"
+           resetKeys={workspaceSidebarVisibilityResetKeys}
+@@ -1946,7 +1977,7 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
+             isMacFullscreen={isMacFullscreen}
+             macWindowControlsLeftPaddingPx={macWindowControlsLeftPaddingPx}
+             windowsWindowControlsRightPaddingPx={windowsWindowControlsRightPaddingPx}
+-            isWindowsDesktop={isWindowsDesktop}
++            isWindowsDesktop={isDesktop}
+             isDesktop={isDesktop}
+             isSidebarVisible={isSidebarVisible}
+             updateReadyVersion={updateReadyVersion}
+diff --git a/packages/ui/src/hooks/useIsNarrowViewport.ts b/packages/ui/src/hooks/useIsNarrowViewport.ts
+new file mode 100644
+index 0000000..768f9dc
+--- /dev/null
++++ b/packages/ui/src/hooks/useIsNarrowViewport.ts
+@@ -0,0 +1,31 @@
++import { useEffect, useState } from "react";
++
++export const NARROW_VIEWPORT_QUERY = "(max-width: 767.5px)";
++
++// 抽屉模式的唯一判定来源：左右面板何时从流内分栏切换为浮层抽屉。
++// 事件驱动而不是读取一次 innerWidth，避免旋转/软键盘弹出后判定过期。
++export function useIsNarrowViewport(): boolean {
++  const [isNarrow, setIsNarrow] = useState(() => {
++    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
++      return false;
++    }
++    return window.matchMedia(NARROW_VIEWPORT_QUERY).matches;
++  });
++
++  useEffect(() => {
++    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
++      return;
++    }
++    const query = window.matchMedia(NARROW_VIEWPORT_QUERY);
++    const handleChange = (event: MediaQueryListEvent) => {
++      setIsNarrow(event.matches);
++    };
++    setIsNarrow(query.matches);
++    query.addEventListener("change", handleChange);
++    return () => {
++      query.removeEventListener("change", handleChange);
++    };
++  }, []);
++
++  return isNarrow;
++}
+-- 
+2.53.0
+
+From 9da7215a0b84734f57555373fe0169923f51d95d Mon Sep 17 00:00:00 2001
+From: xhwxt <197754549+xhwxt@users.noreply.github.com>
+Date: Wed, 7 Oct 2026 12:39:14 +0800
+Subject: [PATCH 4/4] fix(ui): mobile drawer polish + directory browser create
+ folder
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+用户实测反馈 6 项修复（问题8 追加）+ 问题9：
+- 抽屉加不透明 bg-background：脱离文档流后无底色，透出会话区内容
+- 手机刷新默认收起抽屉（useAppPanels 初始态按 matchMedia 判定）
+- DesktopTopOverlay 提到 z-40：抽屉 z-30 之上，展开时按钮仍可点
+- 遮罩移到 #sidebar 之前：同级 z-30 按 DOM 顺序命中，遮罩排后
+  会盖住抽屉，把点向抽屉内容的操作吞成关闭
+- automations/plugin-store 无 WorkspaceHeader 的页面在标题上方
+  预留 h-14 空带，浮层按钮不再压住页面大标题
+- DirectoryBrowser 提级 z-[60]：盖住抽屉层，修复对话框被遮挡
+
+问题9（浏览文件夹新建能力）：
+- IFileService.createDirectory：服务端单段目录创建，recursive=false，
+  名称只允许单段（禁路径分隔符/相对段），路径拼接在服务端完成
+- DirectoryBrowser 工具行加「新建文件夹」→ 行内表单，成功后刷新
+  当前目录；错误（已存在/权限）在错误行展示
+- i18n zh-CN/en-US 新增 4 键；embedded 模式（SSHDialog）同享
+
+E2E：目录创建 on-disk 验证通过；390x844 抽屉 12/12；桌面无回归。
+---
+ packages/services/src/file/file.ts            |  6 ++
+ packages/services/src/file/fileService.ts     | 12 +++
+ .../specs/directory-browser-create-folder.md  | 27 ++++++
+ packages/ui/src/DesktopTopOverlay.tsx         |  4 +-
+ packages/ui/src/DirectoryBrowser.tsx          | 95 ++++++++++++++++++-
+ packages/ui/src/WorkspaceSidebar.tsx          |  7 +-
+ .../ui/src/app-shell/WorkspaceShellLayout.tsx | 21 ++--
+ packages/ui/src/hooks/useAppPanels.ts         | 10 +-
+ packages/ui/src/i18n/locales/en-US.ts         |  4 +
+ packages/ui/src/i18n/locales/zh-CN.ts         |  4 +
+ .../AutomationsMainBreadcrumbFrame.tsx        |  7 +-
+ 11 files changed, 183 insertions(+), 14 deletions(-)
+ create mode 100644 packages/ui/specs/directory-browser-create-folder.md
+
+diff --git a/packages/services/src/file/file.ts b/packages/services/src/file/file.ts
+index dcbad9b..7196cee 100644
+--- a/packages/services/src/file/file.ts
++++ b/packages/services/src/file/file.ts
+@@ -30,6 +30,12 @@ export interface IFileService {
+    */
+   listWorkspaceFiles(params: { rootPath: string }): Promise<WorkspaceFileEntry[]>;
+   readdir(params: { path: string; includeHidden?: boolean }): Promise<FileEntry[]>;
++  /**
++   * 在 parentPath 下创建单个新目录（问题9：web 目录浏览器没有系统原生
++   * 新建文件夹能力）。recursive 恒为 false：父目录必须真实存在，名称只允许
++   * 单段（不含路径分隔符）；已存在时抛服务端原始错误由 UI 展示。
++   */
++  createDirectory(params: { parentPath: string; name: string }): Promise<{ path: string }>;
+   stat(params: { path: string }): Promise<FileStat>;
+   checkFilesExist(params: { paths: string[] }): Promise<Array<{ path: string; exists: boolean }>>;
+   resolvePath(params: { path: string }): Promise<string>;
+diff --git a/packages/services/src/file/fileService.ts b/packages/services/src/file/fileService.ts
+index f1555f5..3ad9ff5 100644
+--- a/packages/services/src/file/fileService.ts
++++ b/packages/services/src/file/fileService.ts
+@@ -368,6 +368,18 @@ export function createFileService(options: CreateFileServiceOptions = {}): IFile
+   };
+ 
+   return {
++    async createDirectory(params: { parentPath: string; name: string }): Promise<{ path: string }> {
++      // 问题9：目录浏览器需要服务端建目录能力。名称必须是单段路径，
++      // 禁止路径分隔符与相对段，防止 UI 层拼接出越权层级。
++      const name = params.name.trim();
++      if (!name || name === "." || name === ".." || /[/\\]/.test(name)) {
++        throw new Error(`Invalid directory name: ${JSON.stringify(params.name)}`);
++      }
++      const targetPath = join(params.parentPath, name);
++      // recursive 恒为 false：父目录必须真实存在，避免在错误层级批量建目录。
++      await mkdir(targetPath, { recursive: false });
++      return { path: targetPath };
++    },
+     async readdir(params: { path: string; includeHidden?: boolean }): Promise<FileEntry[]> {
+       const entries = await readdir(params.path, { withFileTypes: true });
+       const visibleEntries = await Promise.all(
+diff --git a/packages/ui/specs/directory-browser-create-folder.md b/packages/ui/specs/directory-browser-create-folder.md
+new file mode 100644
+index 0000000..2ffac62
+--- /dev/null
++++ b/packages/ui/specs/directory-browser-create-folder.md
+@@ -0,0 +1,27 @@
++# DirectoryBrowser 新建文件夹（问题9）
++
++## 背景
++添加项目 → 浏览文件夹（packages/ui/src/DirectoryBrowser.tsx）只有
++选择能力，无法在浏览位置创建新目录（用户图4）。
++
++## 规则
++1. 能力归属：创建目录是文件系统能力，收口到 IFileService.createDirectory
++   （单方法，recursive: false 语义——父目录必须存在，避免 UI 拼写错误
++   在错误层级批量建目录）。服务端用 node:fs/promises mkdir 实现；
++   web 端经既有 file channel 自动获得（ProxyChannel 自动分派，
++   server entry-http 已注册 IFileService）。
++2. UI：DirectoryBrowser 工具行加"新建文件夹"按钮 → 行内输入框 +
++   确认/取消。成功后 navigateTo 刷新当前目录；失败（已存在/权限）
++   展示 errorReadDir 同区域的错误行。
++3. 状态所有者：isCreating + newDirectoryName 全部为 DirectoryBrowser
++   组件局部 useState，不进全局 store；对话框关闭即丢弃。
++4. 名称校验：非空、不含 / 与 \、不等于 . 或 ..。路径拼接由服务端
++   join 完成，UI 不传完整路径，避免越权路径注入。
++5. i18n：directoryBrowser.newFolder / newFolderName / create /
++   errorCreate 新键，zh-CN 与 en-US 同步补齐。
++6. 嵌入模式（embedded=true，SSHDialog 复用）同样获得该能力。
++
++## 验收
++- 390x844 与 1280x800 视口都能在当前目录创建子目录并立即看到。
++- 已存在同名目录时显示错误且列表不刷新错乱。
++- typecheck/lint 通过。
+diff --git a/packages/ui/src/DesktopTopOverlay.tsx b/packages/ui/src/DesktopTopOverlay.tsx
+index 1ab1fb4..19aa82c 100644
+--- a/packages/ui/src/DesktopTopOverlay.tsx
++++ b/packages/ui/src/DesktopTopOverlay.tsx
+@@ -111,7 +111,9 @@ export function DesktopTopOverlay({
+     <div
+       style={topOverlayWidthStyle}
+       className={cn(
+-        "@container/topoverlayer pointer-events-none absolute h-14 flex left-0 top-0 z-20 w-fit",
++        // z-40：手机抽屉视口里抽屉浮层是 z-30，左上角按钮必须悬在其上才能
++        // 在抽屉展开时仍可点击（也充当第二个关闭入口）。
++        "@container/topoverlayer pointer-events-none absolute h-14 flex left-0 top-0 z-40 w-fit",
+         // Windows/Linux 主面板新增 4px 留白及 1px 边框，左侧工具组需同步偏移才能对齐 Header 中心线。
+         usesCustomCaptionArea && "top-1 mt-px",
+       )}
+diff --git a/packages/ui/src/DirectoryBrowser.tsx b/packages/ui/src/DirectoryBrowser.tsx
+index 6a5e0e6..6174833 100644
+--- a/packages/ui/src/DirectoryBrowser.tsx
++++ b/packages/ui/src/DirectoryBrowser.tsx
+@@ -64,6 +64,10 @@ export function DirectoryBrowser({
+   const [loading, setLoading] = useState(true);
+   const [error, setError] = useState("");
+   const [showHiddenDirectories, setShowHiddenDirectories] = useState(false);
++  // 问题9：目录浏览器此前只能选择既有目录。新建文件夹是纯 UI 局部状态，
++  // 对话框关闭即丢弃，不进全局 store（spec: packages/ui/specs/directory-browser-create-folder.md）。
++  const [isCreatingDirectory, setIsCreatingDirectory] = useState(false);
++  const [newDirectoryName, setNewDirectoryName] = useState("");
+   const listRef = useRef<HTMLDivElement>(null);
+   const showHiddenDirectoriesRef = useRef(false);
+   const requestGuardRef = useRef(createDirectoryBrowserRequestGuard());
+@@ -151,6 +155,46 @@ export function DirectoryBrowser({
+     onSelect(selectedPath);
+   };
+ 
++  // 名称校验：非空、不含路径分隔符、不是相对段。路径拼接在服务端完成，
++  // UI 只提交单段名称，避免把越权层级传下去。
++  const isValidNewDirectoryName = (name: string) =>
++    name.trim().length > 0 && !/[/\\]/.test(name) && name.trim() !== "." && name.trim() !== "..";
++
++  const handleCreateDirectoryCancel = () => {
++    setIsCreatingDirectory(false);
++    setNewDirectoryName("");
++  };
++
++  const handleCreateDirectorySubmit = async () => {
++    const name = newDirectoryName.trim();
++    if (!isValidNewDirectoryName(name) || !currentPath || loading) {
++      return;
++    }
++    setError("");
++    try {
++      await services.fileService.createDirectory({ parentPath: currentPath, name });
++      handleCreateDirectoryCancel();
++      // 创建成功后刷新当前目录，让新目录立即可见可进入。
++      await navigateTo(currentPath);
++    } catch (err) {
++      // 已存在/权限不足等服务端原始错误直接展示，与 readdir 错误共用错误行区域。
++      logger.error("[DirectoryBrowser] 创建目录失败:", err);
++      setError(intl.formatMessage({ id: "directoryBrowser.errorCreate" }, { error: String(err) }));
++    }
++  };
++
++  const handleNewDirectoryNameKeyDown = (e: React.KeyboardEvent) => {
++    if (e.key === "Escape") {
++      e.stopPropagation();
++      handleCreateDirectoryCancel();
++      return;
++    }
++    if (e.key === "Enter") {
++      e.preventDefault();
++      void handleCreateDirectorySubmit();
++    }
++  };
++
+   const handleKeyDown = (e: React.KeyboardEvent) => {
+     if (e.key === "Escape") onCancel();
+   };
+@@ -197,8 +241,57 @@ export function DirectoryBrowser({
+                   : "directoryBrowser.showHidden",
+               })}
+             </Button>
++            <Button
++              type="button"
++              variant={isCreatingDirectory ? "secondary" : "outline"}
++              size="lg"
++              aria-pressed={isCreatingDirectory}
++              disabled={!currentPath}
++              className="h-9 min-w-0 flex-1 px-3 text-ui-base sm:flex-none"
++              onClick={() => setIsCreatingDirectory((creating) => !creating)}
++            >
++              {intl.formatMessage({ id: "directoryBrowser.newFolder" })}
++            </Button>
+           </div>
+         </form>
++        {/* 新建文件夹行内表单：创建到当前浏览目录，成功后刷新列表。 */}
++        {isCreatingDirectory ? (
++          <form
++            onSubmit={(e) => {
++              e.preventDefault();
++              void handleCreateDirectorySubmit();
++            }}
++            className="mt-2 flex gap-2"
++          >
++            <Input
++              type="text"
++              size="lg"
++              value={newDirectoryName}
++              onChange={(e) => setNewDirectoryName(e.target.value)}
++              onKeyDown={handleNewDirectoryNameKeyDown}
++              placeholder={intl.formatMessage({ id: "directoryBrowser.newFolderName" })}
++              autoFocus
++              className="h-9 min-w-0 flex-1 text-ui-base"
++            />
++            <Button
++              type="submit"
++              size="lg"
++              disabled={!isValidNewDirectoryName(newDirectoryName) || loading}
++              className="h-9 shrink-0 px-3 text-ui-base"
++            >
++              {intl.formatMessage({ id: "directoryBrowser.create" })}
++            </Button>
++            <Button
++              type="button"
++              variant="secondary"
++              size="lg"
++              className="h-9 shrink-0 px-3 text-ui-base"
++              onClick={handleCreateDirectoryCancel}
++            >
++              {intl.formatMessage({ id: "common.cancel" })}
++            </Button>
++          </form>
++        ) : null}
+       </div>
+ 
+       {/* 错误提示 */}
+@@ -259,7 +352,7 @@ export function DirectoryBrowser({
+ 
+   return (
+     <div
+-      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 backdrop-blur-sm"
++      className="fixed inset-0 z-[60] flex items-center justify-center bg-foreground/30 backdrop-blur-sm"
+       onClick={(e) => e.target === e.currentTarget && onCancel()}
+       onKeyDown={handleKeyDown}
+     >
+diff --git a/packages/ui/src/WorkspaceSidebar.tsx b/packages/ui/src/WorkspaceSidebar.tsx
+index 1149695..daa4326 100644
+--- a/packages/ui/src/WorkspaceSidebar.tsx
++++ b/packages/ui/src/WorkspaceSidebar.tsx
+@@ -129,6 +129,7 @@ import {
+ } from "@/WorkspaceSidebar/taskGroupTogglePresentation.js";
+ import { WorkspacePurposeSection } from "@/WorkspaceSidebar/WorkspacePurposeSection.js";
+ import { cn } from "@/components/lib/utils.js";
++import { useIsNarrowViewport } from "@/hooks/useIsNarrowViewport.js";
+ import { useCodingPlanUpgradeDialog } from "@/settings/CodingPlanUpgradeDialogProvider.js";
+ import {
+   resolveWorkspaceDragGlobalIndices,
+@@ -388,6 +389,8 @@ export const WorkspaceSidebar = memo(function WorkspaceSidebarComponent({
+     null,
+   );
+   const [isFileTreeOpen, setIsFileTreeOpen] = useState(false);
++  // 手机抽屉视口：顶部预留带要给左上角浮层按钮让位（与 useIsNarrowViewport 判定一致）。
++  const isDrawerViewport = useIsNarrowViewport();
+   const [fileTreeTarget, setFileTreeTarget] = useState<SidebarFileTreeTarget | null>(null);
+   const [groupedStickyHeader, setGroupedStickyHeader] = useState<ReactNode | null>(null);
+   const [taskOrganizeBy, setTaskOrganizeBy] = useState<TaskOrganizeBy>(
+@@ -1254,7 +1257,9 @@ export const WorkspaceSidebar = memo(function WorkspaceSidebarComponent({
+       // 这里用设计系统的结构面 token 固定侧栏层级，避免不同合成器把左侧容器混成异常灰块。
+       className="flex h-full flex-col overflow-hidden"
+     >
+-      <div className="h-12 [app-region:drag]"></div>
++      {/* 手机抽屉视口下左上角浮层按钮（h-14）悬在抽屉上方，这里让出等高空间，
++          避免按钮压住侧栏第一行内容；桌面保持原 h-12 拖拽区。 */}
++      <div className={cn(isDrawerViewport ? "h-14" : "h-12", "[app-region:drag]")}></div>
+       <div className="relative flex-1 min-h-0 overflow-hidden">
+         <div
+           className={cn(
+diff --git a/packages/ui/src/app-shell/WorkspaceShellLayout.tsx b/packages/ui/src/app-shell/WorkspaceShellLayout.tsx
+index 52dc18a..2a903d0 100644
+--- a/packages/ui/src/app-shell/WorkspaceShellLayout.tsx
++++ b/packages/ui/src/app-shell/WorkspaceShellLayout.tsx
+@@ -1539,6 +1539,16 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
+           // CSS 变量驱动的专用 split，普通窗口 resize 只走浏览器布局，不触发 React 状态。
+         )}
+       >
++        {/* 抽屉遮罩：任一抽屉打开时盖住会话区，点击即收起，这是手机抽屉的标准退出路径。
++            必须放在 #sidebar/#sidePaneDrawer 之前：同为 z-30 时浏览器按 DOM 顺序命中，
++            遮罩排后面会盖住抽屉、把点向抽屉内容的操作变成"关闭抽屉"。 */}
++        {(isSidebarDrawerOpen || isSidePaneDrawerOpen) && (
++          <div
++            data-testid="workspace-drawer-backdrop"
++            className="absolute inset-0 z-30 bg-black/40"
++            onClick={isSidebarDrawerOpen ? handleToggleSidebar : handleToggleSidePane}
++          />
++        )}
+         <div
+           ref={workspaceSidebarPanelElementRef}
+           data-panel=""
+@@ -1548,7 +1558,8 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
+             // 抽屉视口：侧栏脱离 flex 流改为左侧浮层，会话区恒定全宽不再被挤压。
+             isDrawerViewport
+               ? cn(
+-                  "absolute inset-y-0 left-0 z-30 h-full overflow-hidden shadow-xl duration-200 ease-out transition-transform",
++                  // 不透明背景：抽屉脱离文档流后外层不再提供底色，透明会透出会话区内容。
++                  "absolute inset-y-0 left-0 z-30 h-full overflow-hidden bg-background shadow-xl duration-200 ease-out transition-transform",
+                   // 抽屉态不用持久化像素宽度：min(85vw,480px) 自适应，避免窄屏被 min-width 撑爆。
+                   isSidebarDrawerOpen
+                     ? "w-[min(85vw,480px)] translate-x-0"
+@@ -1957,14 +1968,6 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
+             {sidePanePanel}
+           </ResizablePanelGroup>
+         </div>
+-        {/* 抽屉遮罩：任一抽屉打开时盖住会话区，点击即收起，这是手机抽屉的标准退出路径。 */}
+-        {(isSidebarDrawerOpen || isSidePaneDrawerOpen) && (
+-          <div
+-            data-testid="workspace-drawer-backdrop"
+-            className="absolute inset-0 z-20 bg-black/40"
+-            onClick={isSidebarDrawerOpen ? handleToggleSidebar : handleToggleSidePane}
+-          />
+-        )}
+         <ScopedErrorBoundary
+           scope="desktop-top-overlay"
+           resetKeys={workspaceSidebarVisibilityResetKeys}
+diff --git a/packages/ui/src/hooks/useAppPanels.ts b/packages/ui/src/hooks/useAppPanels.ts
+index dbc8df4..dac27b3 100644
+--- a/packages/ui/src/hooks/useAppPanels.ts
++++ b/packages/ui/src/hooks/useAppPanels.ts
+@@ -202,7 +202,15 @@ export function useAppPanels(options: {
+   // 交互说明：侧栏显隐按钮放在 App 外层，而不是 Sidebar 内部。
+   // 这样即使侧栏被隐藏，入口也仍然留在左上角，不会出现"收起后没有地方再展开"的问题；
+   // 同时这里统一处理 macOS 红绿灯安全区，避免按钮和系统窗口控件重叠。
+-  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
++  // 手机抽屉视口（<768px，spec: packages/ui/specs/app-shell-drawer.md）首屏默认收起，
++  // 否则每次刷新都弹出一整层侧栏，会话区反而要先关一次抽屉。
++  const [isSidebarVisible, setIsSidebarVisible] = useState(() =>
++    typeof window !== "undefined" &&
++    typeof window.matchMedia === "function" &&
++    window.matchMedia("(max-width: 767.5px)").matches
++      ? false
++      : true,
++  );
+   const [browserNavigationRequest, setBrowserNavigationRequest] =
+     useState<BrowserNavigationRequest | null>(null);
+   const [allRecentClosedSidePaneTabs, setAllRecentClosedSidePaneTabs] = useState<
+diff --git a/packages/ui/src/i18n/locales/en-US.ts b/packages/ui/src/i18n/locales/en-US.ts
+index 4ec0bc4..ae2ebd9 100644
+--- a/packages/ui/src/i18n/locales/en-US.ts
++++ b/packages/ui/src/i18n/locales/en-US.ts
+@@ -1531,6 +1531,10 @@ const enUS: Record<string, string> = {
+   "directoryBrowser.hideHidden": "Hide hidden directories",
+   "directoryBrowser.noSubdirs": "No subdirectories",
+   "directoryBrowser.selectDir": "Select this directory",
++  "directoryBrowser.newFolder": "New folder",
++  "directoryBrowser.newFolderName": "Folder name",
++  "directoryBrowser.create": "Create",
++  "directoryBrowser.errorCreate": "Failed to create folder: {error}",
+   "directoryBrowser.errorSystem": "Failed to get system info",
+   "directoryBrowser.errorReadDir": "Failed to read directory: {error}",
+ 
+diff --git a/packages/ui/src/i18n/locales/zh-CN.ts b/packages/ui/src/i18n/locales/zh-CN.ts
+index 63b5482..0148382 100644
+--- a/packages/ui/src/i18n/locales/zh-CN.ts
++++ b/packages/ui/src/i18n/locales/zh-CN.ts
+@@ -1417,6 +1417,10 @@ const zhCN: Record<string, string> = {
+   "directoryBrowser.hideHidden": "收起隐藏目录",
+   "directoryBrowser.noSubdirs": "无子目录",
+   "directoryBrowser.selectDir": "选择此目录",
++  "directoryBrowser.newFolder": "新建文件夹",
++  "directoryBrowser.newFolderName": "文件夹名称",
++  "directoryBrowser.create": "创建",
++  "directoryBrowser.errorCreate": "无法创建文件夹：{error}",
+   "directoryBrowser.errorSystem": "无法获取系统信息",
+   "directoryBrowser.errorReadDir": "无法读取目录：{error}",
+ 
+diff --git a/packages/ui/src/settings/AutomationsMainBreadcrumbFrame.tsx b/packages/ui/src/settings/AutomationsMainBreadcrumbFrame.tsx
+index 88e606e..a29ae56 100644
+--- a/packages/ui/src/settings/AutomationsMainBreadcrumbFrame.tsx
++++ b/packages/ui/src/settings/AutomationsMainBreadcrumbFrame.tsx
+@@ -32,7 +32,12 @@ export function AutomationsMainBreadcrumbFrame({
+           >
+             <SettingsHeaderBreadcrumb ariaLabel={ariaLabel} items={items} />
+           </div>
+-        ) : null}
++        ) : (
++          // 非 desktop（web/手机）在标题区上方预留一条与顶部浮层按钮组等高的空带：
++          // automations/plugin-store 页面没有 WorkspaceHeader，浮层按钮会直接压在
++          // 页面大标题上（用户反馈的重叠问题）；这里让出同一高度让按钮落进空带。
++          <div className="h-14 shrink-0" aria-hidden="true" />
++        )}
+         {children}
+       </div>
+     </SettingsBreadcrumbProvider>
+-- 
+2.53.0
+

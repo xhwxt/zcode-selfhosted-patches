@@ -16,6 +16,8 @@ Base: ZCode v3.14.3 (commit `29628c9`).
 | d | Session restore | Web entry never enabled `restoreSession`, so no workspace tabs are restored at startup and scoped task queries have no data source | Enable the same `useTabPersistence` restore path the desktop app uses |
 | e | Workspace purpose | `server-info` workspaces carry no purpose; the conversation backing workspace can't be distinguished from user projects | Add optional `workspacePurpose` to the workspace info schema (backward compatible) |
 | f | Mobile background disconnects (direct page) | Mobile browsers freeze/kill the page's WebSocket within seconds of backgrounding; on return the socket is dead with no indication and RPC calls fail silently | Connection guard: non-clean `close` (≠1000/1001) shows a reconnect banner and reloads the page once visible; on return to foreground, a dead-while-hidden socket or a failed `/api/server-info` probe triggers the same recovery; reload rate-limited to 3/60s (server is the source of truth, nothing is lost) |
+| g | Mobile drawer layout (direct page) | Below 768px the sidebar and right side pane are in-flow split columns; opening either squeezes the conversation area | Drawer viewport: sidebar and side pane become sliding overlays (min(85vw,480px), 200ms transition) over a click-to-dismiss backdrop; sidebar drag handle not rendered; drawers are mutually exclusive; the top-left sidebar toggle (web branch of `DesktopTopOverlay`) sits at z-40 above the drawers so it always works |
+| h | Directory browser create folder | The server-side directory browser could only pick existing directories — no way to create a project folder on a phone | `IFileService.createDirectory` (server-side single-segment mkdir, `recursive: false`, path separators rejected in the name; final path is joined server-side); inline "New folder" form in `DirectoryBrowser` refreshes the listing on success; i18n zh-CN/en-US |
 
 All changes are source-level, protocol-compatible additions — no desktop behavior
 changes, no environment-specific values.
@@ -55,7 +57,11 @@ project" (draft mode). Create real projects from the UI as needed.
 
 - `0001-self-hosted-web-parity.patch` — items a–e (single commit)
 - `0002-web-connection-guard.patch` — item f (single commit)
-- `0001-0002-selfhosted-web-patches.patch` — both combined (apply in one step)
+- `0003-feat-ui-mobile-drawer-layout-for-sidebar-and-side-pa.patch` — item g
+- `0004-fix-ui-mobile-drawer-polish-directory-browser-create.patch` — item h
+- `0003-0004-selfhosted-web-patches-mobile.patch` — items g+h combined
 
-Apply against upstream `v3.14.3` (commit `29628c9`); all three variants are
-verified with `git apply --check`.
+Apply against upstream `v3.14.3` (commit `29628c9`) in order 0001 → 0004
+(0001+0002 may also be applied as one combined file historically named
+`0001-0002-selfhosted-web-patches.patch`); all variants are verified with
+`git apply --check`. `apply-selfhosted-web-patches.sh` runs the full sequence.
