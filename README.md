@@ -47,6 +47,15 @@ node bin/zcode.mjs --web --workspace <dir> --host 127.0.0.1 --port 3030 --token 
 `workspacePurpose: "conversation"` — the UI shows it as "not working in a
 project" (draft mode). Create real projects from the UI as needed.
 
+## Optional add-on: official mobile remote-control page
+
+The relay that lets the **official** mobile remote-control page run against a
+self-hosted server is published under [`relay/`](relay/) with its own README
+(endpoints, environment variables, systemd/nginx wiring, optional offline page
+mirror, version pinning). It is deployment tooling, not a source patch — the patch
+set above is what makes the server itself usable; the relay only adds the vendor
+page on top.
+
 ## Notes
 
 - Item j also fixes a latent render crash that fired once per page load:
@@ -54,9 +63,9 @@ project" (draft mode). Create real projects from the UI as needed.
   React 19 the update path compared against an undefined hook slot and threw
   `TypeError: Cannot read properties of undefined (reading 'length')`. The
   parameter is redundant for client-only rendering and was dropped.
-- The official mobile remote-control page (`/remote/v4`) can be proxied and wired
-  to a self-hosted server; that relay is deployment-specific and not part of this
-  patch set.
+- The official mobile remote-control page (`/remote/v4`) needs the relay in
+  [`relay/`](relay/) (plus TLS/reverse-proxy wiring); without it only the direct
+  page (built-in web UI) is reachable.
 - Known limitation: if the server is killed mid-conversation, the task row can
   stay `running` in tasks-index.sqlite (no orphan cleanup on startup yet).
 
