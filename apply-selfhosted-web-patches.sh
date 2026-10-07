@@ -6,6 +6,8 @@
 #   0002 web 连接守卫（后台断连提示 + 回前台自动恢复）
 #   0003 手机抽屉布局（<768px 左侧栏/右侧面板浮层化 + 左上角开关 + 遮罩）
 #   0004 抽屉打磨 + 目录浏览器新建文件夹（IFileService.createDirectory）
+#   0005 二轮实测修复（高度对齐/抽屉互斥/守卫误判/触屏操作栏/问答解析）
+#   0006 三轮恢复体验（header 空垫/滚动记忆持久化+收敛/软重连/恢复锚定）
 # 用法：在 ZCode 仓库根目录执行  bash apply-selfhosted-web-patches.sh
 set -euo pipefail
 
@@ -15,6 +17,8 @@ PATCHES=(
   "$DIR/0002-web-connection-guard.patch"
   "$DIR/0003-feat-ui-mobile-drawer-layout-for-sidebar-and-side-pa.patch"
   "$DIR/0004-fix-ui-mobile-drawer-polish-directory-browser-create.patch"
+  "$DIR/0005-fix-ui-web-round2-mobile-fixes.patch"
+  "$DIR/0006-fix-ui-web-mobile-header-window-controls-padding-per.patch"
 )
 
 echo "==> 检查基线（应为 v3.14.3 / 29628c9，其他版本需自行确认可合并）"
