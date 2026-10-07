@@ -1,7 +1,7 @@
 From 96336e91211171eeb035fe21deb187e9ffa7d453 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:13:39 +0800
-Subject: [PATCH] fix(rpc,client,server): websocket keepalive liveness for
+Subject: [PATCH 1/2] fix(rpc,client,server): websocket keepalive liveness for
  half-open detection
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1054,6 +1054,92 @@ index 8a8a827..3cf4514 100644
    const socket = wrapWebSocket(ws);
    const protocol = new SocketProtocol(socket);
    const rawServer = new ChannelServer(protocol, "server");
+-- 
+2.53.0
+
+
+From 702fbb92e174c690cf5d7f0e225f2f49ca7506f5 Mon Sep 17 00:00:00 2001
+From: xhwxt <xhwxt@users.noreply.github.com>
+Date: Thu, 8 Oct 2026 02:38:20 +0800
+Subject: [PATCH 2/2] fix(client,web): heartbeat deadline fires onHeartbeatDead
+ before close
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+E2E（halfopen-verify.mjs blackhole）发现：监视器判死后 ws.close() 是干净
+关闭（wasClean=true），handleWebTransportClosed 把它当主动登出跳过——
+半开虽被判死但软重连不启动。新增 onHeartbeatDead 回调：判死先于 close
+触发，宿主按断连处理（markSocketDead + visible 时软重连）。
+
+E2E: 黑洞 30-40s 内自动软重连（#2 open，无整页 reload）；
+健康 50s 无重连无横幅；远控页 bootstrap/双 WS 通道正常。
+---
+ packages/client/src/websocket.ts | 10 ++++++++--
+ packages/web/src/main.tsx        |  8 ++++++++
+ 2 files changed, 16 insertions(+), 2 deletions(-)
+
+diff --git a/packages/client/src/websocket.ts b/packages/client/src/websocket.ts
+index f1ac914..3d9eb63 100644
+--- a/packages/client/src/websocket.ts
++++ b/packages/client/src/websocket.ts
+@@ -22,6 +22,8 @@ interface WebSocketConnectionOptions {
+   onOpenProtocol?: (protocol: SocketProtocol) => void;
+   /** 心跳监视器就绪后回调（宿主保存把手用于同 socket 活性查询/补探）。 */
+   onHeartbeat?: (handle: WebSocketHeartbeatHandle) => void;
++  /** 心跳判死回调：在 close 事件之前触发，宿主应按断连处理（启动软重连）。 */
++  onHeartbeatDead?: () => void;
+ }
+ 
+ /**
+@@ -105,6 +107,7 @@ function startWebSocketHeartbeatMonitor(
+   protocol: SocketProtocol,
+   ws: WebSocket,
+   options: WebSocketHeartbeatOptions,
++  onDead?: () => void,
+ ): WebSocketHeartbeatMonitor {
+   let lastReceivedAt = Date.now();
+   const markAlive = () => {
+@@ -119,8 +122,10 @@ function startWebSocketHeartbeatMonitor(
+   }, options.intervalMs);
+   const checkTimer: ReturnType<typeof setInterval> = setInterval(() => {
+     if (Date.now() - lastReceivedAt > options.timeoutMs) {
+-      // 判死：主动关闭本连接。close 事件随后驱动守卫/软重连，
+-      // 不在这里重连——重连所有权在宿主（main.tsx 的软重连状态机）。
++      // 判死：先通知宿主（等同非正常关闭语义——监视器自己的 close() 是干净关闭，
++      // 若直接依赖 close 事件会被宿主当作主动登出而不重连），再关闭本连接。
++      // 重连所有权在宿主（main.tsx 的软重连状态机），这里不重连。
++      onDead?.();
+       try {
+         ws.close();
+       } catch {
+@@ -191,6 +196,7 @@ export function connectViaWebSocket(
+           protocol,
+           ws,
+           options?.heartbeat ?? WEB_SOCKET_HEARTBEAT_DEFAULTS,
++          options?.onHeartbeatDead,
+         );
+         options?.onHeartbeat?.(monitor);
+       }
+diff --git a/packages/web/src/main.tsx b/packages/web/src/main.tsx
+index ceec191..690393f 100644
+--- a/packages/web/src/main.tsx
++++ b/packages/web/src/main.tsx
+@@ -723,6 +723,14 @@ async function connectWebServices(wsUrl: string): Promise<ReturnType<typeof conn
+       // 同 socket 活性把手：守卫回前台时用它判半开（无需换连接探测）。
+       webHeartbeatHandle = handle;
+     },
++    onHeartbeatDead: () => {
++      // 心跳判死先于 close 事件到达：监视器自己的 close() 是干净关闭，
++      // 会被 handleWebTransportClosed 当作主动登出跳过——这里必须显式重连。
++      window.__zcodeConnGuard?.markSocketDead();
++      if (document.visibilityState === "visible") {
++        void startWebSoftReconnect();
++      }
++    },
+   });
+ }
+ 
 -- 
 2.53.0
 
