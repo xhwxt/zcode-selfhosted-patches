@@ -71,16 +71,19 @@ const WINDOW_ID = 'wcs-' + randomUUID();
 let lastViewState = null;
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 
-// 注入到官方远控页 HTML 的恢复 shim（见反代处注释）。策略（v29 网络感知）：
-// - WS 非正常 close：hidden 时记 hiddenDeath；visible 时**先探测网络可达**（fetch 本域
-//   1.2s 超时），可达才 reload——reload 后页面立刻能连上，消除「弱网 reload → 再失败
-//   → 再 reload」的连续刷新；不可达则 1.5s 后重探，直到可达才刷新一次。
-// - 正常关闭（1000/1001，主动登出/官方流程接管）完全不干预。
+// 注入到官方远控页 HTML 的恢复 shim（见反代处注释）。策略（v30 自愈优先，默认不刷新）：
+// - WS 非正常 close：只挂横幅 + 每 2s 观测页面状态。
+//   官方页面（nginx 日志 10:11:07 实证）WS close 后会**自行重连**（5 条 101 同刻重建），
+//   此时撤横幅、什么都不做——用户无感。这是默认路径，绝大多数切后台场景走这里。
+// - 仅当页面进入不可恢复错误屏（RPC 通道放弃重连，body 出现
+//   "Web remote control relay connection closed." 文案）才 reload 兜底，
+//   且 reload 前先探测网络可达（避免弱网下 reload 后再次失败形成连环刷新）。
+// - 正常关闭（1000/1001）完全不干预。
 const RECOVERY_SHIM_JS = `
 (function(){
   if (window.__ZCODE_RC_RECOVERY__) return; window.__ZCODE_RC_RECOVERY__ = true;
   var KEY='zcode-rc-guard-reloads', WIN=60000, MAX=3;
-  var hiddenDeath=false, visibleDeath=false, reloading=false;
+  var broken=false, reloading=false;
   function allowed(){ try{
     var now=Date.now(), s=JSON.parse(sessionStorage.getItem(KEY)||'[]')
       .filter(function(t){return now-t<WIN;});
@@ -89,15 +92,14 @@ const RECOVERY_SHIM_JS = `
   }catch(e){ return true; } }
   function banner(){ var el=document.getElementById('zcode-rc-recover');
     if(!el){ el=document.createElement('div'); el.id='zcode-rc-recover';
-      el.textContent='\\u8fde\\u63a5\\u5df2\\u65ad\\u5f00\\uff0c\\u6b63\\u5728\\u91cd\\u65b0\\u8fde\\u63a5\\u2026';
+      el.textContent='\\u8fde\\u63a5\\u4e2d\\u65ad\\uff0c\\u6b63\\u5728\\u81ea\\u52a8\\u6062\\u590d\\u2026';
       el.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:2147483647;padding:10px 16px;'+
         'text-align:center;background:#b91c1c;color:#fff;font:13px/1.4 system-ui,sans-serif;';
       (document.body||document.documentElement).appendChild(el); } }
+  function unbanner(){ var el=document.getElementById('zcode-rc-recover'); if(el) el.remove(); }
   function reloadIfAllowed(){ if(reloading) return; if(allowed()){ reloading=true;
       try{ sessionStorage.setItem('zcode-rc-recover','1'); }catch(e){}
       location.reload(); } }
-  // 网络可达探测：本域轻量资源，1.2s 超时。可达才 reload——这是消除「连续刷新两次」
-  // 的关键：第一次刷新发生在网络尚未恢复时，reload 下来的页面连不上 WS 又触发一次刷新。
   function netReachable(){ return new Promise(function(resolve){
     var done=false, to=setTimeout(function(){ if(!done){done=true;resolve(false);} },1200);
     try{ fetch(location.origin+'/zusage/boot.js?rcprobe='+Date.now(),{cache:'no-store'})
@@ -105,17 +107,30 @@ const RECOVERY_SHIM_JS = `
       .catch(function(){ if(!done){done=true;clearTimeout(to);resolve(false);} });
     }catch(e){ if(!done){done=true;clearTimeout(to);resolve(false);} }
   }); }
-  function recoverWhenReachable(){ if(reloading) return; banner();
-    netReachable().then(function(ok){ if(ok) reloadIfAllowed();
-      else setTimeout(recoverWhenReachable, 1500); }); }
+  // 错误屏特征：官方 bundle 在 RPC 通道放弃恢复时渲染该英文文案。
+  function errorScreenUp(){ return (document.body?document.body.innerText:'')
+    .indexOf('Web remote control relay connection closed.')>=0; }
+  function markBroken(){ if(broken) return; broken=true; banner();
+    setTimeout(function(){ if(!broken) return; observe(); }, 3000); }
+  function observe(){ if(reloading||!broken) return;
+    if(errorScreenUp()){
+      // 页面已放弃自愈：网络可达才刷新（一次成功，不再连环）。
+      netReachable().then(function(ok){ if(ok) reloadIfAllowed(); else setTimeout(observe,1500); });
+      return;
+    }
+    // 页面仍在自行重连：检查是否已恢复（新 WS OPEN 且无错误屏）。
+    netReachable().then(function(ok){
+      if(ok && !errorScreenUp()){ broken=false; unbanner(); return; }
+      setTimeout(observe, 2000);
+    });
+  }
   try{ if(sessionStorage.getItem('zcode-rc-recover')==='1'){ sessionStorage.removeItem('zcode-rc-recover'); banner();
       setTimeout(function(){ var el=document.getElementById('zcode-rc-recover'); if(el) el.remove(); }, 4000); } }catch(e){}
   var OW=window.WebSocket;
   function Wrapped(url, protocols){ var ws = protocols===undefined ? new OW(url) : new OW(url, protocols);
     ws.addEventListener('close', function(ev){
       if(ev.wasClean || ev.code===1000 || ev.code===1001) return;
-      if(document.visibilityState==='hidden'){ hiddenDeath=true; return; }
-      visibleDeath=true; recoverWhenReachable();
+      markBroken();
     });
     return ws; }
   Wrapped.prototype=OW.prototype;
@@ -135,11 +150,6 @@ const RECOVERY_SHIM_JS = `
     }catch(e){}
     return OF.call(this, input, init);
   };
-  document.addEventListener('visibilitychange', function(){
-    if(document.visibilityState!=='visible') return;
-    if(hiddenDeath || visibleDeath){ hiddenDeath=false; visibleDeath=false;
-      recoverWhenReachable(); return; }
-  });
 })();`;
 
 function tokenOk(given) {
