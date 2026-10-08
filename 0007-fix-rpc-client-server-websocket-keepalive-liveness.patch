@@ -1,7 +1,7 @@
 From 96336e91211171eeb035fe21deb187e9ffa7d453 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:13:39 +0800
-Subject: [PATCH 01/11] fix(rpc,client,server): websocket keepalive liveness
+Subject: [PATCH 01/12] fix(rpc,client,server): websocket keepalive liveness
  for half-open detection
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1061,7 +1061,7 @@ index 8a8a827..3cf4514 100644
 From 702fbb92e174c690cf5d7f0e225f2f49ca7506f5 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:38:20 +0800
-Subject: [PATCH 02/11] fix(client,web): heartbeat deadline fires
+Subject: [PATCH 02/12] fix(client,web): heartbeat deadline fires
  onHeartbeatDead before close
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1147,7 +1147,7 @@ index ceec191..690393f 100644
 From 7fbf4b856e5d5feafaa41b0ee495483f4b23c1c7 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 08:34:01 +0800
-Subject: [PATCH 03/11] perf(web,client): seamless background returns, faster
+Subject: [PATCH 03/12] perf(web,client): seamless background returns, faster
  reconnect, lazy banner
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1423,7 +1423,7 @@ index 690393f..4719771 100644
 From ff95eabdaf8f94210f71f06462d5aec9d3cdc8de Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 09:24:05 +0800
-Subject: [PATCH 04/11] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
+Subject: [PATCH 04/12] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
  =?UTF-8?q?=E2=80=94=20no=20React=20remount=20on=20soft=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1847,7 +1847,7 @@ index 4719771..879e9b7 100644
 From 4b5abe08b2b01c1cea956092d373a390cd4f71fd Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:16:18 +0800
-Subject: [PATCH 05/11] fix(ui): md preview text fences invisible on dark UI +
+Subject: [PATCH 05/12] fix(ui): md preview text fences invisible on dark UI +
  mobile settings row squeeze
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2010,7 +2010,7 @@ index 25cd56d..63e8439 100644
 From 5e75977f0225ba67a130dbc3f05f5812bd3c85c8 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:40:45 +0800
-Subject: [PATCH 06/11] fix(web): remove ALL page reloads from connection paths
+Subject: [PATCH 06/12] fix(web): remove ALL page reloads from connection paths
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -2294,7 +2294,7 @@ index 879e9b7..8a3fdbc 100644
 From e02912dd3796eaae65feed51d8a4d88dcf2b8330 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:56:25 +0800
-Subject: [PATCH 07/11] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20navi?=
+Subject: [PATCH 07/12] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20navi?=
  =?UTF-8?q?gation=20=E2=80=94=20zero=20network=20on=20foreground=20return?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2435,7 +2435,7 @@ index 980b78e..4ab2def 100644
 From fdf2b3636481a207012a1db2c9023553fa630a73 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 11:34:06 +0800
-Subject: [PATCH 08/11] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transp?=
+Subject: [PATCH 08/12] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transp?=
  =?UTF-8?q?ort=20=E2=80=94=20zero=20visual=20change=20on=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2817,7 +2817,7 @@ index 8a3fdbc..69f6756 100644
 From e88c05a5cd3f951dc0e23a36f42e741e5558c124 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:04:53 +0800
-Subject: [PATCH 09/11] =?UTF-8?q?fix(ui,web):=20re-subscribe=20stores=20af?=
+Subject: [PATCH 09/12] =?UTF-8?q?fix(ui,web):=20re-subscribe=20stores=20af?=
  =?UTF-8?q?ter=20hot-swap=20=E2=80=94=20data=20flows=20again?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3170,7 +3170,7 @@ index 69f6756..c28f612 100644
 From f01b4739900110b64e308ba5b266b41297ab8483 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:25:49 +0800
-Subject: [PATCH 10/11] =?UTF-8?q?fix(ui):=20model=20submenu=20squeeze=20on?=
+Subject: [PATCH 10/12] =?UTF-8?q?fix(ui):=20model=20submenu=20squeeze=20on?=
  =?UTF-8?q?=20mobile=20=E2=80=94=20wrap=20names,=20width=20follows=20viewp?=
  =?UTF-8?q?ort?=
 MIME-Version: 1.0
@@ -3237,7 +3237,7 @@ index c2387ed..61943f9 100644
 From 3f0a17b47706177b86f424110be1e8de94448367 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:31:29 +0800
-Subject: [PATCH 11/11] =?UTF-8?q?fix(ui,web):=20re-handshake=20after=20hot?=
+Subject: [PATCH 11/12] =?UTF-8?q?fix(ui,web):=20re-handshake=20after=20hot?=
  =?UTF-8?q?-swap=20=E2=80=94=20fixes=20fault.connection.handshakeRequired?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3354,6 +3354,110 @@ index c28f612..80a252c 100644
  }
  
  async function connectWebHotSwap(
+-- 
+2.53.0
+
+
+From 0ae927b0890afb00c2382e34b5f2a47cd2a68512 Mon Sep 17 00:00:00 2001
+From: xhwxt <197754549+xhwxt@users.noreply.github.com>
+Date: Thu, 8 Oct 2026 13:51:57 +0800
+Subject: [PATCH 12/12] fix(web): SW v3 cache bust + /sw-reset.html escape
+ hatch
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+v2 全量 cache-first 有自我锁死漏洞：部署新构建后若 sw.js 字节不变
+（CACHE_VERSION 不变），浏览器 update check 判定无更新，activate 永不
+触发，cache-first 让手机永远回放旧 HTML/旧 bundle（用户实测：多次刷新
+无效）。
+
+- CACHE_VERSION v2 → v3：借版本字节变化触发 reinstall → activate 清空
+  v2 缓存，下次导航拿新 HTML/新 bundle。注释里写明约定：每次发版必须
+  递增 CACHE_VERSION
+- 新增 /sw-reset.html 兜底页：一键注销全部 Service Worker + 清空全部
+  Cache Storage 后跳回首页。供 SW 更新链路本身失灵时用户自救
+  （浏览器已把 v2 的 fetch handler 用到 /sw-reset.html 上也不影响——
+  v2 cacheFirst 对未缓存资源会走网络拿到本页）
+
+部署：/sw.js=v3、/sw-reset.html 已上线。
+---
+ packages/web/public/sw-reset.html | 47 +++++++++++++++++++++++++++++++
+ packages/web/public/sw.js         |  7 ++++-
+ 2 files changed, 53 insertions(+), 1 deletion(-)
+ create mode 100644 packages/web/public/sw-reset.html
+
+diff --git a/packages/web/public/sw-reset.html b/packages/web/public/sw-reset.html
+new file mode 100644
+index 0000000..d34697b
+--- /dev/null
++++ b/packages/web/public/sw-reset.html
+@@ -0,0 +1,47 @@
++<!doctype html>
++<html lang="zh-CN">
++<head>
++<meta charset="UTF-8" />
++<meta name="viewport" content="width=device-width, initial-scale=1.0" />
++<title>ZCode 缓存修复</title>
++<style>
++  body { background:#161616; color:#fff; font-family:system-ui,sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; margin:0; }
++  .box { text-align:center; padding:2rem; }
++  button { background:#339CFF; color:#fff; border:0; border-radius:12px; padding:14px 28px; font-size:16px; margin-top:1.5rem; }
++  .status { color:#8a8a8a; margin-top:1rem; font-size:13px; white-space:pre-line; }
++</style>
++</head>
++<body>
++<div class="box">
++  <h2 id="title">正在修复本地缓存…</h2>
++  <div class="status" id="status"></div>
++</div>
++<script>
++(async () => {
++  const status = document.getElementById('status');
++  const log = (t) => { status.textContent += t + '\n'; };
++  try {
++    if ('serviceWorker' in navigator) {
++      const regs = await navigator.serviceWorker.getRegistrations();
++      for (const reg of regs) {
++        await reg.unregister();
++        log('已注销 Service Worker');
++      }
++    }
++    if (window.caches && caches.keys) {
++      const keys = await caches.keys();
++      for (const key of keys) {
++        await caches.delete(key);
++        log('已清除缓存: ' + key);
++      }
++    }
++    log('修复完成，正在返回…');
++    setTimeout(() => location.replace('/'), 800);
++  } catch (e) {
++    document.getElementById('title').textContent = '修复失败';
++    log(String(e));
++  }
++})();
++</script>
++</body>
++</html>
+diff --git a/packages/web/public/sw.js b/packages/web/public/sw.js
+index 4ab2def..6338372 100644
+--- a/packages/web/public/sw.js
++++ b/packages/web/public/sw.js
+@@ -17,7 +17,12 @@
+  */
+ 'use strict';
+ 
+-const CACHE_VERSION = 'zcode-shell-v2';
++// v3：v2 全量 cache-first 有个自我锁死漏洞——部署新构建后若 sw.js 字节不变
++// （CACHE_VERSION 不变），浏览器的 update check 判定"无更新"，activate 永远
++// 不触发，cache-first 让手机永远回放旧 HTML/旧 bundle（用户实测：刷新无效）。
++// v3 借版本字符串字节变化触发 reinstall → activate 清掉 v2 缓存，下次导航
++// 拿到新 HTML/新 bundle。此后的正确姿势：每次发版都递增 CACHE_VERSION。
++const CACHE_VERSION = 'zcode-shell-v3';
+ const NEVER_CACHE_RE = /^\/(ws\b|api\/|zusage\/snapshot)/;
+ const REFRESHED_SESSION = 'zcode-sw-refreshed';
+ 
 -- 
 2.53.0
 
