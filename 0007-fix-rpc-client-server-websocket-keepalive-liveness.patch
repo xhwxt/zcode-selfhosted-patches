@@ -1,7 +1,7 @@
 From 96336e91211171eeb035fe21deb187e9ffa7d453 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:13:39 +0800
-Subject: [PATCH 1/2] fix(rpc,client,server): websocket keepalive liveness for
+Subject: [PATCH 1/3] fix(rpc,client,server): websocket keepalive liveness for
  half-open detection
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1061,7 +1061,7 @@ index 8a8a827..3cf4514 100644
 From 702fbb92e174c690cf5d7f0e225f2f49ca7506f5 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:38:20 +0800
-Subject: [PATCH 2/2] fix(client,web): heartbeat deadline fires onHeartbeatDead
+Subject: [PATCH 2/3] fix(client,web): heartbeat deadline fires onHeartbeatDead
  before close
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1140,6 +1140,282 @@ index ceec191..690393f 100644
    });
  }
  
+-- 
+2.53.0
+
+
+From 7fbf4b856e5d5feafaa41b0ee495483f4b23c1c7 Mon Sep 17 00:00:00 2001
+From: xhwxt <xhwxt@users.noreply.github.com>
+Date: Thu, 8 Oct 2026 08:34:01 +0800
+Subject: [PATCH 3/3] perf(web,client): seamless background returns, faster
+ reconnect, lazy banner
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+用户反馈：切回后仍见「断连→刷新」，且很短时间就会发生。
+
+根因（误杀）：手机切后台 JS 计时器冻结/帧停走，回前台监视器第一跳
+lastReceivedAt 必然超 30s 阈值 → 杀掉可能还活着的连接 → 软重连+整树重挂，
+体感=刷新。短切回也中招。
+
+- client: 心跳监视器 hidden 态不杀连接（isPageVisible 由宿主注入，本包
+  不得引用 document——desktop host 无 DOM 编译）；visible 态判死前先发
+  二次探针等 2.5s 回显，有回应即 stand down（连接活着的证据优先于超时阈值）
+- web: heartbeat 用 withPageVisibility 注入可见性；软重连退避压缩为
+  0/0.5/1.5/4/8s（真断线立即首试）；同 socket 补探等待 3s→1.2s；
+  横幅惰性化——第 2 次尝试失败才显示，秒级恢复全程无提示
+
+E2E（feel-verify.mjs）：健康连接 hidden 60s 切回零重连零横幅（无感）；
+黑洞半开 37.5s 判死+软重连未刷新、横幅未出现。typecheck/lint/arch 全过。
+---
+ packages/client/src/index.ts     |  2 +-
+ packages/client/src/websocket.ts | 78 ++++++++++++++++++++++++++++----
+ packages/web/src/main.tsx        | 48 +++++++++++++++-----
+ 3 files changed, 107 insertions(+), 21 deletions(-)
+
+diff --git a/packages/client/src/index.ts b/packages/client/src/index.ts
+index 5daaada..6d5d77c 100644
+--- a/packages/client/src/index.ts
++++ b/packages/client/src/index.ts
+@@ -5,6 +5,6 @@ export type {
+   WebSocketHeartbeatOptions,
+   WebSocketHeartbeatHandle,
+ } from "./websocket.js";
+-export { WEB_SOCKET_HEARTBEAT_DEFAULTS } from "./websocket.js";
++export { WEB_SOCKET_HEARTBEAT_DEFAULTS, withPageVisibility } from "./websocket.js";
+ export { connectViaMessagePort, createMessagePortServiceConnection } from "./messageport.js";
+ export type { MessagePortServiceConnection } from "./messageport.js";
+diff --git a/packages/client/src/websocket.ts b/packages/client/src/websocket.ts
+index 3d9eb63..b881fac 100644
+--- a/packages/client/src/websocket.ts
++++ b/packages/client/src/websocket.ts
+@@ -34,6 +34,14 @@ interface WebSocketConnectionOptions {
+ export interface WebSocketHeartbeatOptions {
+   intervalMs: number;
+   timeoutMs: number;
++  /**
++   * 页面可见性查询（可选）。提供后，hidden 期间监视器不杀连接——手机切后台
++   * JS 计时器冻结、帧消费停止，回前台时 lastReceivedAt 必然超阈值，若直接判死
++   * 会误杀一条可能还活着的连接（用户感知=每次切回都闪一次重连）。回前台后的
++   * 裁决链：守卫 probeConnectionAliveOnSameSocket（新鲜判定+补探）先行，监视器
++   * visible 态判死还有二次探针兜底（见 startWebSocketHeartbeatMonitor）。
++   */
++  isPageVisible?: () => boolean;
+ }
+ 
+ export const WEB_SOCKET_HEARTBEAT_DEFAULTS: WebSocketHeartbeatOptions = {
+@@ -41,6 +49,25 @@ export const WEB_SOCKET_HEARTBEAT_DEFAULTS: WebSocketHeartbeatOptions = {
+   timeoutMs: 30_000,
+ };
+ 
++/**
++ * 浏览器宿主默认的可见性感知心跳参数：hidden 态不杀连接（切后台回前台不误杀），
++ * 其余同 WEB_SOCKET_HEARTBEAT_DEFAULTS。isPageVisible 由调用方注入——本包不得
++ * 引用 document（desktop host 的无 DOM 编译会经 @zcode/server/remote →
++ * @zcode/client 把本文件源码拖进 lib:es2025 工程，DOM 全局在此不可用）。
++ *
++ * @param isPageVisible 宿主注入的可见性查询，如 () => document.visibilityState === "visible"
++ */
++export function withPageVisibility(
++  isPageVisible: () => boolean,
++  options?: WebSocketHeartbeatOptions | null,
++): WebSocketHeartbeatOptions | null {
++  if (options === null) return null;
++  return {
++    ...(options ?? WEB_SOCKET_HEARTBEAT_DEFAULTS),
++    isPageVisible,
++  };
++}
++
+ function wrapBrowserWebSocket(ws: WebSocket): ISocket {
+   const onData = new Emitter<VSBuffer>();
+   const onClose = new Emitter<void>();
+@@ -120,18 +147,53 @@ function startWebSocketHeartbeatMonitor(
+   const keepAliveTimer: ReturnType<typeof setInterval> = setInterval(() => {
+     protocol.sendKeepAlive();
+   }, options.intervalMs);
++
++  // ── 判死流程（visible 态）：超时 → 二次探针 → 仍无回显才杀 ────────────────
++  // 二次探针是防误杀的关键：切后台回来的连接 lastReceivedAt 必然超阈值（后台冻结
++  // 期间帧停走），但连接往往还活着。先补一根探针等回显，有回应即 stand down。
++  let probing = false;
+   const checkTimer: ReturnType<typeof setInterval> = setInterval(() => {
+-    if (Date.now() - lastReceivedAt > options.timeoutMs) {
+-      // 判死：先通知宿主（等同非正常关闭语义——监视器自己的 close() 是干净关闭，
+-      // 若直接依赖 close 事件会被宿主当作主动登出而不重连），再关闭本连接。
+-      // 重连所有权在宿主（main.tsx 的软重连状态机），这里不重连。
++    if (Date.now() - lastReceivedAt <= options.timeoutMs) {
++      return;
++    }
++    if (options.isPageVisible && !options.isPageVisible()) {
++      // hidden（手机切后台/锁屏）：计时器在真机上本已冻结，此分支覆盖「计时器
++      // 未冻结但页面不可见」的实现差异。hidden 态绝不杀连接——回前台后
++      // visibilitychange → 守卫 probeConnectionAliveOnSameSocket 先行裁决
++      // （新鲜判定 + 补探），本计时器随后再跑时连接若已被证明健康，
++      // lastReceivedAt 已刷新，不会进入判死分支。
++      return;
++    }
++    if (probing) {
++      return;
++    }
++    // 二次探针：发一根 KeepAlive，等 2.5s。有回显 → markAlive 刷新 → 下一跳自愈。
++    probing = true;
++    try {
++      protocol.sendKeepAlive();
++    } catch {
++      // socket 已死（send 抛错）：直接判死。
++      probing = false;
+       onDead?.();
+       try {
+         ws.close();
+-      } catch {
+-        // 已处于 CLOSING/CLOSED 时 close() 不应抛错；兜底忽略。
+-      }
++      } catch {}
++      return;
+     }
++    setTimeout(() => {
++      probing = false;
++      if (Date.now() - lastReceivedAt > options.timeoutMs) {
++        // 2.5s 内仍无任何帧（含探针回显）：确认真死。先通知宿主（等同非正常
++        // 关闭语义——监视器自己的 close() 是干净关闭，若直接依赖 close 事件会
++        // 被宿主当作主动登出而不重连），再关闭本连接。重连所有权在宿主。
++        onDead?.();
++        try {
++          ws.close();
++        } catch {
++          // 已处于 CLOSING/CLOSED 时 close() 不应抛错；兜底忽略。
++        }
++      }
++    }, 2_500);
+   }, Math.min(options.intervalMs, options.timeoutMs));
+ 
+   return {
+@@ -148,7 +210,7 @@ function startWebSocketHeartbeatMonitor(
+ 
+ export function connectViaWebSocket(
+   wsUrl: string,
+-  options?: WebSocketConnectionOptions & { heartbeat?: WebSocketHeartbeatOptions },
++  options?: WebSocketConnectionOptions & { heartbeat?: WebSocketHeartbeatOptions | null },
+ ): Promise<IServiceAccessor> {
+   return new Promise((resolve, reject) => {
+     const ws = new WebSocket(wsUrl);
+diff --git a/packages/web/src/main.tsx b/packages/web/src/main.tsx
+index 690393f..4719771 100644
+--- a/packages/web/src/main.tsx
++++ b/packages/web/src/main.tsx
+@@ -10,7 +10,11 @@ import {
+   type Theme,
+ } from "@zcode/ui";
+ import "@zcode/ui/styles.css";
+-import { connectViaProtocol, connectViaWebSocket } from "@zcode/client";
++import {
++  connectViaProtocol,
++  connectViaWebSocket,
++  withPageVisibility,
++} from "@zcode/client";
+ import type { WebSocketHeartbeatHandle } from "@zcode/client";
+ import { WebCallbackPage } from "./auth/WebCallbackPage.js";
+ import { createWebAuthService } from "./auth/webAuthService.js";
+@@ -457,7 +461,9 @@ const GUARD_RELOAD_WINDOW_MS = 60_000;
+ const GUARD_RELOAD_MAX = 3;
+ const GUARD_RELOAD_KEY = "zcode-web-conn-guard-reloads";
+ // 软重连退避序列（毫秒）：耗尽后走整页 reload 兜底。
+-const SOFT_RECONNECT_DELAYS_MS = [1_000, 2_000, 4_000, 8_000] as const;
++// 首试不等待（立即重连）：真断线（close 事件已到达）无需再等 1s；
++// 后续 0.5/1.5/4/8s 覆盖服务端重启窗口，最坏 4 次共 ~14s 到达 reload 兜底。
++const SOFT_RECONNECT_DELAYS_MS = [0, 500, 1_500, 4_000, 8_000] as const;
+ // 重连风暴保护：60 秒内软重连成功达到该次数后改走整页 reload。
+ const SOFT_RECONNECT_SUCCESS_WINDOW_MS = 60_000;
+ const SOFT_RECONNECT_SUCCESS_MAX = 5;
+@@ -484,6 +490,16 @@ interface WebReconnectBanner {
+ // 软重连状态横幅：固定顶部、不遮挡已渲染内容。旧的底部 overlay 仍保留给
+ // reload 兜底路径（软重连失败整页恢复前的最后提示）。
+ function mountWebReconnectBanner(): WebReconnectBanner {
++  // 幂等：横幅惰性化后本函数会在多次失败尝试/退避耗尽时调用，已有横幅直接复用。
++  const existing = document.getElementById("zcode-web-conn-banner");
++  if (existing instanceof HTMLDivElement) {
++    return {
++      element: existing,
++      setMessage(message: string) {
++        existing.textContent = message;
++      },
++    };
++  }
+   const zh = /^zh\b/i.test(navigator.language);
+   const el = document.createElement("div");
+   el.id = "zcode-web-conn-banner";
+@@ -548,7 +564,7 @@ async function probeServerInfoAlive(): Promise<boolean> {
+ // 2) 时间戳过期 → 补发一根探针，短暂等待回显/数据帧刷新时间戳；
+ // 3) 补探后仍未刷新 → 判死，走软重连。
+ const HEARTBEAT_PROBE_FRESH_MS = 20_000;
+-const HEARTBEAT_PROBE_WAIT_MS = 3_000;
++const HEARTBEAT_PROBE_WAIT_MS = 1_200;
+ 
+ // 最近一次建立的连接的心跳把手（重连成功后覆盖；null = 无监视器，退回 HTTP 探测）。
+ let webHeartbeatHandle: WebSocketHeartbeatHandle | null = null;
+@@ -611,7 +627,6 @@ function recordSoftReconnectSuccess(): boolean {
+ 
+ async function attemptSoftReconnectOnce(
+   wsUrl: string,
+-  banner: WebReconnectBanner,
+   zh: boolean,
+ ): Promise<boolean> {
+   try {
+@@ -649,11 +664,15 @@ async function attemptSoftReconnectOnce(
+     return true;
+   } catch {
+     softReconnectAttemptNo += 1;
+-    banner.setMessage(
+-      zh
+-        ? `连接已断开，正在重新连接…（第 ${softReconnectAttemptNo} 次尝试）`
+-        : "Connection lost, reconnecting…",
+-    );
++    // 横幅惰性化：第 2 次尝试失败才挂横幅——首试（立即重连）大多在 1s 内成功，
++    // 用户完全无感；一旦走到第 2 次说明是真断线，此时再提示不迟。
++    if (softReconnectAttemptNo >= 2) {
++      mountWebReconnectBanner().setMessage(
++        zh
++          ? `连接已断开，正在重新连接…（第 ${softReconnectAttemptNo} 次尝试）`
++          : "Connection lost, reconnecting…",
++      );
++    }
+     return false;
+   }
+ }
+@@ -663,16 +682,17 @@ async function startWebSoftReconnect(): Promise<void> {
+   webSoftReconnectInflight = true;
+   softReconnectAttemptNo = 0;
+   const zh = /^zh\b/i.test(navigator.language);
+-  const banner = mountWebReconnectBanner();
++  // 横幅不再预先挂载（首试成功时用户全程看不到任何提示）；
++  // attemptSoftReconnectOnce 第 2 次失败时经 mountWebReconnectBanner 挂载（幂等：已有则跳过）。
+   try {
+     const wsUrl = resolveDefaultWsOrigin() + "/ws";
+     for (const delay of SOFT_RECONNECT_DELAYS_MS) {
+       await new Promise((resolve) => window.setTimeout(resolve, delay));
+-      const ok = await attemptSoftReconnectOnce(wsUrl, banner, zh);
++      const ok = await attemptSoftReconnectOnce(wsUrl, zh);
+       if (ok) return;
+     }
+     // 退避耗尽：转整页 reload 兜底（受限流保护），横幅改为失败提示。
+-    banner.setMessage(
++    mountWebReconnectBanner().setMessage(
+       zh ? "重新连接失败，正在刷新页面…" : "Reconnect failed, reloading…",
+     );
+     window.setTimeout(reloadWebIfAllowed, 600);
+@@ -719,6 +739,10 @@ function installWebConnectionGuard(): void {
+ async function connectWebServices(wsUrl: string): Promise<ReturnType<typeof connectViaProtocol>> {
+   return connectViaWebSocket(wsUrl, {
+     onClose: (event) => handleWebTransportClosed(event),
++    // hidden 态不杀连接（切后台回前台不误杀，体验对齐官方远控页）；visible 态
++    // 判死前还有监视器内的二次探针兜底。isPageVisible 由本文件注入：
++    // packages/client 不得引用 document（desktop host 无 DOM 编译会拉进它的源码）。
++    heartbeat: withPageVisibility(() => document.visibilityState === "visible"),
+     onHeartbeat: (handle) => {
+       // 同 socket 活性把手：守卫回前台时用它判半开（无需换连接探测）。
+       webHeartbeatHandle = handle;
 -- 
 2.53.0
 
