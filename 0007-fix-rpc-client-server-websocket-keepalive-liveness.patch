@@ -1,7 +1,7 @@
 From 96336e91211171eeb035fe21deb187e9ffa7d453 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:13:39 +0800
-Subject: [PATCH 01/23] fix(rpc,client,server): websocket keepalive liveness
+Subject: [PATCH 01/24] fix(rpc,client,server): websocket keepalive liveness
  for half-open detection
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1061,7 +1061,7 @@ index 8a8a827..3cf4514 100644
 From 702fbb92e174c690cf5d7f0e225f2f49ca7506f5 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:38:20 +0800
-Subject: [PATCH 02/23] fix(client,web): heartbeat deadline fires
+Subject: [PATCH 02/24] fix(client,web): heartbeat deadline fires
  onHeartbeatDead before close
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1147,7 +1147,7 @@ index ceec191..690393f 100644
 From 7fbf4b856e5d5feafaa41b0ee495483f4b23c1c7 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 08:34:01 +0800
-Subject: [PATCH 03/23] perf(web,client): seamless background returns, faster
+Subject: [PATCH 03/24] perf(web,client): seamless background returns, faster
  reconnect, lazy banner
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1423,7 +1423,7 @@ index 690393f..4719771 100644
 From ff95eabdaf8f94210f71f06462d5aec9d3cdc8de Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 09:24:05 +0800
-Subject: [PATCH 04/23] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
+Subject: [PATCH 04/24] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
  =?UTF-8?q?=E2=80=94=20no=20React=20remount=20on=20soft=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1847,7 +1847,7 @@ index 4719771..879e9b7 100644
 From 4b5abe08b2b01c1cea956092d373a390cd4f71fd Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:16:18 +0800
-Subject: [PATCH 05/23] fix(ui): md preview text fences invisible on dark UI +
+Subject: [PATCH 05/24] fix(ui): md preview text fences invisible on dark UI +
  mobile settings row squeeze
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2010,7 +2010,7 @@ index 25cd56d..63e8439 100644
 From 5e75977f0225ba67a130dbc3f05f5812bd3c85c8 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:40:45 +0800
-Subject: [PATCH 06/23] fix(web): remove ALL page reloads from connection paths
+Subject: [PATCH 06/24] fix(web): remove ALL page reloads from connection paths
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -2294,7 +2294,7 @@ index 879e9b7..8a3fdbc 100644
 From e02912dd3796eaae65feed51d8a4d88dcf2b8330 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:56:25 +0800
-Subject: [PATCH 07/23] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20navi?=
+Subject: [PATCH 07/24] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20navi?=
  =?UTF-8?q?gation=20=E2=80=94=20zero=20network=20on=20foreground=20return?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2435,7 +2435,7 @@ index 980b78e..4ab2def 100644
 From fdf2b3636481a207012a1db2c9023553fa630a73 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 11:34:06 +0800
-Subject: [PATCH 08/23] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transp?=
+Subject: [PATCH 08/24] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transp?=
  =?UTF-8?q?ort=20=E2=80=94=20zero=20visual=20change=20on=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2817,7 +2817,7 @@ index 8a3fdbc..69f6756 100644
 From e88c05a5cd3f951dc0e23a36f42e741e5558c124 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:04:53 +0800
-Subject: [PATCH 09/23] =?UTF-8?q?fix(ui,web):=20re-subscribe=20stores=20af?=
+Subject: [PATCH 09/24] =?UTF-8?q?fix(ui,web):=20re-subscribe=20stores=20af?=
  =?UTF-8?q?ter=20hot-swap=20=E2=80=94=20data=20flows=20again?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3170,7 +3170,7 @@ index 69f6756..c28f612 100644
 From f01b4739900110b64e308ba5b266b41297ab8483 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:25:49 +0800
-Subject: [PATCH 10/23] =?UTF-8?q?fix(ui):=20model=20submenu=20squeeze=20on?=
+Subject: [PATCH 10/24] =?UTF-8?q?fix(ui):=20model=20submenu=20squeeze=20on?=
  =?UTF-8?q?=20mobile=20=E2=80=94=20wrap=20names,=20width=20follows=20viewp?=
  =?UTF-8?q?ort?=
 MIME-Version: 1.0
@@ -3237,7 +3237,7 @@ index c2387ed..61943f9 100644
 From 3f0a17b47706177b86f424110be1e8de94448367 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:31:29 +0800
-Subject: [PATCH 11/23] =?UTF-8?q?fix(ui,web):=20re-handshake=20after=20hot?=
+Subject: [PATCH 11/24] =?UTF-8?q?fix(ui,web):=20re-handshake=20after=20hot?=
  =?UTF-8?q?-swap=20=E2=80=94=20fixes=20fault.connection.handshakeRequired?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3361,7 +3361,7 @@ index c28f612..80a252c 100644
 From 0ae927b0890afb00c2382e34b5f2a47cd2a68512 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 13:51:57 +0800
-Subject: [PATCH 12/23] fix(web): SW v3 cache bust + /sw-reset.html escape
+Subject: [PATCH 12/24] fix(web): SW v3 cache bust + /sw-reset.html escape
  hatch
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3465,7 +3465,7 @@ index 4ab2def..6338372 100644
 From c9f66c8bce983a5a0229bc8ccd7ab1ae492db8e1 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:19:51 +0800
-Subject: [PATCH 13/23] =?UTF-8?q?fix(web):=20SW=20v4=20=E2=80=94=20drop=20?=
+Subject: [PATCH 13/24] =?UTF-8?q?fix(web):=20SW=20v4=20=E2=80=94=20drop=20?=
  =?UTF-8?q?dirty=20/assets/=20prefetch=20key=20from=20install?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3528,7 +3528,7 @@ index 6338372..3ea1938 100644
 From 4f1063487fbf196f5704a363db6d75fca5dce60c Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:35:37 +0800
-Subject: [PATCH 14/23] =?UTF-8?q?fix(web):=20ignore=20stale=20close=20even?=
+Subject: [PATCH 14/24] =?UTF-8?q?fix(web):=20ignore=20stale=20close=20even?=
  =?UTF-8?q?ts=20=E2=80=94=20stops=20reconnect=20loop=20after=20hot-swap?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3599,7 +3599,7 @@ index 80a252c..dcbd15c 100644
 From 439b3886b10b4be2d1b24caff6a0e64246324363 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:58:29 +0800
-Subject: [PATCH 15/23] =?UTF-8?q?fix(web):=20SW=20v5=20=E2=80=94=20backgro?=
+Subject: [PATCH 15/24] =?UTF-8?q?fix(web):=20SW=20v5=20=E2=80=94=20backgro?=
  =?UTF-8?q?und=20revalidate=20navigations=20(deploy=20path=20restored)?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3724,7 +3724,7 @@ index 3ea1938..e7d6769 100644
 From e1c087861698832f2f3366f7e40f753e1f2f92d7 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:13:29 +0800
-Subject: [PATCH 16/23] =?UTF-8?q?fix(ui):=20usage=20stats=20readability=20?=
+Subject: [PATCH 16/24] =?UTF-8?q?fix(ui):=20usage=20stats=20readability=20?=
  =?UTF-8?q?on=20mobile=20=E2=80=94=20short=20axis=20dates,=20scrollable=20?=
  =?UTF-8?q?heatmap?=
 MIME-Version: 1.0
@@ -3805,7 +3805,7 @@ index 74f4374..4d0119e 100644
 From 2b16f04a279f7bfab703b3c359cae548bb5737d3 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:20:00 +0800
-Subject: [PATCH 17/23] fix(web,client): close stale WebSocket on hot-swap +
+Subject: [PATCH 17/24] fix(web,client): close stale WebSocket on hot-swap +
  crash telemetry
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3897,7 +3897,7 @@ index dcbd15c..baf5ac6 100644
 From a612236eb1a7d0dec7baa02865bbb85f1499ce43 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:59:13 +0800
-Subject: [PATCH 18/23] =?UTF-8?q?fix(web):=20SW=20v7=20=E2=80=94=20network?=
+Subject: [PATCH 18/24] =?UTF-8?q?fix(web):=20SW=20v7=20=E2=80=94=20network?=
  =?UTF-8?q?-first=20for=20zusage=20injected=20scripts?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3958,7 +3958,7 @@ index 829e60f..b13d167 100644
 From 547e7625ecb64f72ecdbe9e6cb9825b17ec32e05 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 16:32:20 +0800
-Subject: [PATCH 19/23] =?UTF-8?q?fix(rpc,client,web):=20replay=20buffered?=
+Subject: [PATCH 19/24] =?UTF-8?q?fix(rpc,client,web):=20replay=20buffered?=
  =?UTF-8?q?=20frames=20on=20hot-swap=20=E2=80=94=20fixes=20handshake=20dea?=
  =?UTF-8?q?dlock?=
 MIME-Version: 1.0
@@ -4111,7 +4111,7 @@ index baf5ac6..37cae36 100644
 From c8f27170dcedd0111e8eba0b5021fad4c9731c22 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 16:43:24 +0800
-Subject: [PATCH 20/23] chore(services): log handshake rejection details for
+Subject: [PATCH 20/24] chore(services): log handshake rejection details for
  intermittent fault diagnosis
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4152,7 +4152,7 @@ index 9fa3233..675de02 100644
 From a54fb72314812838b4d7e77d57881bb669e1ccf0 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 17:17:41 +0800
-Subject: [PATCH 21/23] fix(server,ui): stop killing live connections + silent
+Subject: [PATCH 21/24] fix(server,ui): stop killing live connections + silent
  bounded retry on subscribe failure
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4259,7 +4259,7 @@ index 3cf4514..97eab29 100644
 From ac0f348455c044b4f81ac9ee13bcb6052d03a2b1 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 17:59:57 +0800
-Subject: [PATCH 22/23] chore(services): log hello/initialize arrival on
+Subject: [PATCH 22/24] chore(services): log hello/initialize arrival on
  connection scope
 
 ---
@@ -4315,7 +4315,7 @@ index 675de02..2bed75f 100644
 From d2fe1b5820f301ba300c6d10b6225a0752a1c1ba Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 18:10:02 +0800
-Subject: [PATCH 23/23] =?UTF-8?q?fix(ui):=20handshake=20cache=20invalidati?=
+Subject: [PATCH 23/24] =?UTF-8?q?fix(ui):=20handshake=20cache=20invalidati?=
  =?UTF-8?q?on=20actually=20works=20=E2=80=94=20epoch=20compared=20on=20loo?=
  =?UTF-8?q?kup?=
 MIME-Version: 1.0
@@ -4378,6 +4378,285 @@ index 467ed58..121d219 100644
    });
    return handshake;
  }
+-- 
+2.53.0
+
+
+From e084a63e9ebb9fb9d7d9569c5bbb86c4c10709e7 Mon Sep 17 00:00:00 2001
+From: xhwxt <xhwxt@users.noreply.github.com>
+Date: Thu, 8 Oct 2026 18:47:59 +0800
+Subject: [PATCH 24/24] =?UTF-8?q?fix(rpc):=20re-send=20active=20event=20su?=
+ =?UTF-8?q?bscriptions=20on=20resetTransport=20=E2=80=94=20restores=20UI?=
+ =?UTF-8?q?=20data=20stream?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+用户实测（'握手修好了、能发送、服务器执行了，但 UI 收不到消息流'）：
+热换底后 ChannelClient 的 **listen 类事件订阅**没有恢复——resetTransport 的
+fail-closed 若 dispose activeRequests 会连带清掉 activeEventSubscriptions
+（onDidRemoveLastListener），重发循环遍历空表；且 server 新 scope 不持有
+旧订阅状态。会话帧（onDynamicConversationFrame）等全部事件静默断流。
+
+- ChannelClient 增加活跃事件订阅注册表（activeEventSubscriptions：id →
+  channel/name/arg，requestEvent 注册、onDidRemoveLastListener 注销）
+- resetTransport 重发全部活跃 listen（原 id 保持 handlers 对应），
+  fail-closed 明确不 dispose 事件订阅
+- 单测：event-resub.test.ts——resetTransport 后 listen 自动重发到新 server、
+  客户端持续收到新 server 帧 ✓（全 rpc 测试 6/6）
+
+这正是 DSH-mobile 无感重连的第 4 要素：事件订阅随连接代际自动迁移。
+---
+ packages/rpc/src/channelClient.ts     | 22 +++++++
+ packages/rpc/test/event-resub.test.ts | 82 +++++++++++++++++++++++++
+ test/event-resub.test.ts              | 88 +++++++++++++++++++++++++++
+ 3 files changed, 192 insertions(+)
+ create mode 100644 packages/rpc/test/event-resub.test.ts
+ create mode 100644 test/event-resub.test.ts
+
+diff --git a/packages/rpc/src/channelClient.ts b/packages/rpc/src/channelClient.ts
+index 5dcb8b7..85a9eea 100644
+--- a/packages/rpc/src/channelClient.ts
++++ b/packages/rpc/src/channelClient.ts
+@@ -25,6 +25,16 @@ export class ChannelClient implements IChannelClient, IDisposable {
+   // 单独维护 reject map，避免 dispose 把事件订阅误当成挂起的 RPC 请求。
+   private pendingRejections = new Map<number, (error: Error) => void>();
+   private lastRequestId = 0;
++  /**
++   * 活跃事件订阅（listen）的重发清单：id → 请求参数。
++   * 热换底（resetTransport）后 server 端新 scope 不持有任何订阅状态，
++   * 必须按此清单重发 EventListen——否则 UI 永远收不到事件流（消息帧、
++   * 会话更新全部静默断流）。onDidRemoveLastListener 时移除。
++   */
++  private activeEventSubscriptions = new Map<
++    number,
++    { channelName: string; name: string; arg?: any }
++  >();
+   private protocolListener: IDisposable | null;
+ 
+   // 非 readonly：resetTransport 换底时会整体重建（事件身份随传输换代）。
+@@ -156,6 +166,7 @@ export class ChannelClient implements IChannelClient, IDisposable {
+       onWillAddFirstListener: () => {
+         const doRequest = () => {
+           this.activeRequests.add(emitter);
++          this.activeEventSubscriptions.set(id, { channelName, name, arg });
+           this.sendRequest(RequestType.EventListen, id, channelName, name, arg);
+         };
+ 
+@@ -167,6 +178,7 @@ export class ChannelClient implements IChannelClient, IDisposable {
+       },
+       onDidRemoveLastListener: () => {
+         this.activeRequests.delete(emitter);
++        this.activeEventSubscriptions.delete(id);
+         this.sendCancelOrDispose(RequestType.EventDispose, id);
+         this.handlers.delete(id);
+       },
+@@ -269,6 +281,9 @@ export class ChannelClient implements IChannelClient, IDisposable {
+       return;
+     }
+     // 1. fail-closed 挂起的 Promise 请求（与 dispose 同语义，但不终止对象）。
++    //    注意：只 reject pendingRejections（Promise 请求）——事件订阅的 emitter
++    //    绝不能 dispose（dispose 会触发 onDidRemoveLastListener 清掉
++    //    activeEventSubscriptions，重发循环就空了）。
+     const rejection = new Error("ConnectionClosed");
+     rejection.name = "ConnectionClosed";
+     for (const [id, reject] of this.pendingRejections) {
+@@ -294,6 +309,13 @@ export class ChannelClient implements IChannelClient, IDisposable {
+     for (const frame of bufferedFrames ?? []) {
+       this.onBuffer(frame);
+     }
++
++    // 5. 重发全部活跃事件订阅：server 新 scope 不持有旧订阅状态，
++    //    不重发 = UI 永远收不到事件流（消息帧静默断流）。
++    //    使用原 id（handlers 对应关系保持），server 端新 scope 以新订阅处理。
++    for (const [id, params] of this.activeEventSubscriptions) {
++      this.sendRequest(RequestType.EventListen, id, params.channelName, params.name, params.arg);
++    }
+   }
+ 
+   dispose(reason?: Error): void {
+diff --git a/packages/rpc/test/event-resub.test.ts b/packages/rpc/test/event-resub.test.ts
+new file mode 100644
+index 0000000..d5f9e5f
+--- /dev/null
++++ b/packages/rpc/test/event-resub.test.ts
+@@ -0,0 +1,82 @@
++import assert from "node:assert/strict";
++import test from "node:test";
++import {
++  Emitter,
++  VSBuffer,
++  SocketProtocol,
++  ChannelClient,
++  ChannelServer,
++  ProtocolMessage,
++  ProtocolMessageType,
++  writeProtocolMessage,
++  type ISocket,
++} from "../src/index.js";
++
++function mkSocket(incoming: Emitter<VSBuffer>, outgoing: Emitter<VSBuffer>): ISocket {
++  return {
++    onData: incoming.event,
++    onClose: new Emitter<void>().event,
++    onEnd: new Emitter<void>().event,
++    write: (b) => setTimeout(() => outgoing.fire(b), 0),
++    end() {},
++    drain() {
++      return Promise.resolve();
++    },
++    dispose() {},
++  };
++}
++
++test("resetTransport 重发活跃事件订阅到新 server", async () => {
++  // ---- 第一个 server ----
++  const toClient1 = new Emitter<VSBuffer>();
++  const toServer1 = new Emitter<VSBuffer>();
++  let server1Listens = 0;
++  const clientProto1 = new SocketProtocol(mkSocket(toClient1, toServer1));
++  const serverProto1 = new SocketProtocol(mkSocket(toServer1, toClient1));
++  const client = new ChannelClient(clientProto1);
++  new ChannelServer(serverProto1, "server").registerChannel("test", {
++    listen: (_ctx, name) => {
++      server1Listens += 1;
++      const e = new Emitter<string>();
++      setTimeout(() => e.fire(`s1-${name}`), 5);
++      return e.event;
++    },
++    call: async () => "ok",
++  });
++  await new Promise((r) => setTimeout(r, 20)); // Initialize
++
++  const ch = client.getChannel("test");
++  const got: string[] = [];
++  ch.listen("onChange")((e: unknown) => got.push(String(e)));
++  await new Promise((r) => setTimeout(r, 30));
++  assert.equal(server1Listens, 1);
++
++  // ---- 热换底到第二个 server ----
++  const toClient2 = new Emitter<VSBuffer>();
++  const toServer2 = new Emitter<VSBuffer>();
++  let server2Listens = 0;
++  // 新 protocol 出生即缓冲（对齐生产：main.tsx onOpenProtocol 里注册缓冲）
++  const clientProto2 = new SocketProtocol(mkSocket(toClient2, toServer2));
++  const buffered: VSBuffer[] = [];
++  clientProto2.onMessage((f) => buffered.push(f));
++  const serverProto2 = new SocketProtocol(mkSocket(toServer2, toClient2));
++  new ChannelServer(serverProto2, "server").registerChannel("test", {
++    listen: (_ctx, name) => {
++      server2Listens += 1;
++      const e = new Emitter<string>();
++      setTimeout(() => e.fire(`s2-${name}`), 5);
++      return e.event;
++    },
++    call: async () => "ok",
++  });
++
++  // resetTransport + 重放
++  (client as unknown as { resetTransport: (p: unknown, f: VSBuffer[]) => void }).resetTransport(
++    clientProto2,
++    buffered.splice(0),
++  );
++
++  await new Promise((r) => setTimeout(r, 60));
++  assert.equal(server2Listens, 1, `重发 listen 到达新 server（got=${server2Listens}）`);
++  assert.ok(got.some((g) => g.startsWith("s2-")), `客户端收到新 server 帧: ${got.join(",")}`);
++});
+diff --git a/test/event-resub.test.ts b/test/event-resub.test.ts
+new file mode 100644
+index 0000000..70a97f4
+--- /dev/null
++++ b/test/event-resub.test.ts
+@@ -0,0 +1,88 @@
++import assert from "node:assert/strict";
++import test from "node:test";
++import {
++  Emitter,
++  VSBuffer,
++  SocketProtocol,
++  ChannelClient,
++  ChannelServer,
++  type ISocket,
++} from "../src/index.js";
++import { ProtocolMessage, writeProtocolMessage, ProtocolMessageType } from "../src/protocol.js";
++
++/** 双端 Channel 对：A=client 侧，B=server 侧（带可追踪的事件订阅）。 */
++function createChannelPair() {
++  const dataA = new Emitter<VSBuffer>(); // client 收
++  const dataB = new Emitter<VSBuffer>(); // server 收
++  let serverGotListen: Array<{ id: number; channel: string; name: string }> = [];
++  const mkSocket = (inc: Emitter<VSBuffer>, out: Emitter<VSBuffer>): ISocket => ({
++    onData: inc.event,
++    onClose: new Emitter<void>().event,
++    onEnd: new Emitter<void>().event,
++    write: (b) => setTimeout(() => out.fire(b), 0),
++    end() {},
++    drain() { return Promise.resolve(); },
++    dispose() {},
++  });
++  const clientProto = new SocketProtocol(mkSocket(dataA, dataB));
++  const serverProto = new SocketProtocol(mkSocket(dataB, dataA));
++  const client = new ChannelClient(clientProto);
++  const events: unknown[][] = [];
++  const server = new ChannelServer(serverProto, "server");
++  server.registerChannel("test", {
++    listen(_ctx, name) {
++      const e = new Emitter<unknown>();
++      serverGotListen.push({ id: serverGotListen.length, channel: "test", name });
++      // 订阅后立即发两帧
++      setTimeout(() => { e.fire(`frame-1-${name}`); e.fire(`frame-2-${name}`); }, 10);
++      return e.event;
++    },
++    call: async () => "ok",
++  });
++  return { client, clientProto, serverProto, dataB, events, serverGotListen: () => serverGotListen };
++}
++
++test("resetTransport 后事件订阅自动重发（server 收到第二次 listen）", async () => {
++  const { client, clientProto, serverGotListen } = createChannelPair();
++  await new Promise((r) => setTimeout(r, 30)); // Initialize
++  const ch = client.getChannel("test");
++  const got: string[] = [];
++  ch.listen("onChange")((e: unknown) => got.push(String(e)));
++  await new Promise((r) => setTimeout(r, 50));
++  assert.equal(serverGotListen().length, 1, "首次 listen 到达 server");
++
++  // 模拟热换底：重置 client 的底层传输为一个新的 server（新 scope，无订阅状态）
++  // 直接复用同一对（真实场景是新 WS）——用 resetTransport 换一个全新 server 端：
++  const dataB2 = new Emitter<VSBuffer>();
++  const dataA2 = new Emitter<VSBuffer>();
++  const server2GotListen: Array<{ name: string }> = [];
++  const serverProto2 = new SocketProtocol(mk(dataA2, dataB2));
++  function mk(inc: Emitter<VSBuffer>, out: Emitter<VSBuffer>): ISocket {
++    return {
++      onData: inc.event,
++      onClose: new Emitter<void>().event,
++      onEnd: new Emitter<void>().event,
++      write: (b) => setTimeout(() => out.fire(b), 0),
++      end() {},
++      drain() { return Promise.resolve(); },
++      dispose() {},
++    };
++  }
++  const server2 = new ChannelServer(serverProto2, "server");
++  server2.registerChannel("test", {
++    listen(_ctx, name) {
++      server2GotListen.push({ name });
++      const e = new Emitter<unknown>();
++      setTimeout(() => e.fire(`frame-after-swap-${name}`), 10);
++      return e.event;
++    },
++    call: async () => "ok",
++  });
++  // 客户端换底：新 socket 接收端为 dataA2（server2 发来），发送端 dataB2
++  (client as any).resetTransport(new SocketProtocol(mk(dataA2, dataB2)));
++  await new Promise((r) => setTimeout(r, 80));
++  assert.equal(server2GotListen.length, 1, "resetTransport 后 listen 自动重发到新 server");
++  assert.equal(server2GotListen[0].name, "onChange");
++  // 客户端持续收到新 server 的帧
++  assert.ok(got.some((g) => g.includes("frame-after-swap")), `应收到新 server 帧: ${got.join(",")}`);
++});
 -- 
 2.53.0
 
