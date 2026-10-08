@@ -1,7 +1,7 @@
 From 96336e91211171eeb035fe21deb187e9ffa7d453 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:13:39 +0800
-Subject: [PATCH 01/25] fix(rpc,client,server): websocket keepalive liveness
+Subject: [PATCH 01/26] fix(rpc,client,server): websocket keepalive liveness
  for half-open detection
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1061,7 +1061,7 @@ index 8a8a827..3cf4514 100644
 From 702fbb92e174c690cf5d7f0e225f2f49ca7506f5 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:38:20 +0800
-Subject: [PATCH 02/25] fix(client,web): heartbeat deadline fires
+Subject: [PATCH 02/26] fix(client,web): heartbeat deadline fires
  onHeartbeatDead before close
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1147,7 +1147,7 @@ index ceec191..690393f 100644
 From 7fbf4b856e5d5feafaa41b0ee495483f4b23c1c7 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 08:34:01 +0800
-Subject: [PATCH 03/25] perf(web,client): seamless background returns, faster
+Subject: [PATCH 03/26] perf(web,client): seamless background returns, faster
  reconnect, lazy banner
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1423,7 +1423,7 @@ index 690393f..4719771 100644
 From ff95eabdaf8f94210f71f06462d5aec9d3cdc8de Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 09:24:05 +0800
-Subject: [PATCH 04/25] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
+Subject: [PATCH 04/26] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
  =?UTF-8?q?=E2=80=94=20no=20React=20remount=20on=20soft=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1847,7 +1847,7 @@ index 4719771..879e9b7 100644
 From 4b5abe08b2b01c1cea956092d373a390cd4f71fd Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:16:18 +0800
-Subject: [PATCH 05/25] fix(ui): md preview text fences invisible on dark UI +
+Subject: [PATCH 05/26] fix(ui): md preview text fences invisible on dark UI +
  mobile settings row squeeze
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2010,7 +2010,7 @@ index 25cd56d..63e8439 100644
 From 5e75977f0225ba67a130dbc3f05f5812bd3c85c8 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:40:45 +0800
-Subject: [PATCH 06/25] fix(web): remove ALL page reloads from connection paths
+Subject: [PATCH 06/26] fix(web): remove ALL page reloads from connection paths
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -2294,7 +2294,7 @@ index 879e9b7..8a3fdbc 100644
 From e02912dd3796eaae65feed51d8a4d88dcf2b8330 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:56:25 +0800
-Subject: [PATCH 07/25] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20navi?=
+Subject: [PATCH 07/26] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20navi?=
  =?UTF-8?q?gation=20=E2=80=94=20zero=20network=20on=20foreground=20return?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2435,7 +2435,7 @@ index 980b78e..4ab2def 100644
 From fdf2b3636481a207012a1db2c9023553fa630a73 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 11:34:06 +0800
-Subject: [PATCH 08/25] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transp?=
+Subject: [PATCH 08/26] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transp?=
  =?UTF-8?q?ort=20=E2=80=94=20zero=20visual=20change=20on=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2817,7 +2817,7 @@ index 8a3fdbc..69f6756 100644
 From e88c05a5cd3f951dc0e23a36f42e741e5558c124 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:04:53 +0800
-Subject: [PATCH 09/25] =?UTF-8?q?fix(ui,web):=20re-subscribe=20stores=20af?=
+Subject: [PATCH 09/26] =?UTF-8?q?fix(ui,web):=20re-subscribe=20stores=20af?=
  =?UTF-8?q?ter=20hot-swap=20=E2=80=94=20data=20flows=20again?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3170,7 +3170,7 @@ index 69f6756..c28f612 100644
 From f01b4739900110b64e308ba5b266b41297ab8483 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:25:49 +0800
-Subject: [PATCH 10/25] =?UTF-8?q?fix(ui):=20model=20submenu=20squeeze=20on?=
+Subject: [PATCH 10/26] =?UTF-8?q?fix(ui):=20model=20submenu=20squeeze=20on?=
  =?UTF-8?q?=20mobile=20=E2=80=94=20wrap=20names,=20width=20follows=20viewp?=
  =?UTF-8?q?ort?=
 MIME-Version: 1.0
@@ -3237,7 +3237,7 @@ index c2387ed..61943f9 100644
 From 3f0a17b47706177b86f424110be1e8de94448367 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:31:29 +0800
-Subject: [PATCH 11/25] =?UTF-8?q?fix(ui,web):=20re-handshake=20after=20hot?=
+Subject: [PATCH 11/26] =?UTF-8?q?fix(ui,web):=20re-handshake=20after=20hot?=
  =?UTF-8?q?-swap=20=E2=80=94=20fixes=20fault.connection.handshakeRequired?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3361,7 +3361,7 @@ index c28f612..80a252c 100644
 From 0ae927b0890afb00c2382e34b5f2a47cd2a68512 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 13:51:57 +0800
-Subject: [PATCH 12/25] fix(web): SW v3 cache bust + /sw-reset.html escape
+Subject: [PATCH 12/26] fix(web): SW v3 cache bust + /sw-reset.html escape
  hatch
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3465,7 +3465,7 @@ index 4ab2def..6338372 100644
 From c9f66c8bce983a5a0229bc8ccd7ab1ae492db8e1 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:19:51 +0800
-Subject: [PATCH 13/25] =?UTF-8?q?fix(web):=20SW=20v4=20=E2=80=94=20drop=20?=
+Subject: [PATCH 13/26] =?UTF-8?q?fix(web):=20SW=20v4=20=E2=80=94=20drop=20?=
  =?UTF-8?q?dirty=20/assets/=20prefetch=20key=20from=20install?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3528,7 +3528,7 @@ index 6338372..3ea1938 100644
 From 4f1063487fbf196f5704a363db6d75fca5dce60c Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:35:37 +0800
-Subject: [PATCH 14/25] =?UTF-8?q?fix(web):=20ignore=20stale=20close=20even?=
+Subject: [PATCH 14/26] =?UTF-8?q?fix(web):=20ignore=20stale=20close=20even?=
  =?UTF-8?q?ts=20=E2=80=94=20stops=20reconnect=20loop=20after=20hot-swap?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3599,7 +3599,7 @@ index 80a252c..dcbd15c 100644
 From 439b3886b10b4be2d1b24caff6a0e64246324363 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:58:29 +0800
-Subject: [PATCH 15/25] =?UTF-8?q?fix(web):=20SW=20v5=20=E2=80=94=20backgro?=
+Subject: [PATCH 15/26] =?UTF-8?q?fix(web):=20SW=20v5=20=E2=80=94=20backgro?=
  =?UTF-8?q?und=20revalidate=20navigations=20(deploy=20path=20restored)?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3724,7 +3724,7 @@ index 3ea1938..e7d6769 100644
 From e1c087861698832f2f3366f7e40f753e1f2f92d7 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:13:29 +0800
-Subject: [PATCH 16/25] =?UTF-8?q?fix(ui):=20usage=20stats=20readability=20?=
+Subject: [PATCH 16/26] =?UTF-8?q?fix(ui):=20usage=20stats=20readability=20?=
  =?UTF-8?q?on=20mobile=20=E2=80=94=20short=20axis=20dates,=20scrollable=20?=
  =?UTF-8?q?heatmap?=
 MIME-Version: 1.0
@@ -3805,7 +3805,7 @@ index 74f4374..4d0119e 100644
 From 2b16f04a279f7bfab703b3c359cae548bb5737d3 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:20:00 +0800
-Subject: [PATCH 17/25] fix(web,client): close stale WebSocket on hot-swap +
+Subject: [PATCH 17/26] fix(web,client): close stale WebSocket on hot-swap +
  crash telemetry
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3897,7 +3897,7 @@ index dcbd15c..baf5ac6 100644
 From a612236eb1a7d0dec7baa02865bbb85f1499ce43 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:59:13 +0800
-Subject: [PATCH 18/25] =?UTF-8?q?fix(web):=20SW=20v7=20=E2=80=94=20network?=
+Subject: [PATCH 18/26] =?UTF-8?q?fix(web):=20SW=20v7=20=E2=80=94=20network?=
  =?UTF-8?q?-first=20for=20zusage=20injected=20scripts?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3958,7 +3958,7 @@ index 829e60f..b13d167 100644
 From 547e7625ecb64f72ecdbe9e6cb9825b17ec32e05 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 16:32:20 +0800
-Subject: [PATCH 19/25] =?UTF-8?q?fix(rpc,client,web):=20replay=20buffered?=
+Subject: [PATCH 19/26] =?UTF-8?q?fix(rpc,client,web):=20replay=20buffered?=
  =?UTF-8?q?=20frames=20on=20hot-swap=20=E2=80=94=20fixes=20handshake=20dea?=
  =?UTF-8?q?dlock?=
 MIME-Version: 1.0
@@ -4111,7 +4111,7 @@ index baf5ac6..37cae36 100644
 From c8f27170dcedd0111e8eba0b5021fad4c9731c22 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 16:43:24 +0800
-Subject: [PATCH 20/25] chore(services): log handshake rejection details for
+Subject: [PATCH 20/26] chore(services): log handshake rejection details for
  intermittent fault diagnosis
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4152,7 +4152,7 @@ index 9fa3233..675de02 100644
 From a54fb72314812838b4d7e77d57881bb669e1ccf0 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 17:17:41 +0800
-Subject: [PATCH 21/25] fix(server,ui): stop killing live connections + silent
+Subject: [PATCH 21/26] fix(server,ui): stop killing live connections + silent
  bounded retry on subscribe failure
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4259,7 +4259,7 @@ index 3cf4514..97eab29 100644
 From ac0f348455c044b4f81ac9ee13bcb6052d03a2b1 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 17:59:57 +0800
-Subject: [PATCH 22/25] chore(services): log hello/initialize arrival on
+Subject: [PATCH 22/26] chore(services): log hello/initialize arrival on
  connection scope
 
 ---
@@ -4315,7 +4315,7 @@ index 675de02..2bed75f 100644
 From d2fe1b5820f301ba300c6d10b6225a0752a1c1ba Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 18:10:02 +0800
-Subject: [PATCH 23/25] =?UTF-8?q?fix(ui):=20handshake=20cache=20invalidati?=
+Subject: [PATCH 23/26] =?UTF-8?q?fix(ui):=20handshake=20cache=20invalidati?=
  =?UTF-8?q?on=20actually=20works=20=E2=80=94=20epoch=20compared=20on=20loo?=
  =?UTF-8?q?kup?=
 MIME-Version: 1.0
@@ -4385,7 +4385,7 @@ index 467ed58..121d219 100644
 From e084a63e9ebb9fb9d7d9569c5bbb86c4c10709e7 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 18:47:59 +0800
-Subject: [PATCH 24/25] =?UTF-8?q?fix(rpc):=20re-send=20active=20event=20su?=
+Subject: [PATCH 24/26] =?UTF-8?q?fix(rpc):=20re-send=20active=20event=20su?=
  =?UTF-8?q?bscriptions=20on=20resetTransport=20=E2=80=94=20restores=20UI?=
  =?UTF-8?q?=20data=20stream?=
 MIME-Version: 1.0
@@ -4664,7 +4664,7 @@ index 0000000..70a97f4
 From 10c480e7376be40c585696c908581c4606f642d3 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 19:03:31 +0800
-Subject: [PATCH 25/25] fix(ui): handshake RPC timeout + extended retry budget
+Subject: [PATCH 25/26] fix(ui): handshake RPC timeout + extended retry budget
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -4754,6 +4754,65 @@ index 5515fa1..adc61c2 100644
  
  /**
   * accepted ACK 后等待权威输入投影的宽限期。
+-- 
+2.53.0
+
+
+From 0ded1e7456cda30c88a3000c0124c001616a045e Mon Sep 17 00:00:00 2001
+From: xhwxt <xhwxt@users.noreply.github.com>
+Date: Thu, 8 Oct 2026 19:16:52 +0800
+Subject: [PATCH 26/26] fix(ui): retry schedule tuned to handshake-timeout
+ rhythm; sessions store budget aligned
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+用户指出 3 分钟退避不合适（恢复期间输入框等 UI 全部不可用，恢复越快越好）。
+重试间隔重排为紧贴握手超时节奏：250ms 起步、8s 周期为主（握手超时 8s 是
+瓶颈，重试紧跟其后），总额度约 75s。sessions-index store 同步对齐（10 次）。
+恢复目标从'容忍 3 分钟'改为'数秒内自动收敛'。
+---
+ packages/ui/src/v4/conversationProjectionStore.ts | 8 ++++----
+ packages/ui/src/v4/sessionsIndexStore.ts          | 6 +++++-
+ 2 files changed, 9 insertions(+), 5 deletions(-)
+
+diff --git a/packages/ui/src/v4/conversationProjectionStore.ts b/packages/ui/src/v4/conversationProjectionStore.ts
+index adc61c2..4b43449 100644
+--- a/packages/ui/src/v4/conversationProjectionStore.ts
++++ b/packages/ui/src/v4/conversationProjectionStore.ts
+@@ -33,11 +33,11 @@ import { uiMemoryDiagnosticsRegistry } from "@/lib/memoryDiagnostics.js";
+  * 手点「重新连接」。subscribeConversationV4 走 start-if-needed，重订阅自身会拉起 runtime，
+  * 所以这里按 sessionsIndexStore 的既定模式做有界退避。
+  */
+-// 有界退避额度：手机切后台回前场的完整恢复窗口（服务重启/网络切换/握手超时
+-// 各需要数秒），3 次额度在真机上经常不足——耗尽即落 error 屏，用户只能手动
+-// 点重新连接。扩到 11 次（约 3 分钟）覆盖全部恢复场景。
++// 有界退避：真机上 connect 失败的主因是握手 RPC 挂起（8s 超时兜底），重试间隔
++// 应紧贴该节奏——第一次重试紧跟超时后立即进行，其后短间隔快速收敛。
++// 额度 12 次总计约 75s：覆盖服务重启/网络切换的完整窗口，且全程无需用户干预。
+ const RUNTIME_RECYCLE_RETRY_DELAYS_MS = [
+-  250, 1_000, 3_000, 5_000, 8_000, 10_000, 15_000, 20_000, 30_000, 45_000, 60_000,
++  250, 1_000, 2_000, 3_000, 5_000, 8_000, 8_000, 8_000, 8_000, 8_000, 8_000, 8_000,
+ ] as const;
+ 
+ /**
+diff --git a/packages/ui/src/v4/sessionsIndexStore.ts b/packages/ui/src/v4/sessionsIndexStore.ts
+index 7e8a36f..a195807 100644
+--- a/packages/ui/src/v4/sessionsIndexStore.ts
++++ b/packages/ui/src/v4/sessionsIndexStore.ts
+@@ -37,7 +37,11 @@ export type SessionsIndexStoreStatus = "idle" | "dormant" | "connecting" | "live
+ const RUNTIME_RESTART_RECONNECT_BASE_DELAY_MS = 100;
+ const RUNTIME_RESTART_RECONNECT_MAX_DELAY_MS = 5_000;
+ const RUNTIME_RESTART_BURST_RESET_MS = 30_000;
+-const TRANSIENT_SUBSCRIBE_RETRY_DELAYS_MS = [250, 1_000, 3_000] as const;
++// 与 conversation store 对齐：真机恢复窗口（握手超时/服务重启）需要更长额度，
++// 3 次耗尽即静默失败会让 sessions 面板停留在旧数据上。
++const TRANSIENT_SUBSCRIBE_RETRY_DELAYS_MS = [
++  250, 1_000, 2_000, 3_000, 5_000, 8_000, 8_000, 8_000, 8_000, 8_000,
++] as const;
+ const ERROR_RECOVERY_RETRY_DELAYS_MS = [5_000, 15_000, 60_000] as const;
+ 
+ function isTransientSubscribeError(error: unknown): boolean {
 -- 
 2.53.0
 
