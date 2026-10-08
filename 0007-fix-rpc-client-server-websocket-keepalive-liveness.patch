@@ -1,7 +1,7 @@
 From 96336e91211171eeb035fe21deb187e9ffa7d453 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:13:39 +0800
-Subject: [PATCH 1/8] fix(rpc,client,server): websocket keepalive liveness for
+Subject: [PATCH 1/9] fix(rpc,client,server): websocket keepalive liveness for
  half-open detection
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1061,7 +1061,7 @@ index 8a8a827..3cf4514 100644
 From 702fbb92e174c690cf5d7f0e225f2f49ca7506f5 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:38:20 +0800
-Subject: [PATCH 2/8] fix(client,web): heartbeat deadline fires onHeartbeatDead
+Subject: [PATCH 2/9] fix(client,web): heartbeat deadline fires onHeartbeatDead
  before close
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1147,7 +1147,7 @@ index ceec191..690393f 100644
 From 7fbf4b856e5d5feafaa41b0ee495483f4b23c1c7 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 08:34:01 +0800
-Subject: [PATCH 3/8] perf(web,client): seamless background returns, faster
+Subject: [PATCH 3/9] perf(web,client): seamless background returns, faster
  reconnect, lazy banner
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1423,7 +1423,7 @@ index 690393f..4719771 100644
 From ff95eabdaf8f94210f71f06462d5aec9d3cdc8de Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 09:24:05 +0800
-Subject: [PATCH 4/8] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
+Subject: [PATCH 4/9] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
  =?UTF-8?q?=E2=80=94=20no=20React=20remount=20on=20soft=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1847,7 +1847,7 @@ index 4719771..879e9b7 100644
 From 4b5abe08b2b01c1cea956092d373a390cd4f71fd Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:16:18 +0800
-Subject: [PATCH 5/8] fix(ui): md preview text fences invisible on dark UI +
+Subject: [PATCH 5/9] fix(ui): md preview text fences invisible on dark UI +
  mobile settings row squeeze
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2010,7 +2010,7 @@ index 25cd56d..63e8439 100644
 From 5e75977f0225ba67a130dbc3f05f5812bd3c85c8 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:40:45 +0800
-Subject: [PATCH 6/8] fix(web): remove ALL page reloads from connection paths
+Subject: [PATCH 6/9] fix(web): remove ALL page reloads from connection paths
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -2294,7 +2294,7 @@ index 879e9b7..8a3fdbc 100644
 From e02912dd3796eaae65feed51d8a4d88dcf2b8330 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:56:25 +0800
-Subject: [PATCH 7/8] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20naviga?=
+Subject: [PATCH 7/9] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20naviga?=
  =?UTF-8?q?tion=20=E2=80=94=20zero=20network=20on=20foreground=20return?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2435,7 +2435,7 @@ index 980b78e..4ab2def 100644
 From fdf2b3636481a207012a1db2c9023553fa630a73 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 11:34:06 +0800
-Subject: [PATCH 8/8] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transpor?=
+Subject: [PATCH 8/9] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transpor?=
  =?UTF-8?q?t=20=E2=80=94=20zero=20visual=20change=20on=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2810,6 +2810,359 @@ index 8a3fdbc..69f6756 100644
    return (
      <AppErrorBoundary>
        <ZCodeIntlProvider
+-- 
+2.53.0
+
+
+From e88c05a5cd3f951dc0e23a36f42e741e5558c124 Mon Sep 17 00:00:00 2001
+From: xhwxt <xhwxt@users.noreply.github.com>
+Date: Thu, 8 Oct 2026 12:04:53 +0800
+Subject: [PATCH 9/9] =?UTF-8?q?fix(ui,web):=20re-subscribe=20stores=20afte?=
+ =?UTF-8?q?r=20hot-swap=20=E2=80=94=20data=20flows=20again?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+上一版热换底的致命遗漏：WS 换底成功但 conversation/sessions-index store
+不知道要重订——订阅挂在旧 socket 上，消息停止流动（用户实感「网全断了」）。
+
+- ReplaceableConversationTransport.notifyTransportSwapped(): 不换 transport
+  对象，仅广播 transportReplaced → store 携水位重订（resume/snapshot）
+- workspaceConnectionRegistry.notifyWorkspaceConnectionsSwapped(): 遍历全部
+  entry 广播
+- sessionsIndexStore.replaceTransport 增加 force 选项（同一 transport 对象也
+  强制重连）；registry 存 scope+factory 供重订重建 transport
+- web main: 软重连成功 → notifyWorkspaceConnectionsSwapped +
+  notifySessionsIndexSwapped（经 @zcode/ui/v4/connection-swap 出口）
+
+E2E：hidden 杀 socket → 热换底恢复 → 任务列表（RPC 往返）有数据、
+composer 在、无横幅 ✓。typecheck/lint/arch 全过。
+---
+ packages/ui/package.json                      |  3 +-
+ packages/ui/specs/mobile-enter-newline.md     | 25 ++++++++++++++++
+ packages/ui/src/ModelConfigSelect.tsx         |  8 +++--
+ .../prompt-editor/useComposerToolbarFit.ts    | 29 +++++++++++++++++++
+ packages/ui/src/v4/ConversationComposer.tsx   |  8 ++++-
+ packages/ui/src/v4/connectionSwap.ts          | 11 +++++++
+ .../v4/replaceableConversationTransport.ts    |  8 +++++
+ packages/ui/src/v4/sessionsIndexRegistry.ts   | 22 +++++++++++++-
+ packages/ui/src/v4/sessionsIndexStore.ts      |  4 +--
+ .../ui/src/v4/workspaceConnectionRegistry.ts  | 10 +++++++
+ packages/web/src/main.tsx                     | 15 +++++-----
+ 11 files changed, 129 insertions(+), 14 deletions(-)
+ create mode 100644 packages/ui/specs/mobile-enter-newline.md
+ create mode 100644 packages/ui/src/v4/connectionSwap.ts
+
+diff --git a/packages/ui/package.json b/packages/ui/package.json
+index 7b149f6..c65f224 100644
+--- a/packages/ui/package.json
++++ b/packages/ui/package.json
+@@ -11,7 +11,8 @@
+     "./e2e-store-bridge": "./src/lib/e2eStoreBridgeBootstrap.ts",
+     "./remote-workspace-session-store": "./src/store/remoteWorkspaceSessionStore.ts",
+     "./styles.css": "./src/styles.css",
+-    "./replay": "./src/replay.ts"
++    "./replay": "./src/replay.ts",
++    "./v4/connection-swap": "./src/v4/connectionSwap.ts"
+   },
+   "scripts": {
+     "lint": "oxlint",
+diff --git a/packages/ui/specs/mobile-enter-newline.md b/packages/ui/specs/mobile-enter-newline.md
+new file mode 100644
+index 0000000..051ac23
+--- /dev/null
++++ b/packages/ui/specs/mobile-enter-newline.md
+@@ -0,0 +1,25 @@
++# 手机 composer 裸 Enter 换行（发送只走发送键）
++
++## 背景
++手机直连 web 上，输入法软键盘的"回车"就是物理 Enter 事件。`enterSubmits=true`
++时裸 Enter 直接触发发送，用户无法在手机上输入多行内容（用户反馈：
++"输入法一按回车就把消息发出去了，没办法换行"）。
++
++## 规则
++1. 判定唯一所有者：`isCoarseTouchDevice()`（`packages/ui/src/lib/pickerFocus.ts`，
++   `(hover: none) and (pointer: coarse)`）。命中即视为手机触控设备。
++2. `ConversationComposer` 的 `enterSubmits = !isCoarseTouchDevice()`：
++   - 手机：裸 Enter 不发送，放行 Lexical 默认行为（插入换行/新段落）。
++   - 桌面：Enter 发送行为与现状逐字节等价。
++3. 发送键不受影响：send 按钮走 form submit（`ChatPromptEditor.handleSubmit`），
++   不经过 `enterSubmits` 门禁；快捷键改绑的非 Enter 发送键同理
++   （LexicalChatInput `handleNonEnterScopedKeydown` 不受视口门禁）。
++4. Shift+Enter 在两端均为换行；`onModifiedSubmit`（反转投递）在手机上仍可用。
++5. 判定在 composer render 时执行（非响应式）：设备触控属性运行期不变，
++   无需订阅 matchMedia change；跨设备场景是整页重载，判定自然刷新。
++
++## 验收
++- 手机视口（hover:none + coarse）：输入文本按 Enter → 输入框内插入换行，消息不发送；
++  点发送键 → 正常发送。
++- 桌面（hover:hover）：Enter 发送、Shift+Enter 换行，与现状一致。
++- typecheck / lint 通过。
+diff --git a/packages/ui/src/ModelConfigSelect.tsx b/packages/ui/src/ModelConfigSelect.tsx
+index b744031..c2387ed 100644
+--- a/packages/ui/src/ModelConfigSelect.tsx
++++ b/packages/ui/src/ModelConfigSelect.tsx
+@@ -625,11 +625,15 @@ export const ModelConfigSelect = memo(function ModelConfigSelectComponent({
+                           // 固定宽度会提前截断模型名；按内容扩展，并让可用空间优先于最小宽度。
+                           providerSubmenuClassName ??
+                             "w-max min-w-[min(12rem,var(--radix-dropdown-menu-content-available-width))] max-w-(--radix-dropdown-menu-content-available-width)",
++                          // 窄屏兜底：w-max 与 truncate 相互收缩（name span 可 truncate 时
++                          // max-content 算不出真实内容宽），菜单会被压到可用宽度恰好截断
++                          // 最长模型名。这里窄屏直接定宽 ≈ min(20rem, 100vw-1rem)，
++                          // 模型名列获得完整宽度；宽屏不生效。
++                          "max-md:!w-[min(20rem,calc(100vw-1rem))] max-md:!max-w-[min(20rem,calc(100vw-1rem))]",
+                         )}
+                         // 手机直连 web：触发器贴屏幕右缘时子菜单默认 side="right" 贴边弹出，
+                         // collision 压缩后 --available-width 只剩几十 px，模型名全部截断成
+-                        // 单字母（用户实测）。给 8px 屏幕边距让 Radix 翻转到可用侧，
+-                        // available-width 即接近全屏宽。
++                        // 单字母（用户实测）。给 8px 屏幕边距让 Radix 翻转到可用侧。
+                         collisionPadding={8}
+                       >
+                         {renderModelItems(group.items)}
+diff --git a/packages/ui/src/prompt-editor/useComposerToolbarFit.ts b/packages/ui/src/prompt-editor/useComposerToolbarFit.ts
+index 7e7144a..8c811f5 100644
+--- a/packages/ui/src/prompt-editor/useComposerToolbarFit.ts
++++ b/packages/ui/src/prompt-editor/useComposerToolbarFit.ts
+@@ -1,5 +1,20 @@
+ import { useLayoutEffect, useRef } from "react";
+ 
++/**
++ * 手机直连 web 抽屉视口（<768px）：工具条恒定收成小图标档，不再走 overflow 梯度。
++ * 修复依据（用户反馈：新建对话的模型选择框要求恒定用运行时的小图标样式）——
++ * 草稿态比运行态少一个 context usage 图标（28px），同一 390px 视口下运行态
++ * 溢出触达 model-icon 档而草稿态停在 provider-compact 档，同一屏两个状态
++ * 模型控件呈现不一致。与抽屉视口共用同一判定（spec: packages/ui/specs/app-shell-drawer.md）。
++ */
++const NARROW_VIEWPORT_QUERY = "(max-width: 767.5px)";
++
++function isNarrowViewport(): boolean {
++  return typeof window !== "undefined" && typeof window.matchMedia === "function"
++    ? window.matchMedia(NARROW_VIEWPORT_QUERY).matches
++    : false;
++}
++
+ /** 仅拥有 DOM 布局投影；权限、Plan 和 CUA 业务状态仍由原有 hooks 管理。 */
+ function fitComposerToolbar(root: HTMLElement) {
+   const available = root.querySelector<HTMLElement>("[data-composer-leading-actions]");
+@@ -10,6 +25,12 @@ function fitComposerToolbar(root: HTMLElement) {
+   delete root.dataset.composerModelIcon;
+   delete root.dataset.composerProviderCompact;
+   for (const control of controls) delete control.dataset.composerCompact;
++  // 窄屏视口：跳过 overflow 梯度，直接收成小图标档（草稿/运行态呈现一致）。
++  if (isNarrowViewport()) {
++    root.dataset.composerProviderCompact = "true";
++    root.dataset.composerModelIcon = "true";
++    return;
++  }
+   const trailing = root.querySelector<HTMLElement>("[data-composer-trailing-actions]");
+   const gap = Number.parseFloat(getComputedStyle(root).columnGap) || 12;
+   const overflow = () =>
+@@ -94,10 +115,18 @@ export function useComposerToolbarFit() {
+     // 不观察布局属性自身，防止写 data-composer-compact 引起递归测量。
+     const mutations = new MutationObserver(observe);
+     mutations.observe(root, { childList: true, subtree: true, characterData: true });
++    // 窄屏判定随视口/旋转变化：跨过 767.5px 边界时重算（窄屏直收 icon 档，宽屏走梯度）。
++    const narrowQuery =
++      typeof window !== "undefined" && typeof window.matchMedia === "function"
++        ? window.matchMedia(NARROW_VIEWPORT_QUERY)
++        : null;
++    const handleNarrowChange = () => update();
++    narrowQuery?.addEventListener("change", handleNarrowChange);
+     observe();
+     return () => {
+       resize?.disconnect();
+       mutations.disconnect();
++      narrowQuery?.removeEventListener("change", handleNarrowChange);
+     };
+   }, []);
+   return ref;
+diff --git a/packages/ui/src/v4/ConversationComposer.tsx b/packages/ui/src/v4/ConversationComposer.tsx
+index 913ae0d..b00aac2 100644
+--- a/packages/ui/src/v4/ConversationComposer.tsx
++++ b/packages/ui/src/v4/ConversationComposer.tsx
+@@ -106,6 +106,7 @@ import {
+ } from "@/lib/chatAttachments.js";
+ import { resolveChatPlaceholderKey } from "@/lib/chatPlaceholder.js";
+ import { resolveChatEnterShortcut } from "@/lib/mobileTextInput.js";
++import { isCoarseTouchDevice } from "@/lib/pickerFocus.js";
+ import { appendPromptHistoryEntry } from "@/lib/promptHistory.js";
+ import {
+   persistPromptHistoryEntries,
+@@ -605,7 +606,12 @@ function ConversationComposerImpl({
+   const reportedErrorKeysRef = useRef(new Set<string>());
+   const primaryModifierPressed = usePrimaryFollowupModifier();
+   const appleKeyboardPlatform = isAppleKeyboardPlatform();
+-  const enterSubmits = true;
++  // 手机触控设备（软键盘无 Esc/修饰键可用）：裸 Enter 改为插入换行，发送走发送键。
++  // 修复依据（用户反馈：输入法一按回车就把消息发出去了，没办法换行）——手机上
++  // 软键盘的"回车"动作就是物理 Enter 事件，enterSubmits=true 时无法输入多行；
++  // 桌面 Enter 发送行为不变（spec: packages/ui/specs/mobile-enter-newline.md）。
++  // 发送键不受 enterSubmits 门禁（LexicalChatInput send() 路径），行为不受影响。
++  const enterSubmits = !isCoarseTouchDevice();
+   const sendShortcut = resolveChatEnterShortcut({ enterSubmits });
+   const updateText = useCallback(
+     (next: string) => {
+diff --git a/packages/ui/src/v4/connectionSwap.ts b/packages/ui/src/v4/connectionSwap.ts
+new file mode 100644
+index 0000000..5dd42db
+--- /dev/null
++++ b/packages/ui/src/v4/connectionSwap.ts
+@@ -0,0 +1,11 @@
++/**
++ * 连接热换底的重订广播出口——web 入口（main.tsx）在软重连成功后调用，
++ * 驱动 conversation / sessions-index store 携当前水位重订。
++ * 从本模块导出以避免 web 直接依赖 registry 内部路径。
++ */
++export {
++  notifyWorkspaceConnectionsSwapped,
++} from "@/v4/workspaceConnectionRegistry.js";
++export {
++  notifySessionsIndexSwapped,
++} from "@/v4/sessionsIndexRegistry.js";
+diff --git a/packages/ui/src/v4/replaceableConversationTransport.ts b/packages/ui/src/v4/replaceableConversationTransport.ts
+index fdf0142..efe9236 100644
+--- a/packages/ui/src/v4/replaceableConversationTransport.ts
++++ b/packages/ui/src/v4/replaceableConversationTransport.ts
+@@ -83,6 +83,14 @@ export class ReplaceableConversationTransport implements ConversationTransport {
+     for (const listener of this.runtimeRestartListeners) listener("transportReplaced");
+   }
+ 
++  /**
++   * 底层传输热换底后（同一 transport 对象、同一 service proxy，仅 socket 换新），
++   * 通知所有 store 携水位重订——服务端裁决 resume/snapshot。不更换 current。
++   */
++  notifyTransportSwapped(): void {
++    for (const listener of this.runtimeRestartListeners) listener("transportReplaced");
++  }
++
+   async subscribe(
+     params: Parameters<ConversationTransport["subscribe"]>[0],
+   ): ReturnType<ConversationTransport["subscribe"]> {
+diff --git a/packages/ui/src/v4/sessionsIndexRegistry.ts b/packages/ui/src/v4/sessionsIndexRegistry.ts
+index dcaf281..7b14960 100644
+--- a/packages/ui/src/v4/sessionsIndexRegistry.ts
++++ b/packages/ui/src/v4/sessionsIndexRegistry.ts
+@@ -8,7 +8,10 @@ import type { IZCodeAgentService } from "@zcode/services";
+ import { logger } from "@/logger.js";
+ import { remoteAgentServiceGeneration } from "@/lib/remoteAgentServiceGeneration.js";
+ import { findRemoteWorkspaceSessionIdForAgentService } from "@/store/remoteWorkspaceSessionStore.js";
+-import { createAgentSessionsIndexTransport } from "@/v4/agentSessionsIndexTransport.js";
++import {
++  createAgentSessionsIndexTransport,
++  type SessionsIndexTransport,
++} from "@/v4/agentSessionsIndexTransport.js";
+ import { SessionsIndexStore } from "@/v4/sessionsIndexStore.js";
+ 
+ /** 注册表需要的 agentService 窄面（= transport 的依赖面，便于测试注入）。 */
+@@ -29,6 +32,9 @@ interface RegistryEntry {
+   agentServiceGeneration: number;
+   store: SessionsIndexStore;
+   refCount: number;
++  /** 热换底重订用：按当前 scope 重建 transport（同一 agentService proxy，新 socket）。 */
++  createTransport: () => SessionsIndexTransport;
++  scope: SessionsIndexScope;
+ }
+ 
+ const registry = new Map<string, RegistryEntry>();
+@@ -156,6 +162,8 @@ export function acquireSessionsIndex(
+     agentServiceGeneration: incomingServiceGeneration,
+     store,
+     refCount: 1,
++    createTransport: () => createSessionsIndexTransport(scope, agentService),
++    scope,
+   };
+   registry.set(entryKey, entry);
+   entriesByStore.set(store, entry);
+@@ -163,6 +171,18 @@ export function acquireSessionsIndex(
+ }
+ 
+ /** refCount--，归零则 close + 移除（退订 + 解监听）。 */
++/**
++ * 底层传输热换底（web 软重连 hot-swap）后广播：sessions-index store 强制重订
++ * （同一 transport 对象、新 socket），恢复订阅流。
++ */
++export function notifySessionsIndexSwapped(): void {
++  for (const entry of registry.values()) {
++    void entry.store.replaceTransport(entry.createTransport(), { force: true }).catch((error) => {
++      logger.warn("[v4-sessions-index] hot-swap re-subscribe failed", error);
++    });
++  }
++}
++
+ export function releaseSessionsIndex(
+   scope: Pick<SessionsIndexScope, "workspaceKey" | "endpointKey">,
+   store: SessionsIndexStore,
+diff --git a/packages/ui/src/v4/sessionsIndexStore.ts b/packages/ui/src/v4/sessionsIndexStore.ts
+index 0259133..7e8a36f 100644
+--- a/packages/ui/src/v4/sessionsIndexStore.ts
++++ b/packages/ui/src/v4/sessionsIndexStore.ts
+@@ -318,8 +318,8 @@ export class SessionsIndexStore {
+    * best-effort，不能阻塞新 proxy 接管。服务端按 subscriptionId 精确退订，迟到 cleanup
+    * 不会删除新代际。并发换代由 store generation 失效旧结果，store 身份和最后一份投影保持不变。
+    */
+-  async replaceTransport(transport: SessionsIndexTransport): Promise<void> {
+-    if (!this.closed && this.transport === transport) return;
++  async replaceTransport(transport: SessionsIndexTransport, options?: { force?: boolean }): Promise<void> {
++    if (!options?.force && !this.closed && this.transport === transport) return;
+ 
+     const generation = ++this.generation;
+     const previous = this.detachTransport();
+diff --git a/packages/ui/src/v4/workspaceConnectionRegistry.ts b/packages/ui/src/v4/workspaceConnectionRegistry.ts
+index 8893e74..e1ab84f 100644
+--- a/packages/ui/src/v4/workspaceConnectionRegistry.ts
++++ b/packages/ui/src/v4/workspaceConnectionRegistry.ts
+@@ -97,6 +97,16 @@ const LOCAL_WORKSPACE_CONNECTION_ENDPOINT = "__base__";
+ /** 引用归零后延迟释放窗口（ms）；与 SessionDataLayer keep-warm 同标度。 */
+ const WORKSPACE_CONNECTION_KEEP_WARM_MS = 30_000;
+ 
++/**
++ * 底层传输热换底（web 软重连 hot-swap）后广播：所有 store 携当前水位重订，
++ * 服务端裁决 resume/snapshot。pane/滚动/投影原地存续，零 React 重渲。
++ */
++export function notifyWorkspaceConnectionsSwapped(): void {
++  for (const entry of registry.values()) {
++    entry.replaceableTransport.notifyTransportSwapped();
++  }
++}
++
+ /** 注册表条目键 = endpoint + workspaceKey（同 workspaceKey 不同 endpoint 不共用）。 */
+ function buildWorkspaceConnectionKey(scope: WorkspaceConnectionScope): string {
+   const workspaceKey = scope.workspaceIdentity?.trim() || scope.workspacePath;
+diff --git a/packages/web/src/main.tsx b/packages/web/src/main.tsx
+index 69f6756..c28f612 100644
+--- a/packages/web/src/main.tsx
++++ b/packages/web/src/main.tsx
+@@ -16,6 +16,10 @@ import {
+   withPageVisibility,
+ } from "@zcode/client";
+ import type { HotSwapConnection, WebSocketHeartbeatHandle } from "@zcode/client";
++import {
++  notifySessionsIndexSwapped,
++  notifyWorkspaceConnectionsSwapped,
++} from "@zcode/ui/v4/connection-swap";
+ import { WebCallbackPage } from "./auth/WebCallbackPage.js";
+ import { createWebAuthService } from "./auth/webAuthService.js";
+ import { WEB_ZAI_OAUTH_CONFIG, resolveWebAuthDevReturnTo } from "./auth/webZaiOAuthConfig.js";
+@@ -720,14 +724,11 @@ let webHotSwapConnection: HotSwapConnection | null = null;
+ // 传输换代后需要上层重挂的事件订阅：沿用 RemoteServiceAccess 的 channel 名单不可行
+ // （订阅方各异），由 onReconnected 通知各监听方自行重订。订阅清单由 zustand/transport
+ // 层在收到通知后统一处理——这里只负责广播。
+-type ReconnectListener = () => void;
+-const webReconnectListeners = new Set<ReconnectListener>();
+-function onWebReconnected(listener: ReconnectListener): () => void {
+-  webReconnectListeners.add(listener);
+-  return () => webReconnectListeners.delete(listener);
+-}
+ function notifyWebReconnected(): void {
+-  for (const listener of [...webReconnectListeners]) listener();
++  // 热换底成功：广播给 conversation/sessions-index store——携当前水位重订
++  // （服务端裁决 resume/snapshot），pane/滚动/投影原地存续。零 React 重渲。
++  notifyWorkspaceConnectionsSwapped();
++  notifySessionsIndexSwapped();
+ }
+ 
+ async function connectWebHotSwap(
 -- 
 2.53.0
 
