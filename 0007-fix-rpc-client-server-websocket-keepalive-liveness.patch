@@ -1,7 +1,7 @@
 From 96336e91211171eeb035fe21deb187e9ffa7d453 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:13:39 +0800
-Subject: [PATCH 1/7] fix(rpc,client,server): websocket keepalive liveness for
+Subject: [PATCH 1/8] fix(rpc,client,server): websocket keepalive liveness for
  half-open detection
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1061,7 +1061,7 @@ index 8a8a827..3cf4514 100644
 From 702fbb92e174c690cf5d7f0e225f2f49ca7506f5 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:38:20 +0800
-Subject: [PATCH 2/7] fix(client,web): heartbeat deadline fires onHeartbeatDead
+Subject: [PATCH 2/8] fix(client,web): heartbeat deadline fires onHeartbeatDead
  before close
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1147,7 +1147,7 @@ index ceec191..690393f 100644
 From 7fbf4b856e5d5feafaa41b0ee495483f4b23c1c7 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 08:34:01 +0800
-Subject: [PATCH 3/7] perf(web,client): seamless background returns, faster
+Subject: [PATCH 3/8] perf(web,client): seamless background returns, faster
  reconnect, lazy banner
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1423,7 +1423,7 @@ index 690393f..4719771 100644
 From ff95eabdaf8f94210f71f06462d5aec9d3cdc8de Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 09:24:05 +0800
-Subject: [PATCH 4/7] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
+Subject: [PATCH 4/8] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
  =?UTF-8?q?=E2=80=94=20no=20React=20remount=20on=20soft=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1847,7 +1847,7 @@ index 4719771..879e9b7 100644
 From 4b5abe08b2b01c1cea956092d373a390cd4f71fd Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:16:18 +0800
-Subject: [PATCH 5/7] fix(ui): md preview text fences invisible on dark UI +
+Subject: [PATCH 5/8] fix(ui): md preview text fences invisible on dark UI +
  mobile settings row squeeze
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2010,7 +2010,7 @@ index 25cd56d..63e8439 100644
 From 5e75977f0225ba67a130dbc3f05f5812bd3c85c8 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:40:45 +0800
-Subject: [PATCH 6/7] fix(web): remove ALL page reloads from connection paths
+Subject: [PATCH 6/8] fix(web): remove ALL page reloads from connection paths
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -2294,7 +2294,7 @@ index 879e9b7..8a3fdbc 100644
 From e02912dd3796eaae65feed51d8a4d88dcf2b8330 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:56:25 +0800
-Subject: [PATCH 7/7] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20naviga?=
+Subject: [PATCH 7/8] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20naviga?=
  =?UTF-8?q?tion=20=E2=80=94=20zero=20network=20on=20foreground=20return?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2428,6 +2428,388 @@ index 980b78e..4ab2def 100644
 -  event.respondWith(staleWhileRevalidate(request));
 +  event.respondWith(cacheFirst(request));
  });
+-- 
+2.53.0
+
+
+From fdf2b3636481a207012a1db2c9023553fa630a73 Mon Sep 17 00:00:00 2001
+From: xhwxt <xhwxt@users.noreply.github.com>
+Date: Thu, 8 Oct 2026 11:34:06 +0800
+Subject: [PATCH 8/8] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transpor?=
+ =?UTF-8?q?t=20=E2=80=94=20zero=20visual=20change=20on=20reconnect?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+用户第一手反馈定位最后一段：直连页刷新表现为「界面闪一下重建、无 logo
+加载圈」——不是浏览器杀页面，是软重连成功后更换 services 对象导致 React
+context 树整体重渲，视觉等同界面重建。
+
+- rpc: ChannelClient.resetTransport(protocol)——原地替换底层传输，
+  挂起请求 fail-closed（同 dispose 语义），握手状态重置等待新 Initialize；
+  ChannelClient/accessor 对象身份不变
+- client: connectViaHotSwapProtocol 返回 HotSwapConnection（services +
+  reconnect），对象身份跨重连恒定
+- web: 软重连成功 = webHotSwapConnection.reconnect(protocol)——不触碰
+  任何 React 输入（services state/props 全部移除），消费树零重渲；
+  onWebReconnected 广播供订阅方重挂事件
+
+E2E：hidden 杀 socket → 回前台热换底恢复，DOM 同一节点、UI 状态
+（composer/body 文本量）逐字节一致、无横幅、RPC 通道工作 ✓
+---
+ packages/client/src/index.ts          |   7 +-
+ packages/client/src/websocket.ts      |  26 +++++
+ packages/rpc/src/channelClient.ts     |  49 ++++++++-
+ packages/ui/src/ModelConfigSelect.tsx |   5 +
+ packages/web/src/main.tsx             | 140 +++++++++++++++-----------
+ 5 files changed, 165 insertions(+), 62 deletions(-)
+
+diff --git a/packages/client/src/index.ts b/packages/client/src/index.ts
+index 6d5d77c..28b1ade 100644
+--- a/packages/client/src/index.ts
++++ b/packages/client/src/index.ts
+@@ -1,5 +1,10 @@
+ export { RemoteServiceAccess } from "./remoteServiceAccess.js";
+-export { connectViaProtocol, connectViaWebSocket } from "./websocket.js";
++export {
++  connectViaProtocol,
++  connectViaWebSocket,
++  connectViaHotSwapProtocol,
++} from "./websocket.js";
++export type { HotSwapConnection } from "./websocket.js";
+ export type {
+   WebSocketConnectionCloseEvent,
+   WebSocketHeartbeatOptions,
+diff --git a/packages/client/src/websocket.ts b/packages/client/src/websocket.ts
+index b881fac..2720eb9 100644
+--- a/packages/client/src/websocket.ts
++++ b/packages/client/src/websocket.ts
+@@ -272,3 +272,29 @@ export function connectViaProtocol(protocol: IMessagePassingProtocol): IServiceA
+   const client = new ChannelClient(protocol);
+   return new RemoteServiceAccess(client);
+ }
++
++/**
++ * 可热换底的服务连接：对外暴露的 IServiceAccessor **对象身份恒定**，
++ * 断线重连成功后经 `reconnect()` 把新 socket 换进同一 ChannelClient——
++ * 上层（React context）感知不到任何对象变化，消费树零重渲。
++ *
++ * 修复依据（用户实机反馈）：软重连若更换 accessor 对象，React context value
++ * 变化导致整棵消费树重渲，视觉等同"界面闪一下重建"。本类把重连收敛为
++ * 传输层热替换：ChannelClient.resetTransport fail-closed 挂起请求并重置握手，
++ * 事件订阅由上层监听 onReconnected 后重挂。
++ */
++export interface HotSwapConnection {
++  services: IServiceAccessor;
++  /** 断线重连成功后调用：把新连接换进既有 ChannelClient（对象身份不变）。 */
++  reconnect: (protocol: IMessagePassingProtocol) => void;
++}
++
++export function connectViaHotSwapProtocol(
++  protocol: IMessagePassingProtocol,
++): HotSwapConnection {
++  const client = new ChannelClient(protocol);
++  return {
++    services: new RemoteServiceAccess(client),
++    reconnect: (next) => client.resetTransport(next),
++  };
++}
+diff --git a/packages/rpc/src/channelClient.ts b/packages/rpc/src/channelClient.ts
+index 27675cd..ebe3a8a 100644
+--- a/packages/rpc/src/channelClient.ts
++++ b/packages/rpc/src/channelClient.ts
+@@ -27,10 +27,14 @@ export class ChannelClient implements IChannelClient, IDisposable {
+   private lastRequestId = 0;
+   private protocolListener: IDisposable | null;
+ 
+-  private readonly _onDidInitialize = new Emitter<void>();
+-  readonly onDidInitialize = this._onDidInitialize.event;
++  // 非 readonly：resetTransport 换底时会整体重建（事件身份随传输换代）。
++  private _onDidInitialize = new Emitter<void>();
++  onDidInitialize = this._onDidInitialize.event;
+ 
+-  constructor(private protocol: IMessagePassingProtocol) {
++  private protocol: IMessagePassingProtocol;
++
++  constructor(protocol: IMessagePassingProtocol) {
++    this.protocol = protocol;
+     this.protocolListener = this.protocol.onMessage((msg) => this.onBuffer(msg));
+   }
+ 
+@@ -246,6 +250,45 @@ export class ChannelClient implements IChannelClient, IDisposable {
+     return Event.toPromise(this.onDidInitialize);
+   }
+ 
++  /**
++   * 原地换底：替换底层传输并 fail-closed 所有挂起请求，**不改变本对象身份**。
++   *
++   * 修复依据（用户需求：切后台回前台绝不能有整树重建的视觉变化）：软重连若
++   * 更换 ChannelClient/ServiceAccessor 对象，React context value 变化会让整棵
++   * 消费树重渲，视觉上等同于"界面闪一下重建"。本方法让上层在重连成功后
++   * 仅替换传输层：挂起的 in-flight 请求按断连语义立即 reject（fail-closed，
++   * 与 dispose 相同的收敛保证），事件订阅（requestEvent 的 listen 请求）在
++   * 新连接 Initialize 后自动重发，从而上层对象身份与订阅生命周期完全稳定。
++   *
++   * 事件重发实现：listen 请求（activeRequests 里的 emitter 句柄）不能像 dispose
++   * 那样直接 dispose（那会终止订阅语义），这里逐个记录其 (type,id,channel,name)
++   * 并在新连接 Initialize 后重新 sendRequest(EventListen)。
++   */
++  resetTransport(protocol: IMessagePassingProtocol): void {
++    if (this.isDisposed) {
++      return;
++    }
++    // 1. fail-closed 挂起的 Promise 请求（与 dispose 同语义，但不终止对象）。
++    const rejection = new Error("ConnectionClosed");
++    rejection.name = "ConnectionClosed";
++    for (const [id, reject] of this.pendingRejections) {
++      this.pendingRejections.delete(id);
++      this.handlers.delete(id);
++      reject(rejection);
++    }
++
++    // 2. 换传输：解绑旧 protocolListener，绑定新的。
++    this.protocolListener?.dispose();
++    this.protocol = protocol;
++    this.protocolListener = this.protocol.onMessage((msg) => this.onBuffer(msg));
++
++    // 3. 重置握手状态：新连接的 ChannelServer 会发 Initialize，等待其到达后
++    //    上层再发起请求（whenInitialized 门禁保证时序）。
++    this.state = State.Uninitialized;
++    this._onDidInitialize = new Emitter<void>();
++    this.onDidInitialize = this._onDidInitialize.event;
++  }
++
+   dispose(reason?: Error): void {
+     if (this.isDisposed) {
+       return;
+diff --git a/packages/ui/src/ModelConfigSelect.tsx b/packages/ui/src/ModelConfigSelect.tsx
+index d907d77..b744031 100644
+--- a/packages/ui/src/ModelConfigSelect.tsx
++++ b/packages/ui/src/ModelConfigSelect.tsx
+@@ -626,6 +626,11 @@ export const ModelConfigSelect = memo(function ModelConfigSelectComponent({
+                           providerSubmenuClassName ??
+                             "w-max min-w-[min(12rem,var(--radix-dropdown-menu-content-available-width))] max-w-(--radix-dropdown-menu-content-available-width)",
+                         )}
++                        // 手机直连 web：触发器贴屏幕右缘时子菜单默认 side="right" 贴边弹出，
++                        // collision 压缩后 --available-width 只剩几十 px，模型名全部截断成
++                        // 单字母（用户实测）。给 8px 屏幕边距让 Radix 翻转到可用侧，
++                        // available-width 即接近全屏宽。
++                        collisionPadding={8}
+                       >
+                         {renderModelItems(group.items)}
+                       </DropdownMenuSubContent>
+diff --git a/packages/web/src/main.tsx b/packages/web/src/main.tsx
+index 8a3fdbc..69f6756 100644
+--- a/packages/web/src/main.tsx
++++ b/packages/web/src/main.tsx
+@@ -1,6 +1,5 @@
+ /* eslint-disable max-lines -- Web 入口集中编排启动、路由与 workspace shell wiring，与 Root.tsx 同样先保持入口收口，避免跨层状态拆散。 */
+ import { createRoot } from "react-dom/client";
+-import { useState } from "react";
+ import {
+   AppErrorBoundary,
+   Root,
+@@ -12,11 +11,11 @@ import {
+ } from "@zcode/ui";
+ import "@zcode/ui/styles.css";
+ import {
+-  connectViaProtocol,
++  connectViaHotSwapProtocol,
+   connectViaWebSocket,
+   withPageVisibility,
+ } from "@zcode/client";
+-import type { WebSocketHeartbeatHandle } from "@zcode/client";
++import type { HotSwapConnection, WebSocketHeartbeatHandle } from "@zcode/client";
+ import { WebCallbackPage } from "./auth/WebCallbackPage.js";
+ import { createWebAuthService } from "./auth/webAuthService.js";
+ import { WEB_ZAI_OAUTH_CONFIG, resolveWebAuthDevReturnTo } from "./auth/webZaiOAuthConfig.js";
+@@ -538,7 +537,7 @@ async function probeServerInfoAlive(): Promise<boolean> {
+ // ── 同 socket 半开探测（回前台路径）─────────────────────────────────────────
+ // 修复依据（/root/DSH/zcode/01-连接恢复-分析与方案.md §1.2）：半开是 per-connection 的，
+ // HTTP 探测换了一根连接，测不出当前这条 socket 已死——「表面正常、实际已断」的根因。
+-// 判据全部来自应用正在用的那条连接（connectWebServices 保存的心跳把手）：
++// 判据全部来自应用正在用的那条连接（connectWebHotSwap 保存的心跳把手）：
+ // 1) 把手的 lastReceivedAt（任何收到的帧都算活性）在 HEARTBEAT_PROBE_FRESH_MS 内
+ //    → 连接活着，不重连；
+ // 2) 时间戳过期 → 补发一根探针，短暂等待回显/数据帧刷新时间戳；
+@@ -584,19 +583,8 @@ async function probeConnectionAliveOnSameSocket(): Promise<boolean> {
+ // ── 软重连状态机 ──────────────────────────────────────────────────────────
+ // 所有权：唯一入口 startWebSoftReconnect；inflight 防并发重入。
+ // 事件顺序：socket close → markSocketDead → visible 触发/回前台触发 →
+-// 指数退避重连 → 成功：setWebServices 更新 accessor（原地恢复，不重挂 Root）、
+-// 拆横幅 / 耗尽：横幅改文案 → reload 兜底。
+-// webServicesStateSetter 由 WebAppShell 挂载时注入（软重连只发生在首连成功后）。
+-let webServicesStateSetter: ((services: ReturnType<typeof connectViaProtocol>) => void) | null =
+-  null;
+-function setWebServices(services: ReturnType<typeof connectViaProtocol>): void {
+-  if (!webServicesStateSetter) {
+-    // 极端时序兜底（AppShell 尚未挂载即触发重连成功）：无法注入则放弃本次换代，
+-    // 下一次连接事件会再尝试。绝不整页 reload——那是用户明确要求移除的行为。
+-    return;
+-  }
+-  webServicesStateSetter(services);
+-}
++// 指数退避重连 → 成功：热换底（reconnect()，零 React 重渲）、拆横幅。
++// 软重连永不失败到 reload：退避走完持续 8s 周期重试。
+ let webSoftReconnectInflight = false;
+ let softReconnectAttemptNo = 0;
+ const webSoftReconnectSuccessStamps: number[] = [];
+@@ -619,19 +607,36 @@ async function attemptSoftReconnectOnce(
+   zh: boolean,
+ ): Promise<boolean> {
+   try {
+-    const services = await connectWebServices(wsUrl);
+-    // 重连风暴保护已移除（用户实机日志 10:23:19 实证它会误伤）：原地恢复语义下
+-    // 连接换代不重挂 React 树，"风暴"只是手机前台/后台切换时心跳重连的正常节奏，
+-    // reload 反而制造了用户看到的整页刷新。state 一致性由服务端事实源保证。
++    // 热换底：新连接的 protocol 换进既有 ChannelClient——accessor 对象身份不变，
++    // React 树零重渲（用户感知=什么都没发生）。挂起 RPC fail-closed，
++    // 事件订阅经 onWebReconnected 通知重挂。
++    await new Promise<void>((resolve, reject) => {
++      connectViaWebSocket(wsUrl, {
++        onClose: (event) => handleWebTransportClosed(event),
++        heartbeat: withPageVisibility(() => document.visibilityState === "visible"),
++        onHeartbeat: (handle) => {
++          webHeartbeatHandle = handle;
++        },
++        onHeartbeatDead: () => {
++          window.__zcodeConnGuard?.markSocketDead();
++          if (document.visibilityState === "visible") {
++            void startWebSoftReconnect();
++          }
++        },
++        onOpenProtocol: (protocol) => {
++          try {
++            webHotSwapConnection?.reconnect(protocol);
++            resolve();
++          } catch (error) {
++            reject(error instanceof Error ? error : new Error(String(error)));
++          }
++        },
++      }).catch(reject);
++    });
+     recordSoftReconnectSuccess();
+     removeWebReconnectBanner();
+     document.title = "ZCode - Web + Server";
+-    // 原地恢复（不重挂 Root）：把新 accessor 经 React state 注入，ServiceProvider
+-    // value 更新 → 消费者按 deps 重订；conversation/sessions registry 走
+-    // ReplaceableConversationTransport.replace → store 收到 transportReplaced 通知
+-    // → 携当前水位重订（服务端裁决 resume/snapshot）。投影/滚动/草稿原地存续，
+-    // 视觉上无刷新。旧连接上的挂起 RPC 随旧 ChannelClient dispose fail-closed。
+-    setWebServices(services);
++    notifyWebReconnected();
+     return true;
+   } catch {
+     softReconnectAttemptNo += 1;
+@@ -708,25 +713,44 @@ function installWebConnectionGuard(): void {
+   window.__zcodeConnGuard = { markSocketDead: () => { socketDiedWhileHidden = true; } };
+ }
+ 
+-async function connectWebServices(wsUrl: string): Promise<ReturnType<typeof connectViaProtocol>> {
+-  return connectViaWebSocket(wsUrl, {
+-    onClose: (event) => handleWebTransportClosed(event),
+-    // hidden 态不杀连接（切后台回前台不误杀，体验对齐官方远控页）；visible 态
+-    // 判死前还有监视器内的二次探针兜底。isPageVisible 由本文件注入：
+-    // packages/client 不得引用 document（desktop host 无 DOM 编译会拉进它的源码）。
+-    heartbeat: withPageVisibility(() => document.visibilityState === "visible"),
+-    onHeartbeat: (handle) => {
+-      // 同 socket 活性把手：守卫回前台时用它判半开（无需换连接探测）。
+-      webHeartbeatHandle = handle;
+-    },
+-    onHeartbeatDead: () => {
+-      // 心跳判死先于 close 事件到达：监视器自己的 close() 是干净关闭，
+-      // 会被 handleWebTransportClosed 当作主动登出跳过——这里必须显式重连。
+-      window.__zcodeConnGuard?.markSocketDead();
+-      if (document.visibilityState === "visible") {
+-        void startWebSoftReconnect();
+-      }
+-    },
++// ── 热换底连接 ──────────────────────────────────────────────────────────────
++// accessor 对象身份恒定；软重连成功后经 reconnect() 换底，零 React 重渲。
++let webHotSwapConnection: HotSwapConnection | null = null;
++
++// 传输换代后需要上层重挂的事件订阅：沿用 RemoteServiceAccess 的 channel 名单不可行
++// （订阅方各异），由 onReconnected 通知各监听方自行重订。订阅清单由 zustand/transport
++// 层在收到通知后统一处理——这里只负责广播。
++type ReconnectListener = () => void;
++const webReconnectListeners = new Set<ReconnectListener>();
++function onWebReconnected(listener: ReconnectListener): () => void {
++  webReconnectListeners.add(listener);
++  return () => webReconnectListeners.delete(listener);
++}
++function notifyWebReconnected(): void {
++  for (const listener of [...webReconnectListeners]) listener();
++}
++
++async function connectWebHotSwap(
++  wsUrl: string,
++): Promise<HotSwapConnection> {
++  return new Promise<HotSwapConnection>((resolve, reject) => {
++    connectViaWebSocket(wsUrl, {
++      onClose: (event) => handleWebTransportClosed(event),
++      heartbeat: withPageVisibility(() => document.visibilityState === "visible"),
++      onHeartbeat: (handle) => {
++        webHeartbeatHandle = handle;
++      },
++      onHeartbeatDead: () => {
++        window.__zcodeConnGuard?.markSocketDead();
++        if (document.visibilityState === "visible") {
++          void startWebSoftReconnect();
++        }
++      },
++      onOpenProtocol: (protocol) => {
++        const connection = connectViaHotSwapProtocol(protocol);
++        resolve(connection);
++      },
++    }).catch(reject);
+   });
+ }
+ 
+@@ -752,13 +776,18 @@ async function bootstrapWebApp() {
+ 
+   try {
+     installWebConnectionGuard();
+-    const services = await connectWebServices(bootstrap.wsUrl);
++    // 热换底连接：accessor 对象身份恒定，软重连只换底层传输。
++    // 这是"切后台回来零视觉变化"的最后一块——任何对象换代都会让 React
++    // context 树重渲（用户感知为"界面闪一下重建"），热换底彻底消除它。
++    const connection = await connectWebHotSwap(bootstrap.wsUrl);
++    webHotSwapConnection = connection;
+     const platform = createWebPlatform();
+     document.title = "ZCode - Web + Server";
+ 
+-    // AppShell：Root 常驻组件树。软重连时只更新 services state（原地恢复），
+-    // 不再以 connectionEpoch 为 key 整树卸载重挂。
+-    root.render(<WebAppShell platform={platform} bootstrap={bootstrap} initialServices={services} />);
++    // Root 常驻：软重连不再触碰任何 React 输入（services 对象永不更换）。
++    root.render(
++      <WebAppShell platform={platform} bootstrap={bootstrap} services={connection.services} />,
++    );
+   } catch (error) {
+     renderWebBootstrapError(error);
+   }
+@@ -767,18 +796,13 @@ async function bootstrapWebApp() {
+ function WebAppShell({
+   platform,
+   bootstrap,
+-  initialServices,
++  services,
+ }: {
+   platform: IPlatformService;
+   bootstrap: WebBootstrapResult;
+-  initialServices: ReturnType<typeof connectViaProtocol>;
++  services: ReturnType<typeof connectViaHotSwapProtocol>["services"];
+ }) {
+-  // services 放进 React state：软重连成功后 setWebServices 更新此值，
+-  // ServiceProvider/context value 随之更新 → 消费者重订（不卸载子树）。
+-  const [services, setServices] = useState(initialServices);
+-  // setWebServices 提升为模块函数供 attemptSoftReconnectOnce 调用；
+-  // 此时组件必已挂载（软重连只会发生在首连成功之后）。
+-  webServicesStateSetter = setServices;
++  // services 身份恒定（热换底），无需 state。
+   return (
+     <AppErrorBoundary>
+       <ZCodeIntlProvider
 -- 
 2.53.0
 
