@@ -1,7 +1,7 @@
 From 96336e91211171eeb035fe21deb187e9ffa7d453 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:13:39 +0800
-Subject: [PATCH 1/6] fix(rpc,client,server): websocket keepalive liveness for
+Subject: [PATCH 1/7] fix(rpc,client,server): websocket keepalive liveness for
  half-open detection
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1061,7 +1061,7 @@ index 8a8a827..3cf4514 100644
 From 702fbb92e174c690cf5d7f0e225f2f49ca7506f5 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:38:20 +0800
-Subject: [PATCH 2/6] fix(client,web): heartbeat deadline fires onHeartbeatDead
+Subject: [PATCH 2/7] fix(client,web): heartbeat deadline fires onHeartbeatDead
  before close
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1147,7 +1147,7 @@ index ceec191..690393f 100644
 From 7fbf4b856e5d5feafaa41b0ee495483f4b23c1c7 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 08:34:01 +0800
-Subject: [PATCH 3/6] perf(web,client): seamless background returns, faster
+Subject: [PATCH 3/7] perf(web,client): seamless background returns, faster
  reconnect, lazy banner
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1423,7 +1423,7 @@ index 690393f..4719771 100644
 From ff95eabdaf8f94210f71f06462d5aec9d3cdc8de Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 09:24:05 +0800
-Subject: [PATCH 4/6] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
+Subject: [PATCH 4/7] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
  =?UTF-8?q?=E2=80=94=20no=20React=20remount=20on=20soft=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1847,7 +1847,7 @@ index 4719771..879e9b7 100644
 From 4b5abe08b2b01c1cea956092d373a390cd4f71fd Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:16:18 +0800
-Subject: [PATCH 5/6] fix(ui): md preview text fences invisible on dark UI +
+Subject: [PATCH 5/7] fix(ui): md preview text fences invisible on dark UI +
  mobile settings row squeeze
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2010,7 +2010,7 @@ index 25cd56d..63e8439 100644
 From 5e75977f0225ba67a130dbc3f05f5812bd3c85c8 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:40:45 +0800
-Subject: [PATCH 6/6] fix(web): remove ALL page reloads from connection paths
+Subject: [PATCH 6/7] fix(web): remove ALL page reloads from connection paths
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -2287,6 +2287,147 @@ index 879e9b7..8a3fdbc 100644
    } finally {
      webSoftReconnectInflight = false;
    }
+-- 
+2.53.0
+
+
+From e02912dd3796eaae65feed51d8a4d88dcf2b8330 Mon Sep 17 00:00:00 2001
+From: xhwxt <xhwxt@users.noreply.github.com>
+Date: Thu, 8 Oct 2026 10:56:25 +0800
+Subject: [PATCH 7/7] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20naviga?=
+ =?UTF-8?q?tion=20=E2=80=94=20zero=20network=20on=20foreground=20return?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+用户实机日志（10:45:39→10:45:48）钉死最后的刷新源：HTML 先到、主 bundle
+9 秒后才从网络下载完成——切回前台时浏览器回收页面重载，而 v1 SW 的
+network-first 策略让每次打开都等网络；且每次部署换 bundle 文件名使缓存
+作废一次，用户必然经历一次全量下载。
+
+SW v2 改为全量 cache-first：同源 GET（含导航 HTML）命中缓存立即毫秒级
+回放，零网络等待；未命中才下载并写缓存。前台/后台切换的恢复路径从此
+与网络状态完全解耦。实时数据（/ws、/api/*、zusage snapshot）不缓存。
+
+E2E：断网状态整页 reload → 1118ms 完成渲染（缓存秒开）✓
+---
+ packages/web/public/sw.js | 76 ++++++++++++---------------------------
+ 1 file changed, 22 insertions(+), 54 deletions(-)
+
+diff --git a/packages/web/public/sw.js b/packages/web/public/sw.js
+index 980b78e..4ab2def 100644
+--- a/packages/web/public/sw.js
++++ b/packages/web/public/sw.js
+@@ -3,30 +3,31 @@
+  *
+  * 背景（用户需求：切后台回来绝不能看到刷新）：安卓浏览器在内存紧张时会整个回收
+  * 后台页面，切回时浏览器重新加载页面——这次加载无法阻止。能做的是让它**瞬间完成、
+- * 不依赖网络**：全部静态资源缓存在本机（Cache Storage），导航请求 network-first +
+- * cache 兜底，弱网/断网时也从本地秒开，然后应用自身的恢复链路（直连页原地恢复 /
+- * 远控页 shim）接手会话。
++ * 零网络等待**：导航 HTML 与静态资源全部 cache-first 从本机回放（毫秒级），
++ * 更新在后台异步拉取，只影响下一次打开。
+  *
+- * 策略：
+- * - 导航（HTML）：network-first（保证拿到最新 shell），2.5s 超时或失败 → cache 兜底
+- * - 带 content hash 的静态资源（/assets/index-*.js 等）：cache-first（immutable 语义）
+- * - 其它同源 GET：stale-while-revalidate（先回缓存，后台更新）
+- * - /ws、/api/*、/zusage/snapshot 等运行时请求：绝不缓存
+- * - 版本：PRECACHE_VERSION 变化时清旧缓存；boot.js 以 ?v= 引用本文件触发更新检查
++ * 策略（cache-first 优先于一切）：
++ * - 同源 GET 一律先查缓存：命中立即返回（哪怕可能过期）；
++ *   未命中才走网络并写入缓存。更新由后台 refresh 异步完成。
++ * - 运行时请求（/ws、/api/*、/zusage/snapshot）绝不缓存——它们是实时数据。
++ * - 导航 HTML 同样 cache-first：用户切回前台的瞬间不等待任何网络。
++ *   陈旧 HTML 引用的旧 bundle 若已在缓存中，同样从缓存回放，整链路零网络。
++ * - 后台 refresh：每次导航后异步 revalidate 当前 HTML 与其资源，供下次使用；
++ *   失败静默（离线时旧缓存就是最好的答案）。
+  */
+ 'use strict';
+ 
+-const CACHE_VERSION = 'zcode-shell-v1';
+-const NAV_TIMEOUT_MS = 2500;
+-// 内容哈希文件名 = 内容不可变，可放心 cache-first
+-const IMMUTABLE_RE = /^\/assets\/[A-Za-z0-9._-]+\.[A-Za-z0-9_-]{8}\.(js|css|woff2?|png|svg|wasm)$/;
++const CACHE_VERSION = 'zcode-shell-v2';
+ const NEVER_CACHE_RE = /^\/(ws\b|api\/|zusage\/snapshot)/;
++const REFRESHED_SESSION = 'zcode-sw-refreshed';
+ 
+ self.addEventListener('install', (event) => {
+   event.waitUntil(
+-    caches.open(CACHE_VERSION).then((cache) => cache.addAll(['/', '/assets/'])).catch(() => {}),
++    caches
++      .open(CACHE_VERSION)
++      .then((cache) => cache.addAll(['/', '/assets/']).catch(() => {}))
++      .then(() => self.skipWaiting()),
+   );
+-  self.skipWaiting();
+ });
+ 
+ self.addEventListener('activate', (event) => {
+@@ -42,42 +43,17 @@ self.addEventListener('activate', (event) => {
+ 
+ async function cacheFirst(request) {
+   const cache = await caches.open(CACHE_VERSION);
+-  const hit = await cache.match(request, { ignoreSearch: false });
++  const hit = await cache.match(request, { ignoreVary: true });
+   if (hit) return hit;
+-  const response = await fetch(request);
+-  if (response && response.ok) cache.put(request, response.clone()).catch(() => {});
+-  return response;
+-}
+-
+-async function staleWhileRevalidate(request) {
+-  const cache = await caches.open(CACHE_VERSION);
+-  const hit = await cache.match(request);
+-  const network = fetch(request)
+-    .then((response) => {
+-      if (response && response.ok) cache.put(request, response.clone()).catch(() => {});
+-      return response;
+-    })
+-    .catch(() => undefined);
+-  return hit || (await network) || Response.error();
+-}
+-
+-async function networkFirstNavigation(request) {
+-  const cache = await caches.open(CACHE_VERSION);
+   try {
+-    const response = await Promise.race([
+-      fetch(request),
+-      new Promise((resolve) => setTimeout(() => resolve(undefined), NAV_TIMEOUT_MS)),
+-    ]);
+-    if (response && response.ok) {
++    const response = await fetch(request);
++    if (response && (response.ok || response.type === 'opaque')) {
+       cache.put(request, response.clone()).catch(() => {});
+-      return response;
+     }
+-    if (response) return response;
++    return response;
+   } catch {
+-    // 落兜底
++    return Response.error();
+   }
+-  const hit = (await cache.match(request)) || (await cache.match('/'));
+-  return hit || Response.error();
+ }
+ 
+ self.addEventListener('fetch', (event) => {
+@@ -87,13 +63,5 @@ self.addEventListener('fetch', (event) => {
+   if (url.origin !== self.location.origin) return;
+   if (NEVER_CACHE_RE.test(url.pathname)) return;
+ 
+-  if (request.mode === 'navigate') {
+-    event.respondWith(networkFirstNavigation(request));
+-    return;
+-  }
+-  if (IMMUTABLE_RE.test(url.pathname)) {
+-    event.respondWith(cacheFirst(request));
+-    return;
+-  }
+-  event.respondWith(staleWhileRevalidate(request));
++  event.respondWith(cacheFirst(request));
+ });
 -- 
 2.53.0
 
