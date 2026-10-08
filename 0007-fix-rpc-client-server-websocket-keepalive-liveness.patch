@@ -1,7 +1,7 @@
 From 96336e91211171eeb035fe21deb187e9ffa7d453 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:13:39 +0800
-Subject: [PATCH 1/3] fix(rpc,client,server): websocket keepalive liveness for
+Subject: [PATCH 1/4] fix(rpc,client,server): websocket keepalive liveness for
  half-open detection
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1061,7 +1061,7 @@ index 8a8a827..3cf4514 100644
 From 702fbb92e174c690cf5d7f0e225f2f49ca7506f5 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:38:20 +0800
-Subject: [PATCH 2/3] fix(client,web): heartbeat deadline fires onHeartbeatDead
+Subject: [PATCH 2/4] fix(client,web): heartbeat deadline fires onHeartbeatDead
  before close
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1147,7 +1147,7 @@ index ceec191..690393f 100644
 From 7fbf4b856e5d5feafaa41b0ee495483f4b23c1c7 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 08:34:01 +0800
-Subject: [PATCH 3/3] perf(web,client): seamless background returns, faster
+Subject: [PATCH 3/4] perf(web,client): seamless background returns, faster
  reconnect, lazy banner
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1416,6 +1416,430 @@ index 690393f..4719771 100644
      onHeartbeat: (handle) => {
        // 同 socket 活性把手：守卫回前台时用它判半开（无需换连接探测）。
        webHeartbeatHandle = handle;
+-- 
+2.53.0
+
+
+From ff95eabdaf8f94210f71f06462d5aec9d3cdc8de Mon Sep 17 00:00:00 2001
+From: xhwxt <xhwxt@users.noreply.github.com>
+Date: Thu, 8 Oct 2026 09:24:05 +0800
+Subject: [PATCH 4/4] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
+ =?UTF-8?q?=E2=80=94=20no=20React=20remount=20on=20soft=20reconnect?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+用户要求：切后台回来绝不能看到刷新。此前软重连仍以 connectionEpoch 为
+key 整树卸载重挂 <Root>，视觉等价整页刷新；右侧文件面板偶发打不开
+（骨架屏卡死）也是同一根因——打到死 socket 的 RPC 永久挂起。
+
+原地恢复的三块拼图（协议/存储层本已具备，缺的只是接线）：
+- registry: base（__base__）与 remote 一律持有 ReplaceableConversationTransport；
+  service 换代走 replace()（store 收到 transportReplaced → 携水位重订，
+  服务端裁决 resume/snapshot），不再 delete+stale 删旧建新
+- sessionsIndexRegistry: replaceTransport 分支去掉 remote-only 限制，
+  local 换代同样原地切换
+- web main.tsx: services 改 React state（WebAppShell），软重连成功后
+  setWebServices 注入新 accessor——context 更新、消费者按 deps 重订，
+  Root 常驻不卸载；connectionEpoch 重挂机制删除
+- useTabPersistence: 恢复是一次性启动语义（restoreAttemptedRef 守卫），
+  accessor 换代不重跑 restoreTabs（会重建 tab id 闪断会话视图）；
+  cleanup 收敛 lifecycle 防止 isRestoring 永久悬挂
+
+E2E（inplace-verify.mjs）：hidden 期服务端 terminate socket（真断线）→
+回前台软重连成功，DOM 节点同一（未重挂）、epoch 标记保留、无横幅；
+visible 态杀 socket 同样原地恢复；健康切回零重连；远控页无回归。
+spec: packages/ui/specs/base-service-replace.md
+---
+ packages/ui/specs/base-service-replace.md     |  61 ++++++++++
+ packages/ui/src/hooks/useTabPersistence.ts    |  19 +++
+ packages/ui/src/v4/sessionsIndexRegistry.ts   |  39 ++++---
+ .../ui/src/v4/workspaceConnectionRegistry.ts  |  35 ++++--
+ packages/web/src/main.tsx                     | 109 ++++++++++--------
+ 5 files changed, 192 insertions(+), 71 deletions(-)
+ create mode 100644 packages/ui/specs/base-service-replace.md
+
+diff --git a/packages/ui/specs/base-service-replace.md b/packages/ui/specs/base-service-replace.md
+new file mode 100644
+index 0000000..557656e
+--- /dev/null
++++ b/packages/ui/specs/base-service-replace.md
+@@ -0,0 +1,61 @@
++# base service 换代的原地恢复（web 直连页软重连不重挂）
++
++## 背景
++
++web 直连页（packages/web）软重连此前以 `connectionEpoch` 为 React key 整树卸载重挂
++`<Root>`，视觉等价整页刷新。而服务端/协议层本已具备无损恢复的全部要素：
++
++- V4 订阅协议支持 resume（客户端携 base {logEpoch, seq}，服务端裁决续增量或重快照）；
++- 投影 store（conversationProjectionStore）的 `handleRuntimeRestart("transportReplaced")`
++  正是「transport 换代、保留水位 fresh subscribe」的原地恢复路径；
++- `ReplaceableConversationTransport` 已在远程 workspace 线承担「service proxy 换代期间
++  transport 身份稳定」的职责，但 registry 只为 remote endpoint 创建它。
++
++用户要求：切后台→回前台**绝不能看到刷新**。误杀已由心跳 hidden 豁免清零；
++真断线（后台 socket 被系统回收）后原地恢复成为最后一段体感差距。
++
++## 规则
++
++### R1 registry：base（__base__）换代改走 replace，不再删旧建新
++`workspaceConnectionRegistry.acquireWorkspaceConnection`：
++- 无论 endpoint 是否 remote，entry 一律持有 `ReplaceableConversationTransport`；
++- 命中 existing 且 `agentService` 对象不同（base 换代）时：更新 entry 的
++  agentService/agentServiceGeneration，`replaceableTransport.replace(新 transport)`，
++  refCount++——**不 delete、不 stale**。旧 transport 的订阅退订与延迟清理由
++  ReplaceableConversationTransport.replace 内部协议负责（best-effort unsubscribe +
++  `transportReplaced` 通知）；
++- 「本地 __base__ service 换代 = 旧条目失效」的旧语义废止：store/layer 身份保持，
++  conversation 投影与 sessions-index store 跨换代存续。
++
++### R2 sessionsIndexRegistry：local 换代同样 replaceTransport
++`acquireSessionsIndex` 的 replaceTransport 分支去掉 remote-only 限制：existing 命中且
++generation 更新时，一律 `store.replaceTransport(新 transport)`；旧分支的 delete+close
++仅保留给「existing 存在但 endpoint/语义不匹配」的兜底。
++
++### R3 web bootstrap：软重连成功后更新 services，不再重挂 Root
++`packages/web/src/main.tsx`：
++- `services` 由模块变量改为 React state（`useState<IServiceAccessor | null>`）；
++- 软重连成功：新 accessor `setWebServices(next)` → `ServiceProvider` value 更新 →
++  React 重渲消费者（不卸载子树），hooks 依 deps 自然重订；
++- `connectionEpoch` 重挂机制删除；横幅/退避/风暴保护语义不变；
++- bootstrap 首连与软重连共用同一 render 路径（首次 setState 由 null → accessor）。
++
++### R4 useTabPersistence：恢复是一次性启动语义
++restore effect 以「本 hook 实例从未完成过恢复」为唯一执行条件（ref 守卫）；
++settingService/accessor 换代不重跑 restoreTabs（restoreTabs 会重建 tab id，二次执行
++会让已挂载会话视图闪断）。persist 路径正常跟随最新 settingService。
++
++### R5 幂等边界（换代重跑审计结论）
++- broadcast/bots effect：subscribe+cleanup 模式，deps 变化自动重订 ✓
++- Root 的 `registerBaseWorkspaceServices` effect：重复注册是幂等 set ✓
++- useModelSelectionServiceView 等 useSyncExternalStore 消费者：重订 ✓
++- 会话输入草稿、滚动记忆：属 UI-local/sessionStorage，不依赖 service 对象身份 ✓
++
++## 验收
++
++- E2E：hidden 期间服务端杀掉 socket（真断线）→ 回前台守卫探测判死 → 软重连 →
++  **Root 未卸载**（以 `document` 内 React root 标记/全局计数证伪整树重挂）、
++  会话视图仍在原 tab、横幅按惰性语义出现/不出现；
++- 健康切回零扰动（继承上一轮）；黑洞半开判死路径（继承）不受影响；
++- 桌面端不受影响：registry 对 desktop 场景的语义不变（base 只注册一次，不换代）。
++- typecheck / lint / 单测通过。
+diff --git a/packages/ui/src/hooks/useTabPersistence.ts b/packages/ui/src/hooks/useTabPersistence.ts
+index 87da79c..df6be02 100644
+--- a/packages/ui/src/hooks/useTabPersistence.ts
++++ b/packages/ui/src/hooks/useTabPersistence.ts
+@@ -126,6 +126,10 @@ export function useTabPersistence({
+   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+   const shouldRestoreSession = Boolean(settingService && restoreSession);
+   const initialRestoreFullyCompletedRef = useRef(!shouldRestoreSession);
++  // 恢复是一次性启动语义：settingService/accessor 换代（web 软重连原地恢复）不得
++  // 重跑 restoreTabs——它会重建 tab id，已挂载会话视图会闪断。本 ref 记录「本 hook
++  // 实例是否已经启动过恢复流程」，启动过即永久跳过（persist 路径照常跟随新 service）。
++  const restoreAttemptedRef = useRef(false);
+   const [restoreLifecycle, setRestoreLifecycle] = useState<TabPersistenceRestoreLifecycle>(() => ({
+     settingService,
+     restoreSession,
+@@ -159,6 +163,12 @@ export function useTabPersistence({
+       });
+       return;
+     }
++    // 换代守卫：恢复流程已在旧 service 上启动过（无论成败）→ 不重跑。
++    // lifecycle 状态保持完成态，persist effect 会改用新 settingService。
++    if (restoreAttemptedRef.current) {
++      return;
++    }
++    restoreAttemptedRef.current = true;
+ 
+     let cancelled = false;
+     let cancelDeferredRestore: (() => void) | null = null;
+@@ -269,6 +279,15 @@ export function useTabPersistence({
+       });
+ 
+     return () => {
++      // 换代（settingService 更新）触发的 cleanup：恢复流程本身无法转移，但 lifecycle
++      // 必须收敛到完成态——否则 isRestoring/hasCompletedInitialRestore 永久悬挂。
++      // 恢复守卫（restoreAttemptedRef）保证不会因此重跑 restoreTabs。
++      if (!initialRestoreFullyCompletedRef.current) {
++        initialRestoreFullyCompletedRef.current = true;
++      }
++      setRestoreLifecycle((prev) =>
++        prev.completed ? prev : { ...prev, completed: true, fullyCompleted: true },
++      );
+       cancelled = true;
+       cancelDeferredRestore?.();
+     };
+diff --git a/packages/ui/src/v4/sessionsIndexRegistry.ts b/packages/ui/src/v4/sessionsIndexRegistry.ts
+index af48723..dcaf281 100644
+--- a/packages/ui/src/v4/sessionsIndexRegistry.ts
++++ b/packages/ui/src/v4/sessionsIndexRegistry.ts
+@@ -112,28 +112,33 @@ export function acquireSessionsIndex(
+   }
+   if (
+     existing &&
+-    (scope.endpointKey ?? LOCAL_SESSIONS_INDEX_ENDPOINT) !== LOCAL_SESSIONS_INDEX_ENDPOINT
++    existing.agentService !== agentService &&
++    incomingServiceGeneration > existing.agentServiceGeneration
+   ) {
++    // service proxy 换代（远程 attachment 重连 / web base 软重连）：复用同一 store，
++    // 按 generation 单向、串行切换 transport。store generation 会同步 detach 旧
++    // transport 并让迟到结果失效。本地 __base__ 换代不再 delete+close（那是整树
++    // 重挂语义），与远程同样原地 replace——sessions 面板状态跨换代存续。
+     existing.refCount += 1;
+-    // 远程 RPC proxy 换代期间，不同 React consumer 可能短暂持有新旧 service。
+-    // CLI 对同 connection/topic 只保留后一次订阅；若这里并行创建第二个 store，旧 store
+-    // 会继续显示 live/空快照却永远收不到帧。远程 scope 固定复用同一 store，并按 service
+-    // generation 单向、串行切换 transport；迟到的旧 consumer 不允许把 transport 切回去。
+-    if (incomingServiceGeneration > existing.agentServiceGeneration) {
+-      existing.agentService = agentService;
+-      existing.agentServiceGeneration = incomingServiceGeneration;
+-      const transport = createSessionsIndexTransport(scope, agentService);
+-      // 任何中间 proxy 的 subscribe 都可能永久 pending，换代不能排队等待
+-      // 前一条 I/O。store generation 会同步 detach 旧 transport，并让迟到结果自行失效。
+-      void existing.store.replaceTransport(transport).catch((error) => {
+-        logger.warn("[v4-sessions-index] remote transport replacement failed", error);
+-      });
+-    }
++    existing.agentService = agentService;
++    existing.agentServiceGeneration = incomingServiceGeneration;
++    const transport = createSessionsIndexTransport(scope, agentService);
++    // 任何中间 proxy 的 subscribe 都可能永久 pending，换代不能排队等待
++    // 前一条 I/O。store generation 会同步 detach 旧 transport，并让迟到结果自行失效。
++    void existing.store.replaceTransport(transport).catch((error) => {
++      logger.warn("[v4-sessions-index] transport replacement failed", error);
++    });
+     return existing.store;
+   }
+   if (existing) {
+-    // 本地 __base__ 保持原生命周期：service 实例换代时创建新 store；旧 consumer
+-    // 后续 cleanup 仍按 store 身份精确 release，不能误减新条目的 refCount。
++    if (existing.agentService === agentService) {
++      // buildSessionsIndexEntryKey 带了 generation 时不会走到这里；不带 generation
++      // 的调用方（同 scope 不同 key 组合）按同 service 复用。
++      existing.refCount += 1;
++      return existing.store;
++    }
++    // generation 不满足单向切换（迟到/回退的旧 proxy）：清场重建，防止 transport
++    // 被切回旧代。旧 consumer 后续 cleanup 仍按 store 身份精确 release。
+     registry.delete(entryKey);
+     if (existing.refCount <= 0) {
+       existing.store.close();
+diff --git a/packages/ui/src/v4/workspaceConnectionRegistry.ts b/packages/ui/src/v4/workspaceConnectionRegistry.ts
+index 2c2834b..8893e74 100644
+--- a/packages/ui/src/v4/workspaceConnectionRegistry.ts
++++ b/packages/ui/src/v4/workspaceConnectionRegistry.ts
+@@ -72,11 +72,20 @@ interface RegistryEntry {
+   agentService: WorkspaceConnectionAgentService;
+   agentServiceGeneration: number;
+   transport: ConversationTransport;
+-  replaceableTransport: ReplaceableConversationTransport | null;
++  /**
++   * base（__base__）与 remote endpoint 一律持有可换代 transport：service proxy 换代
++   * （web 软重连 / 远程 attachment 重连）时 replace() 保持 transport 身份稳定，
++   * conversation store 经 transportReplaced 通知携水位重订（服务端裁决 resume/snapshot），
++   * pane 与滚动/投影状态原地存续——不再删旧建新。
++   */
++  replaceableTransport: ReplaceableConversationTransport;
+   layer: SessionDataLayer;
+   refCount: number;
+   keepWarmTimer: ReturnType<typeof setTimeout> | null;
+-  /** 本地 service 换代后被移出注册表的旧条目：末位 lease release 时立即 dispose。 */
++  /**
++   * 语义不匹配（endpoint 变化等）被移出注册表的旧条目：末位 lease release 时立即
++   * dispose。service 换代不再置位此标记（replace 路径保持条目身份）。
++   */
+   stale: boolean;
+ }
+ 
+@@ -175,6 +184,20 @@ export function acquireWorkspaceConnection(
+       existing.keepWarmTimer = null;
+     }
+     entry = existing;
++    // base（__base__）service 换代：与 remote 相同的 replace 路径。transport 身份不变，
++    // store/layer 存续；旧 transport 订阅由 ReplaceableConversationTransport.replace
++    // 内部协议清理，store 经 transportReplaced 携水位重订（原地恢复，不重挂 React 树）。
++    if (existing.agentService !== agentService) {
++      existing.agentService = agentService;
++      existing.agentServiceGeneration = incomingServiceGeneration;
++      existing.replaceableTransport.replace(
++        createAgentConversationTransport(agentService, {
++          workspacePath: scope.workspacePath,
++          ...(scope.workspaceIdentity ? { workspaceIdentity: scope.workspaceIdentity } : {}),
++          ...(createLocalMediaPreviewUrl ? { createLocalMediaPreviewUrl } : {}),
++        }),
++      );
++    }
+     logger.lifecycle.info("v4 workspace connection reused", {
+       event: "v4.workspace_connection.reused",
+       isRemote,
+@@ -186,7 +209,7 @@ export function acquireWorkspaceConnection(
+     });
+   } else {
+     if (existing) {
+-      // 本地 __base__ service 换代：旧条目失效移出；
++      // 语义不匹配（同 key 但 remoteSessionId 不同的冲突）：旧条目失效移出；
+       // 无人持有则立即清场，有人持有则由其末位 release 清场。
+       registry.delete(key);
+       existing.stale = true;
+@@ -199,10 +222,8 @@ export function acquireWorkspaceConnection(
+       ...(scope.workspaceIdentity ? { workspaceIdentity: scope.workspaceIdentity } : {}),
+       ...(createLocalMediaPreviewUrl ? { createLocalMediaPreviewUrl } : {}),
+     });
+-    const replaceableTransport = isRemote
+-      ? new ReplaceableConversationTransport(initialTransport)
+-      : null;
+-    const transport = replaceableTransport ?? initialTransport;
++    const replaceableTransport = new ReplaceableConversationTransport(initialTransport);
++    const transport = replaceableTransport;
+     entry = {
+       key,
+       agentService,
+diff --git a/packages/web/src/main.tsx b/packages/web/src/main.tsx
+index 4719771..879e9b7 100644
+--- a/packages/web/src/main.tsx
++++ b/packages/web/src/main.tsx
+@@ -1,5 +1,6 @@
+ /* eslint-disable max-lines -- Web 入口集中编排启动、路由与 workspace shell wiring，与 Root.tsx 同样先保持入口收口，避免跨层状态拆散。 */
+ import { createRoot } from "react-dom/client";
++import { useState } from "react";
+ import {
+   AppErrorBoundary,
+   Root,
+@@ -604,8 +605,19 @@ async function probeConnectionAliveOnSameSocket(): Promise<boolean> {
+ // ── 软重连状态机 ──────────────────────────────────────────────────────────
+ // 所有权：唯一入口 startWebSoftReconnect；inflight 防并发重入。
+ // 事件顺序：socket close → markSocketDead → visible 触发/回前台触发 →
+-// 指数退避重连 → 成功：epoch+1 重挂 Root、拆横幅 / 耗尽：横幅改文案 → reload 兜底。
+-let webConnectionEpoch = 0;
++// 指数退避重连 → 成功：setWebServices 更新 accessor（原地恢复，不重挂 Root）、
++// 拆横幅 / 耗尽：横幅改文案 → reload 兜底。
++// webServicesStateSetter 由 WebAppShell 挂载时注入（软重连只发生在首连成功后）。
++let webServicesStateSetter: ((services: ReturnType<typeof connectViaProtocol>) => void) | null =
++  null;
++function setWebServices(services: ReturnType<typeof connectViaProtocol>): void {
++  if (!webServicesStateSetter) {
++    // 极端时序兜底（AppShell 尚未挂载即触发重连成功）：退回整页 reload 语义。
++    reloadWebIfAllowed();
++    return;
++  }
++  webServicesStateSetter(services);
++}
+ let webSoftReconnectInflight = false;
+ let softReconnectAttemptNo = 0;
+ const webSoftReconnectSuccessStamps: number[] = [];
+@@ -636,31 +648,14 @@ async function attemptSoftReconnectOnce(
+       reloadWebIfAllowed();
+       return true;
+     }
+-    webConnectionEpoch += 1;
+     removeWebReconnectBanner();
+-    const platform = createWebPlatform();
+     document.title = "ZCode - Web + Server";
+-    // key=connectionEpoch 强制整树卸载重挂：旧连接上的所有 hook/ store 订阅
+-    // 随之销毁，新树全部走服务端事实源（快照重放），语义与整页 reload 等价。
+-    root.render(
+-      <AppErrorBoundary key={webConnectionEpoch}>
+-        <ZCodeIntlProvider
+-          key={webConnectionEpoch}
+-          settingService={services.settingService}
+-          broadcastService={services.broadcastService}
+-        >
+-          <Root
+-            key={webConnectionEpoch}
+-            services={services}
+-            platform={platform}
+-            restoreSession
+-            preferDirectoryBrowser
+-            supportsEmbeddedBrowser={false}
+-            allowRemoteWorkspace={false}
+-          />
+-        </ZCodeIntlProvider>
+-      </AppErrorBoundary>,
+-    );
++    // 原地恢复（不重挂 Root）：把新 accessor 经 React state 注入，ServiceProvider
++    // value 更新 → 消费者按 deps 重订；conversation/sessions registry 走
++    // ReplaceableConversationTransport.replace → store 收到 transportReplaced 通知
++    // → 携当前水位重订（服务端裁决 resume/snapshot）。投影/滚动/草稿原地存续，
++    // 视觉上无刷新。旧连接上的挂起 RPC 随旧 ChannelClient dispose fail-closed。
++    setWebServices(services);
+     return true;
+   } catch {
+     softReconnectAttemptNo += 1;
+@@ -784,31 +779,51 @@ async function bootstrapWebApp() {
+     const platform = createWebPlatform();
+     document.title = "ZCode - Web + Server";
+ 
+-    root.render(
+-      <AppErrorBoundary>
+-        <ZCodeIntlProvider
+-          settingService={services.settingService}
+-          broadcastService={services.broadcastService}
+-        >
+-          <Root
+-            services={services}
+-            platform={platform}
+-            initialWorkspaceAbsPath={bootstrap.initialWorkspaceAbsPath}
+-            initialWorkspaceIdentity={bootstrap.initialWorkspaceIdentity}
+-            initialWorkspacePurpose={bootstrap.initialWorkspacePurpose}
+-            initialTaskId={bootstrap.initialTaskId}
+-            restoreSession={bootstrap.restoreSession}
+-            allowOpenWorkspace={bootstrap.allowOpenWorkspace}
+-            preferDirectoryBrowser
+-            supportsEmbeddedBrowser={false}
+-            allowRemoteWorkspace={false}
+-          />
+-        </ZCodeIntlProvider>
+-      </AppErrorBoundary>,
+-    );
++    // AppShell：Root 常驻组件树。软重连时只更新 services state（原地恢复），
++    // 不再以 connectionEpoch 为 key 整树卸载重挂。
++    root.render(<WebAppShell platform={platform} bootstrap={bootstrap} initialServices={services} />);
+   } catch (error) {
+     renderWebBootstrapError(error);
+   }
+ }
+ 
++function WebAppShell({
++  platform,
++  bootstrap,
++  initialServices,
++}: {
++  platform: IPlatformService;
++  bootstrap: WebBootstrapResult;
++  initialServices: ReturnType<typeof connectViaProtocol>;
++}) {
++  // services 放进 React state：软重连成功后 setWebServices 更新此值，
++  // ServiceProvider/context value 随之更新 → 消费者重订（不卸载子树）。
++  const [services, setServices] = useState(initialServices);
++  // setWebServices 提升为模块函数供 attemptSoftReconnectOnce 调用；
++  // 此时组件必已挂载（软重连只会发生在首连成功之后）。
++  webServicesStateSetter = setServices;
++  return (
++    <AppErrorBoundary>
++      <ZCodeIntlProvider
++        settingService={services.settingService}
++        broadcastService={services.broadcastService}
++      >
++        <Root
++          services={services}
++          platform={platform}
++          initialWorkspaceAbsPath={bootstrap.initialWorkspaceAbsPath}
++          initialWorkspaceIdentity={bootstrap.initialWorkspaceIdentity}
++          initialWorkspacePurpose={bootstrap.initialWorkspacePurpose}
++          initialTaskId={bootstrap.initialTaskId}
++          restoreSession={bootstrap.restoreSession}
++          allowOpenWorkspace={bootstrap.allowOpenWorkspace}
++          preferDirectoryBrowser
++          supportsEmbeddedBrowser={false}
++          allowRemoteWorkspace={false}
++        />
++      </ZCodeIntlProvider>
++    </AppErrorBoundary>
++  );
++}
++
+ void bootstrapWebApp();
 -- 
 2.53.0
 
