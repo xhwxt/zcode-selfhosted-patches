@@ -1,7 +1,7 @@
 From 96336e91211171eeb035fe21deb187e9ffa7d453 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:13:39 +0800
-Subject: [PATCH 01/15] fix(rpc,client,server): websocket keepalive liveness
+Subject: [PATCH 01/17] fix(rpc,client,server): websocket keepalive liveness
  for half-open detection
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1061,7 +1061,7 @@ index 8a8a827..3cf4514 100644
 From 702fbb92e174c690cf5d7f0e225f2f49ca7506f5 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:38:20 +0800
-Subject: [PATCH 02/15] fix(client,web): heartbeat deadline fires
+Subject: [PATCH 02/17] fix(client,web): heartbeat deadline fires
  onHeartbeatDead before close
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1147,7 +1147,7 @@ index ceec191..690393f 100644
 From 7fbf4b856e5d5feafaa41b0ee495483f4b23c1c7 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 08:34:01 +0800
-Subject: [PATCH 03/15] perf(web,client): seamless background returns, faster
+Subject: [PATCH 03/17] perf(web,client): seamless background returns, faster
  reconnect, lazy banner
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1423,7 +1423,7 @@ index 690393f..4719771 100644
 From ff95eabdaf8f94210f71f06462d5aec9d3cdc8de Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 09:24:05 +0800
-Subject: [PATCH 04/15] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
+Subject: [PATCH 04/17] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
  =?UTF-8?q?=E2=80=94=20no=20React=20remount=20on=20soft=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1847,7 +1847,7 @@ index 4719771..879e9b7 100644
 From 4b5abe08b2b01c1cea956092d373a390cd4f71fd Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:16:18 +0800
-Subject: [PATCH 05/15] fix(ui): md preview text fences invisible on dark UI +
+Subject: [PATCH 05/17] fix(ui): md preview text fences invisible on dark UI +
  mobile settings row squeeze
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2010,7 +2010,7 @@ index 25cd56d..63e8439 100644
 From 5e75977f0225ba67a130dbc3f05f5812bd3c85c8 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:40:45 +0800
-Subject: [PATCH 06/15] fix(web): remove ALL page reloads from connection paths
+Subject: [PATCH 06/17] fix(web): remove ALL page reloads from connection paths
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -2294,7 +2294,7 @@ index 879e9b7..8a3fdbc 100644
 From e02912dd3796eaae65feed51d8a4d88dcf2b8330 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:56:25 +0800
-Subject: [PATCH 07/15] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20navi?=
+Subject: [PATCH 07/17] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20navi?=
  =?UTF-8?q?gation=20=E2=80=94=20zero=20network=20on=20foreground=20return?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2435,7 +2435,7 @@ index 980b78e..4ab2def 100644
 From fdf2b3636481a207012a1db2c9023553fa630a73 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 11:34:06 +0800
-Subject: [PATCH 08/15] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transp?=
+Subject: [PATCH 08/17] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transp?=
  =?UTF-8?q?ort=20=E2=80=94=20zero=20visual=20change=20on=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2817,7 +2817,7 @@ index 8a3fdbc..69f6756 100644
 From e88c05a5cd3f951dc0e23a36f42e741e5558c124 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:04:53 +0800
-Subject: [PATCH 09/15] =?UTF-8?q?fix(ui,web):=20re-subscribe=20stores=20af?=
+Subject: [PATCH 09/17] =?UTF-8?q?fix(ui,web):=20re-subscribe=20stores=20af?=
  =?UTF-8?q?ter=20hot-swap=20=E2=80=94=20data=20flows=20again?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3170,7 +3170,7 @@ index 69f6756..c28f612 100644
 From f01b4739900110b64e308ba5b266b41297ab8483 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:25:49 +0800
-Subject: [PATCH 10/15] =?UTF-8?q?fix(ui):=20model=20submenu=20squeeze=20on?=
+Subject: [PATCH 10/17] =?UTF-8?q?fix(ui):=20model=20submenu=20squeeze=20on?=
  =?UTF-8?q?=20mobile=20=E2=80=94=20wrap=20names,=20width=20follows=20viewp?=
  =?UTF-8?q?ort?=
 MIME-Version: 1.0
@@ -3237,7 +3237,7 @@ index c2387ed..61943f9 100644
 From 3f0a17b47706177b86f424110be1e8de94448367 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:31:29 +0800
-Subject: [PATCH 11/15] =?UTF-8?q?fix(ui,web):=20re-handshake=20after=20hot?=
+Subject: [PATCH 11/17] =?UTF-8?q?fix(ui,web):=20re-handshake=20after=20hot?=
  =?UTF-8?q?-swap=20=E2=80=94=20fixes=20fault.connection.handshakeRequired?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3361,7 +3361,7 @@ index c28f612..80a252c 100644
 From 0ae927b0890afb00c2382e34b5f2a47cd2a68512 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 13:51:57 +0800
-Subject: [PATCH 12/15] fix(web): SW v3 cache bust + /sw-reset.html escape
+Subject: [PATCH 12/17] fix(web): SW v3 cache bust + /sw-reset.html escape
  hatch
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3465,7 +3465,7 @@ index 4ab2def..6338372 100644
 From c9f66c8bce983a5a0229bc8ccd7ab1ae492db8e1 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:19:51 +0800
-Subject: [PATCH 13/15] =?UTF-8?q?fix(web):=20SW=20v4=20=E2=80=94=20drop=20?=
+Subject: [PATCH 13/17] =?UTF-8?q?fix(web):=20SW=20v4=20=E2=80=94=20drop=20?=
  =?UTF-8?q?dirty=20/assets/=20prefetch=20key=20from=20install?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3528,7 +3528,7 @@ index 6338372..3ea1938 100644
 From 4f1063487fbf196f5704a363db6d75fca5dce60c Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:35:37 +0800
-Subject: [PATCH 14/15] =?UTF-8?q?fix(web):=20ignore=20stale=20close=20even?=
+Subject: [PATCH 14/17] =?UTF-8?q?fix(web):=20ignore=20stale=20close=20even?=
  =?UTF-8?q?ts=20=E2=80=94=20stops=20reconnect=20loop=20after=20hot-swap?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3599,7 +3599,7 @@ index 80a252c..dcbd15c 100644
 From 439b3886b10b4be2d1b24caff6a0e64246324363 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:58:29 +0800
-Subject: [PATCH 15/15] =?UTF-8?q?fix(web):=20SW=20v5=20=E2=80=94=20backgro?=
+Subject: [PATCH 15/17] =?UTF-8?q?fix(web):=20SW=20v5=20=E2=80=94=20backgro?=
  =?UTF-8?q?und=20revalidate=20navigations=20(deploy=20path=20restored)?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3717,6 +3717,179 @@ index 3ea1938..e7d6769 100644
 +  }
    event.respondWith(cacheFirst(request));
  });
+-- 
+2.53.0
+
+
+From e1c087861698832f2f3366f7e40f753e1f2f92d7 Mon Sep 17 00:00:00 2001
+From: xhwxt <197754549+xhwxt@users.noreply.github.com>
+Date: Thu, 8 Oct 2026 15:13:29 +0800
+Subject: [PATCH 16/17] =?UTF-8?q?fix(ui):=20usage=20stats=20readability=20?=
+ =?UTF-8?q?on=20mobile=20=E2=80=94=20short=20axis=20dates,=20scrollable=20?=
+ =?UTF-8?q?heatmap?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+手机直连 web（390px 视口，内容列 ~256px）使用统计两处不可读（用户截图）：
+
+1. 每日 Token 趋势图 X 轴：interval={0} minTickGap={0} 强制全部刻度渲染，
+   7 个 "10月N日"（~45px/个）在 256px 里互相重叠成 "10月11日12日…"。
+   - 轴标签改短格式 M/d（formatShortDay；跨年补年份前缀），tooltip 保留
+     完整 formatDay 文案不损失信息
+   - 去掉 interval={0}/minTickGap={0} 和手写抽稀 formatter，交给 recharts
+     按可用宽度自动抽稀：桌面宽图仍近每日刻度，手机窄图只保留放得下的
+     刻度（实测 390px 显示 10/2·10/4·10/6·10/8 四个，零重叠）
+
+2. Token 活动热力图：52 周列在 264px 容器里每列 ~4px 成纯噪点，月份标签
+   全部截断成"1…"。恢复每列最小可读宽度（10px）+ 容器 overflow-x-auto：
+   数据仍一次性完整渲染（维持"完整展示"语义），手机上横向滑动查看；
+   宽屏容器宽度足够，无滚动条，行为不变。
+
+验证：typecheck / lint / build 过；390px 视口截图确认刻度无重叠、
+热力图可滑动。SW 版本随发版递增（v5→v6）保证手机拿到新 bundle。
+---
+ .../AppUsageDailyModelTrendChart.tsx          | 20 ++++---------------
+ 1 file changed, 4 insertions(+), 16 deletions(-)
+
+diff --git a/packages/ui/src/settings/usage-stats/AppUsageDailyModelTrendChart.tsx b/packages/ui/src/settings/usage-stats/AppUsageDailyModelTrendChart.tsx
+index 74f4374..4d0119e 100644
+--- a/packages/ui/src/settings/usage-stats/AppUsageDailyModelTrendChart.tsx
++++ b/packages/ui/src/settings/usage-stats/AppUsageDailyModelTrendChart.tsx
+@@ -65,14 +65,6 @@ export function resolveDailyModelTooltipTokenParts(
+   };
+ }
+ 
+-function shouldShowDailyChartAxisLabel(index: number, total: number): boolean {
+-  if (total <= 14) {
+-    return true;
+-  }
+-  const step = total > 45 ? 7 : 5;
+-  return index === 0 || index === total - 1 || index % step === 0;
+-}
+-
+ // 短轴标签：M/d。手机图宽 ~256px 时 "10月8日"（~45px）放不下 7 个刻度，
+ // 会重叠成 "10月11日12日…"（用户截图）；"10/8"（~28px）可以放下。
+ function formatShortDay(locale: string, dateKey: string | null): string {
+@@ -209,11 +201,6 @@ export function AppUsageDailyModelTrendChart({ snapshot }: { snapshot: AppUsageS
+     () => buildAppUsageDailyModelChartViewModel({ intl, locale, snapshot }),
+     [intl, locale, snapshot],
+   );
+-  const shouldShowAxisLabel = useCallback(
+-    (_value: string, index: number) =>
+-      shouldShowDailyChartAxisLabel(index, chartData.length) ? _value : "",
+-    [chartData.length],
+-  );
+   const formatTooltipLabel = useCallback(
+     (_: unknown, payload: readonly { payload?: unknown }[]) => {
+       const row = payload[0]?.payload as DailyModelChartRow | undefined;
+@@ -304,10 +291,11 @@ export function AppUsageDailyModelTrendChart({ snapshot }: { snapshot: AppUsageS
+                 dataKey="label"
+                 tickLine={false}
+                 axisLine={false}
+-                interval={0}
+-                minTickGap={0}
++                // 之前 interval={0} minTickGap={0} 强制每个刻度都渲染，手机 ~256px
++                // 图宽放不下全部短日期，相邻 "10/1""10/2" 仍然贴在一起（实测截图）。
++                // 改为交给 recharts 按可用宽度自动抽稀：桌面宽图仍是每日/常规步进，
++                // 手机窄图自动只保留放得下的刻度。
+                 tickMargin={8}
+-                tickFormatter={shouldShowAxisLabel}
+               />
+               <YAxis hide domain={[0, maxTokens]} />
+               <ChartTooltip cursor={false} content={tooltipContent} />
+-- 
+2.53.0
+
+
+From 2b16f04a279f7bfab703b3c359cae548bb5737d3 Mon Sep 17 00:00:00 2001
+From: xhwxt <xhwxt@users.noreply.github.com>
+Date: Thu, 8 Oct 2026 15:20:00 +0800
+Subject: [PATCH 17/17] fix(web,client): close stale WebSocket on hot-swap +
+ crash telemetry
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+用户 15:09 日志实证：type=reload cnt 8→11 每 2-3 秒一次 = 页面重载循环，
+且每次导航都由 SW referer 发起（cache miss 后回源）。engine 判定为
+renderer 崩溃自动重载循环——每轮重连遗留一条保持打开的旧 WebSocket
+（resetTransport 只换 protocol 引用，旧 ws 未关），server 端连接堆积+
+terminate，资源泄漏放大。
+
+- main.tsx: onOpenSocket 捕获新 ws 并显式关闭上一条（两条连接路径统一）
+- boot.js: crash 检测遗嘱——beforeunload 清除、crash 来不及清，启动时
+  上报 favicon.svg?crash=1，nginx 日志可区分「用户刷新」与「崩溃自动重载」
+---
+ packages/web/public/sw.js |  2 +-
+ packages/web/src/main.tsx | 28 ++++++++++++++++++++++++++++
+ 2 files changed, 29 insertions(+), 1 deletion(-)
+
+diff --git a/packages/web/public/sw.js b/packages/web/public/sw.js
+index e7d6769..829e60f 100644
+--- a/packages/web/public/sw.js
++++ b/packages/web/public/sw.js
+@@ -22,7 +22,7 @@
+ // 不触发，cache-first 让手机永远回放旧 HTML/旧 bundle（用户实测：刷新无效）。
+ // v3 借版本字符串字节变化触发 reinstall → activate 清掉 v2 缓存，下次导航
+ // 拿到新 HTML/新 bundle。此后的正确姿势：每次发版都递增 CACHE_VERSION。
+-const CACHE_VERSION = 'zcode-shell-v5';
++const CACHE_VERSION = 'zcode-shell-v6';
+ const NEVER_CACHE_RE = /^\/(ws\b|api\/|zusage\/snapshot)/;
+ const REFRESHED_SESSION = 'zcode-sw-refreshed';
+ 
+diff --git a/packages/web/src/main.tsx b/packages/web/src/main.tsx
+index dcbd15c..baf5ac6 100644
+--- a/packages/web/src/main.tsx
++++ b/packages/web/src/main.tsx
+@@ -627,6 +627,17 @@ async function attemptSoftReconnectOnce(
+     await new Promise<void>((resolve, reject) => {
+       const generation = ++webSocketGeneration;
+       connectViaWebSocket(wsUrl, {
++        onOpenSocket: (ws) => {
++          const stale = previousWebSocket;
++          previousWebSocket = ws;
++          if (stale && stale !== ws) {
++            try {
++              stale.close();
++            } catch {
++              // 已关闭时忽略。
++            }
++          }
++        },
+         onClose: (event) => handleWebTransportClosed(generation, event),
+         heartbeat: withPageVisibility(() => document.visibilityState === "visible"),
+         onHeartbeat: (handle) => {
+@@ -742,12 +753,29 @@ function notifyWebReconnected(): void {
+   notifyConnectionSwappedAfterHotSwap();
+ }
+ 
++// 上一个 WebSocket 实例：热换底后必须显式关闭，否则旧连接保持打开——
++// server 端连接堆积、每条都被 ping/pong 清理 terminate、close 事件回流，
++// 是 15:09 重连/重载风暴的资源面根源。
++let previousWebSocket: WebSocket | null = null;
++
+ async function connectWebHotSwap(
+   wsUrl: string,
+ ): Promise<HotSwapConnection> {
+   return new Promise<HotSwapConnection>((resolve, reject) => {
+     const generation = ++webSocketGeneration;
+     connectViaWebSocket(wsUrl, {
++      onOpenSocket: (ws) => {
++        // 新连接已建立并接管：显式关闭上一条，杜绝旧连接堆积。
++        const stale = previousWebSocket;
++        previousWebSocket = ws;
++        if (stale && stale !== ws) {
++          try {
++            stale.close();
++          } catch {
++            // 已关闭时忽略。
++          }
++        }
++      },
+       onClose: (event) => handleWebTransportClosed(generation, event),
+       heartbeat: withPageVisibility(() => document.visibilityState === "visible"),
+       onHeartbeat: (handle) => {
 -- 
 2.53.0
 
