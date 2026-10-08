@@ -1,7 +1,7 @@
-From 96336e91211171eeb035fe21deb187e9ffa7d453 Mon Sep 17 00:00:00 2001
+From de68d20b699ddcb30f64f6237153c96a13aab14f Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:13:39 +0800
-Subject: [PATCH 01/26] fix(rpc,client,server): websocket keepalive liveness
+Subject: [PATCH 01/29] fix(rpc,client,server): websocket keepalive liveness
  for half-open detection
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -54,7 +54,7 @@ index 6015fc9..5daaada 100644
  export { connectViaMessagePort, createMessagePortServiceConnection } from "./messageport.js";
  export type { MessagePortServiceConnection } from "./messageport.js";
 diff --git a/packages/client/src/websocket.ts b/packages/client/src/websocket.ts
-index 2eded6a..f1ac914 100644
+index 2eded6a..9cbaceb 100644
 --- a/packages/client/src/websocket.ts
 +++ b/packages/client/src/websocket.ts
 @@ -18,8 +18,27 @@ export interface WebSocketConnectionCloseEvent {
@@ -90,7 +90,7 @@ index 2eded6a..f1ac914 100644
  }
  
 +// ── 心跳监视器（同 socket 半开判死）──────────────────────────────────────────
-+// 修复依据（/root/DSH/zcode/01-连接恢复-分析与方案.md §1）：半开是 per-connection 的，
++// 修复依据（连接恢复分析 §1）：半开是 per-connection 的，
 +// 换一根连接的 HTTP 探测测不出当前这根已死；必须在应用正在用的 socket 上发帧并等回应。
 +// 所有权：每条连接的监视器闭包是 lastReceivedAt 的唯一所有者；探针经 SocketProtocol
 +// sendKeepAlive()（ack=0）发出，对端自动回显（ack=1）或触发 onKeepAlive/任何帧更新活性。
@@ -200,13 +200,13 @@ index 2eded6a..f1ac914 100644
  }
 diff --git a/packages/rpc/specs/socket-keepalive.md b/packages/rpc/specs/socket-keepalive.md
 new file mode 100644
-index 0000000..25feed4
+index 0000000..037b4e3
 --- /dev/null
 +++ b/packages/rpc/specs/socket-keepalive.md
 @@ -0,0 +1,77 @@
 +# SocketProtocol KeepAlive 探针/回显 —— 直连 web 半开判死
 +
-+## 背景（用户反馈 + 行号级取证见 /root/DSH/zcode/01-连接恢复-分析与方案.md）
++## 背景（用户反馈 + 行号级取证见 连接恢复分析）
 +
 +直连页链路（浏览器 ↔ nginx ↔ server `/ws`）此前零存活探测：
 +`SocketProtocol.readMessages()` 只对 `Regular` 帧触发 `onMessage`，其余类型直接丢弃；
@@ -802,7 +802,7 @@ index 0000000..3eaa17a
 +  void b;
 +});
 diff --git a/packages/server/src/http.ts b/packages/server/src/http.ts
-index 21a0fd7..aa91739 100644
+index 21a0fd7..22e1dd6 100644
 --- a/packages/server/src/http.ts
 +++ b/packages/server/src/http.ts
 @@ -84,11 +84,61 @@ function wrapWebSocket(ws: WebSocket): ISocket {
@@ -810,7 +810,7 @@ index 21a0fd7..aa91739 100644
    console.log(formatLogPrefix("zcode-server:http", process.pid), ...args);
  
 +// ── WS 层 ping/pong 死连接清理 ─────────────────────────────────────────────
-+// 修复依据（/root/DSH/zcode/01-连接恢复-分析与方案.md §1.5）：这条链路此前零存活探测，
++// 修复依据（连接恢复分析 §1.5）：这条链路此前零存活探测，
 +// 半开连接永远占用服务端资源、也无法通过 terminate 触发浏览器侧 close → 软重连。
 +// 浏览器网络栈自动回 pong（不依赖页面 JS 计时器，后台冻结页也能回）；连续 2 个
 +// 周期无 pong 即 terminate，浏览器收到 close 事件后走既有守卫/软重连路径。
@@ -868,7 +868,7 @@ index 21a0fd7..aa91739 100644
    const protocol = new SocketProtocol(socket);
    const rawServer = new ChannelServer(protocol, "server");
 diff --git a/packages/web/src/main.tsx b/packages/web/src/main.tsx
-index ee0bd8a..ceec191 100644
+index ee0bd8a..305ea3f 100644
 --- a/packages/web/src/main.tsx
 +++ b/packages/web/src/main.tsx
 @@ -10,7 +10,8 @@ import {
@@ -886,7 +886,7 @@ index ee0bd8a..ceec191 100644
  }
  
 +// ── 同 socket 半开探测（回前台路径）─────────────────────────────────────────
-+// 修复依据（/root/DSH/zcode/01-连接恢复-分析与方案.md §1.2）：半开是 per-connection 的，
++// 修复依据（连接恢复分析 §1.2）：半开是 per-connection 的，
 +// HTTP 探测换了一根连接，测不出当前这条 socket 已死——「表面正常、实际已断」的根因。
 +// 判据全部来自应用正在用的那条连接（connectWebServices 保存的心跳把手）：
 +// 1) 把手的 lastReceivedAt（任何收到的帧都算活性）在 HEARTBEAT_PROBE_FRESH_MS 内
@@ -988,7 +988,7 @@ index ee0bd8a..ceec191 100644
      document.title = "ZCode - Web + Server";
  
 diff --git a/packages/zcode-server-cli/src/server-core/http.ts b/packages/zcode-server-cli/src/server-core/http.ts
-index 8a8a827..3cf4514 100644
+index 8a8a827..95cac80 100644
 --- a/packages/zcode-server-cli/src/server-core/http.ts
 +++ b/packages/zcode-server-cli/src/server-core/http.ts
 @@ -36,6 +36,54 @@ interface CoreHttpServer {
@@ -996,7 +996,7 @@ index 8a8a827..3cf4514 100644
  const log = createServiceLogger("server-core");
  
 +// ── WS 层 ping/pong 死连接清理 ─────────────────────────────────────────────
-+// 修复依据（/root/DSH/zcode/01-连接恢复-分析与方案.md §1.5）：这条链路此前零存活探测，
++// 修复依据（连接恢复分析 §1.5）：这条链路此前零存活探测，
 +// 半开连接永远占用服务端资源、也无法通过 terminate 触发浏览器侧 close → 软重连。
 +// 浏览器网络栈自动回 pong（不依赖页面 JS 计时器，后台冻结页也能回）；连续 2 个
 +// 周期无 pong 即 terminate。与 packages/server/src/http.ts 保持同一参数与语义。
@@ -1058,10 +1058,10 @@ index 8a8a827..3cf4514 100644
 2.53.0
 
 
-From 702fbb92e174c690cf5d7f0e225f2f49ca7506f5 Mon Sep 17 00:00:00 2001
+From 114e9d43071f3a3c8ba7b813022c1bc848822734 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:38:20 +0800
-Subject: [PATCH 02/26] fix(client,web): heartbeat deadline fires
+Subject: [PATCH 02/29] fix(client,web): heartbeat deadline fires
  onHeartbeatDead before close
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1080,7 +1080,7 @@ E2E: 黑洞 30-40s 内自动软重连（#2 open，无整页 reload）；
  2 files changed, 16 insertions(+), 2 deletions(-)
 
 diff --git a/packages/client/src/websocket.ts b/packages/client/src/websocket.ts
-index f1ac914..3d9eb63 100644
+index 9cbaceb..77922a9 100644
 --- a/packages/client/src/websocket.ts
 +++ b/packages/client/src/websocket.ts
 @@ -22,6 +22,8 @@ interface WebSocketConnectionOptions {
@@ -1122,7 +1122,7 @@ index f1ac914..3d9eb63 100644
          options?.onHeartbeat?.(monitor);
        }
 diff --git a/packages/web/src/main.tsx b/packages/web/src/main.tsx
-index ceec191..690393f 100644
+index 305ea3f..7c36e7d 100644
 --- a/packages/web/src/main.tsx
 +++ b/packages/web/src/main.tsx
 @@ -723,6 +723,14 @@ async function connectWebServices(wsUrl: string): Promise<ReturnType<typeof conn
@@ -1144,10 +1144,10 @@ index ceec191..690393f 100644
 2.53.0
 
 
-From 7fbf4b856e5d5feafaa41b0ee495483f4b23c1c7 Mon Sep 17 00:00:00 2001
+From 99fb8f4e201e5b5e0b1a1ca20237730f177483cf Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 08:34:01 +0800
-Subject: [PATCH 03/26] perf(web,client): seamless background returns, faster
+Subject: [PATCH 03/29] perf(web,client): seamless background returns, faster
  reconnect, lazy banner
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1187,7 +1187,7 @@ index 5daaada..6d5d77c 100644
  export { connectViaMessagePort, createMessagePortServiceConnection } from "./messageport.js";
  export type { MessagePortServiceConnection } from "./messageport.js";
 diff --git a/packages/client/src/websocket.ts b/packages/client/src/websocket.ts
-index 3d9eb63..b881fac 100644
+index 77922a9..d1e673c 100644
 --- a/packages/client/src/websocket.ts
 +++ b/packages/client/src/websocket.ts
 @@ -34,6 +34,14 @@ interface WebSocketConnectionOptions {
@@ -1302,7 +1302,7 @@ index 3d9eb63..b881fac 100644
    return new Promise((resolve, reject) => {
      const ws = new WebSocket(wsUrl);
 diff --git a/packages/web/src/main.tsx b/packages/web/src/main.tsx
-index 690393f..4719771 100644
+index 7c36e7d..ae5c3bb 100644
 --- a/packages/web/src/main.tsx
 +++ b/packages/web/src/main.tsx
 @@ -10,7 +10,11 @@ import {
@@ -1420,10 +1420,10 @@ index 690393f..4719771 100644
 2.53.0
 
 
-From ff95eabdaf8f94210f71f06462d5aec9d3cdc8de Mon Sep 17 00:00:00 2001
+From 368a50b1b68be87966fced31424aef5486bf39d0 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 09:24:05 +0800
-Subject: [PATCH 04/26] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
+Subject: [PATCH 04/29] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
  =?UTF-8?q?=E2=80=94=20no=20React=20remount=20on=20soft=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1696,7 +1696,7 @@ index 2c2834b..8893e74 100644
        key,
        agentService,
 diff --git a/packages/web/src/main.tsx b/packages/web/src/main.tsx
-index 4719771..879e9b7 100644
+index ae5c3bb..dcdef96 100644
 --- a/packages/web/src/main.tsx
 +++ b/packages/web/src/main.tsx
 @@ -1,5 +1,6 @@
@@ -1844,10 +1844,10 @@ index 4719771..879e9b7 100644
 2.53.0
 
 
-From 4b5abe08b2b01c1cea956092d373a390cd4f71fd Mon Sep 17 00:00:00 2001
+From 07843f5a5f00afa71faea45282c31bf59150970a Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:16:18 +0800
-Subject: [PATCH 05/26] fix(ui): md preview text fences invisible on dark UI +
+Subject: [PATCH 05/29] fix(ui): md preview text fences invisible on dark UI +
  mobile settings row squeeze
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2007,10 +2007,10 @@ index 25cd56d..63e8439 100644
 2.53.0
 
 
-From 5e75977f0225ba67a130dbc3f05f5812bd3c85c8 Mon Sep 17 00:00:00 2001
+From eb1e5605eeeb99b042ae219b009abd4e91451973 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:40:45 +0800
-Subject: [PATCH 06/26] fix(web): remove ALL page reloads from connection paths
+Subject: [PATCH 06/29] fix(web): remove ALL page reloads from connection paths
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -2034,7 +2034,7 @@ E2E: hidden 杀 socket → 原地恢复（DOM 同一节点、无横幅）✓
  create mode 100644 packages/web/public/sw.js
 
 diff --git a/packages/server/src/http.ts b/packages/server/src/http.ts
-index aa91739..5e440ef 100644
+index 22e1dd6..16c5c27 100644
 --- a/packages/server/src/http.ts
 +++ b/packages/server/src/http.ts
 @@ -511,10 +511,14 @@ export function createHttpServer(
@@ -2161,7 +2161,7 @@ index 0000000..980b78e
 +  event.respondWith(staleWhileRevalidate(request));
 +});
 diff --git a/packages/web/src/main.tsx b/packages/web/src/main.tsx
-index 879e9b7..8a3fdbc 100644
+index dcdef96..4311a39 100644
 --- a/packages/web/src/main.tsx
 +++ b/packages/web/src/main.tsx
 @@ -446,8 +446,9 @@ function renderWebBootstrapError(error: unknown): void {
@@ -2291,10 +2291,10 @@ index 879e9b7..8a3fdbc 100644
 2.53.0
 
 
-From e02912dd3796eaae65feed51d8a4d88dcf2b8330 Mon Sep 17 00:00:00 2001
+From 354f07061e285014e1004b93b91e60af98dc2c82 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:56:25 +0800
-Subject: [PATCH 07/26] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20navi?=
+Subject: [PATCH 07/29] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20navi?=
  =?UTF-8?q?gation=20=E2=80=94=20zero=20network=20on=20foreground=20return?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2432,10 +2432,10 @@ index 980b78e..4ab2def 100644
 2.53.0
 
 
-From fdf2b3636481a207012a1db2c9023553fa630a73 Mon Sep 17 00:00:00 2001
+From db282af6c0f949f2f3bfd4b6850b8475c4851c0e Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 11:34:06 +0800
-Subject: [PATCH 08/26] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transp?=
+Subject: [PATCH 08/29] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transp?=
  =?UTF-8?q?ort=20=E2=80=94=20zero=20visual=20change=20on=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2481,7 +2481,7 @@ index 6d5d77c..28b1ade 100644
    WebSocketConnectionCloseEvent,
    WebSocketHeartbeatOptions,
 diff --git a/packages/client/src/websocket.ts b/packages/client/src/websocket.ts
-index b881fac..2720eb9 100644
+index d1e673c..9df2256 100644
 --- a/packages/client/src/websocket.ts
 +++ b/packages/client/src/websocket.ts
 @@ -272,3 +272,29 @@ export function connectViaProtocol(protocol: IMessagePassingProtocol): IServiceA
@@ -2599,7 +2599,7 @@ index d907d77..b744031 100644
                          {renderModelItems(group.items)}
                        </DropdownMenuSubContent>
 diff --git a/packages/web/src/main.tsx b/packages/web/src/main.tsx
-index 8a3fdbc..69f6756 100644
+index 4311a39..7790234 100644
 --- a/packages/web/src/main.tsx
 +++ b/packages/web/src/main.tsx
 @@ -1,6 +1,5 @@
@@ -2625,7 +2625,7 @@ index 8a3fdbc..69f6756 100644
  import { WEB_ZAI_OAUTH_CONFIG, resolveWebAuthDevReturnTo } from "./auth/webZaiOAuthConfig.js";
 @@ -538,7 +537,7 @@ async function probeServerInfoAlive(): Promise<boolean> {
  // ── 同 socket 半开探测（回前台路径）─────────────────────────────────────────
- // 修复依据（/root/DSH/zcode/01-连接恢复-分析与方案.md §1.2）：半开是 per-connection 的，
+ // 修复依据（连接恢复分析 §1.2）：半开是 per-connection 的，
  // HTTP 探测换了一根连接，测不出当前这条 socket 已死——「表面正常、实际已断」的根因。
 -// 判据全部来自应用正在用的那条连接（connectWebServices 保存的心跳把手）：
 +// 判据全部来自应用正在用的那条连接（connectWebHotSwap 保存的心跳把手）：
@@ -2814,10 +2814,10 @@ index 8a3fdbc..69f6756 100644
 2.53.0
 
 
-From e88c05a5cd3f951dc0e23a36f42e741e5558c124 Mon Sep 17 00:00:00 2001
+From 1575737a4f601d74e09dc19894da96d19ed797b6 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:04:53 +0800
-Subject: [PATCH 09/26] =?UTF-8?q?fix(ui,web):=20re-subscribe=20stores=20af?=
+Subject: [PATCH 09/29] =?UTF-8?q?fix(ui,web):=20re-subscribe=20stores=20af?=
  =?UTF-8?q?ter=20hot-swap=20=E2=80=94=20data=20flows=20again?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3130,7 +3130,7 @@ index 8893e74..e1ab84f 100644
  function buildWorkspaceConnectionKey(scope: WorkspaceConnectionScope): string {
    const workspaceKey = scope.workspaceIdentity?.trim() || scope.workspacePath;
 diff --git a/packages/web/src/main.tsx b/packages/web/src/main.tsx
-index 69f6756..c28f612 100644
+index 7790234..e5a91b0 100644
 --- a/packages/web/src/main.tsx
 +++ b/packages/web/src/main.tsx
 @@ -16,6 +16,10 @@ import {
@@ -3167,10 +3167,10 @@ index 69f6756..c28f612 100644
 2.53.0
 
 
-From f01b4739900110b64e308ba5b266b41297ab8483 Mon Sep 17 00:00:00 2001
+From 1f43dc774e46a27205dfe0a0ea6d03b0eec51640 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:25:49 +0800
-Subject: [PATCH 10/26] =?UTF-8?q?fix(ui):=20model=20submenu=20squeeze=20on?=
+Subject: [PATCH 10/29] =?UTF-8?q?fix(ui):=20model=20submenu=20squeeze=20on?=
  =?UTF-8?q?=20mobile=20=E2=80=94=20wrap=20names,=20width=20follows=20viewp?=
  =?UTF-8?q?ort?=
 MIME-Version: 1.0
@@ -3191,7 +3191,6 @@ Content-Transfer-Encoding: 8bit
 
 验证：390px 视口子菜单 x=8..203 贴左缘完整可见，10 个模型名零截断；
 767px 同样通过；桌面 1280px 回归通过。typecheck/lint/arch 过。
-部署：index-DBtCWdsh.js 已上线 /opt/zcode/web。
 ---
  packages/ui/src/ModelConfigSelect.tsx | 16 ++++++++++------
  1 file changed, 10 insertions(+), 6 deletions(-)
@@ -3234,10 +3233,10 @@ index c2387ed..61943f9 100644
 2.53.0
 
 
-From 3f0a17b47706177b86f424110be1e8de94448367 Mon Sep 17 00:00:00 2001
+From 1b11d905c0e6eab7a26ae2240fa0f0ff405ac961 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:31:29 +0800
-Subject: [PATCH 11/26] =?UTF-8?q?fix(ui,web):=20re-handshake=20after=20hot?=
+Subject: [PATCH 11/29] =?UTF-8?q?fix(ui,web):=20re-handshake=20after=20hot?=
  =?UTF-8?q?-swap=20=E2=80=94=20fixes=20fault.connection.handshakeRequired?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3324,7 +3323,7 @@ index 5dd42db..2ad8133 100644
 +  notifySessionsIndexSwapped();
 +}
 diff --git a/packages/web/src/main.tsx b/packages/web/src/main.tsx
-index c28f612..80a252c 100644
+index e5a91b0..ea4c885 100644
 --- a/packages/web/src/main.tsx
 +++ b/packages/web/src/main.tsx
 @@ -16,10 +16,7 @@ import {
@@ -3358,10 +3357,10 @@ index c28f612..80a252c 100644
 2.53.0
 
 
-From 0ae927b0890afb00c2382e34b5f2a47cd2a68512 Mon Sep 17 00:00:00 2001
+From 02f5be69a51cf66104acb5a2d8fef4ab9b7e4a29 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 13:51:57 +0800
-Subject: [PATCH 12/26] fix(web): SW v3 cache bust + /sw-reset.html escape
+Subject: [PATCH 12/29] fix(web): SW v3 cache bust + /sw-reset.html escape
  hatch
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3462,10 +3461,10 @@ index 4ab2def..6338372 100644
 2.53.0
 
 
-From c9f66c8bce983a5a0229bc8ccd7ab1ae492db8e1 Mon Sep 17 00:00:00 2001
+From 08dcd3f515dc280d359409e6b364daaa385fdd22 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:19:51 +0800
-Subject: [PATCH 13/26] =?UTF-8?q?fix(web):=20SW=20v4=20=E2=80=94=20drop=20?=
+Subject: [PATCH 13/29] =?UTF-8?q?fix(web):=20SW=20v4=20=E2=80=94=20drop=20?=
  =?UTF-8?q?dirty=20/assets/=20prefetch=20key=20from=20install?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3525,10 +3524,10 @@ index 6338372..3ea1938 100644
 2.53.0
 
 
-From 4f1063487fbf196f5704a363db6d75fca5dce60c Mon Sep 17 00:00:00 2001
+From 201e0c331c779b39c463fd436c4ae22ea39497c7 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:35:37 +0800
-Subject: [PATCH 14/26] =?UTF-8?q?fix(web):=20ignore=20stale=20close=20even?=
+Subject: [PATCH 14/29] =?UTF-8?q?fix(web):=20ignore=20stale=20close=20even?=
  =?UTF-8?q?ts=20=E2=80=94=20stops=20reconnect=20loop=20after=20hot-swap?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3545,7 +3544,7 @@ Content-Transfer-Encoding: 8bit
  1 file changed, 18 insertions(+), 3 deletions(-)
 
 diff --git a/packages/web/src/main.tsx b/packages/web/src/main.tsx
-index 80a252c..dcbd15c 100644
+index ea4c885..5b4f167 100644
 --- a/packages/web/src/main.tsx
 +++ b/packages/web/src/main.tsx
 @@ -504,7 +504,20 @@ function removeWebReconnectBanner(): void {
@@ -3596,17 +3595,17 @@ index 80a252c..dcbd15c 100644
 2.53.0
 
 
-From 439b3886b10b4be2d1b24caff6a0e64246324363 Mon Sep 17 00:00:00 2001
+From c5306790dd763477ee4c1ed5b018f83cff5104b6 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:58:29 +0800
-Subject: [PATCH 15/26] =?UTF-8?q?fix(web):=20SW=20v5=20=E2=80=94=20backgro?=
+Subject: [PATCH 15/29] =?UTF-8?q?fix(web):=20SW=20v5=20=E2=80=94=20backgro?=
  =?UTF-8?q?und=20revalidate=20navigations=20(deploy=20path=20restored)?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
 cache-first 架构缺陷：部署新版本后，已激活客户端永远命中旧缓存，
-新代码无法到达用户（用户手机卡在 BHVhIucq，拿不到 tJ_d20Hz 的代际守卫修复）。
+新代码无法到达用户（已激活客户端停在旧 bundle hash，拿不到新修复）。
 修复：导航命中缓存后 waitUntil 后台 revalidate 该 HTML（no-store），
 当前这次零等待、下次导航生效。CACHE_VERSION v5。
 ---
@@ -3721,10 +3720,10 @@ index 3ea1938..e7d6769 100644
 2.53.0
 
 
-From e1c087861698832f2f3366f7e40f753e1f2f92d7 Mon Sep 17 00:00:00 2001
+From 4e768ffd1beacdd2b2bd299796e6845124ca84e6 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:13:29 +0800
-Subject: [PATCH 16/26] =?UTF-8?q?fix(ui):=20usage=20stats=20readability=20?=
+Subject: [PATCH 16/29] =?UTF-8?q?fix(ui):=20usage=20stats=20readability=20?=
  =?UTF-8?q?on=20mobile=20=E2=80=94=20short=20axis=20dates,=20scrollable=20?=
  =?UTF-8?q?heatmap?=
 MIME-Version: 1.0
@@ -3802,10 +3801,10 @@ index 74f4374..4d0119e 100644
 2.53.0
 
 
-From 2b16f04a279f7bfab703b3c359cae548bb5737d3 Mon Sep 17 00:00:00 2001
+From d56f5f9faf78d9dda1d28ca9a76b5d08d8f316b4 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:20:00 +0800
-Subject: [PATCH 17/26] fix(web,client): close stale WebSocket on hot-swap +
+Subject: [PATCH 17/29] fix(web,client): close stale WebSocket on hot-swap +
  crash telemetry
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3839,7 +3838,7 @@ index e7d6769..829e60f 100644
  const REFRESHED_SESSION = 'zcode-sw-refreshed';
  
 diff --git a/packages/web/src/main.tsx b/packages/web/src/main.tsx
-index dcbd15c..baf5ac6 100644
+index 5b4f167..e767efb 100644
 --- a/packages/web/src/main.tsx
 +++ b/packages/web/src/main.tsx
 @@ -627,6 +627,17 @@ async function attemptSoftReconnectOnce(
@@ -3894,10 +3893,10 @@ index dcbd15c..baf5ac6 100644
 2.53.0
 
 
-From a612236eb1a7d0dec7baa02865bbb85f1499ce43 Mon Sep 17 00:00:00 2001
+From 923e3f1ffe8145d946e5a58b7c8afb9f985e215a Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:59:13 +0800
-Subject: [PATCH 18/26] =?UTF-8?q?fix(web):=20SW=20v7=20=E2=80=94=20network?=
+Subject: [PATCH 18/29] =?UTF-8?q?fix(web):=20SW=20v7=20=E2=80=94=20network?=
  =?UTF-8?q?-first=20for=20zusage=20injected=20scripts?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3905,7 +3904,7 @@ Content-Transfer-Encoding: 8bit
 
 发现最后一个缓存盲区：boot.js/overlay.js（无内容哈希的注入脚本）也被
 cache-first 锁死——服务器端这几轮的所有前端修复（wasDiscarded 探针、
-crash 遗嘱、dshm-shell 标记）从未到达用户手机，全部验证都被旧脚本蒙蔽。
+crash 遗嘱、shell 标记）从未到达用户手机，全部验证都被旧脚本蒙蔽。
 修复：/zusage/boot.js 与 overlay.js 改 network-first + cache 兜底。
 CACHE_VERSION v7。
 ---
@@ -3955,10 +3954,10 @@ index 829e60f..b13d167 100644
 2.53.0
 
 
-From 547e7625ecb64f72ecdbe9e6cb9825b17ec32e05 Mon Sep 17 00:00:00 2001
+From 53f07053a90070fad64c8bdc06bf53ca0b21b7f2 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 16:32:20 +0800
-Subject: [PATCH 19/26] =?UTF-8?q?fix(rpc,client,web):=20replay=20buffered?=
+Subject: [PATCH 19/29] =?UTF-8?q?fix(rpc,client,web):=20replay=20buffered?=
  =?UTF-8?q?=20frames=20on=20hot-swap=20=E2=80=94=20fixes=20handshake=20dea?=
  =?UTF-8?q?dlock?=
 MIME-Version: 1.0
@@ -3984,7 +3983,7 @@ typecheck 全过。
  3 files changed, 42 insertions(+), 8 deletions(-)
 
 diff --git a/packages/client/src/websocket.ts b/packages/client/src/websocket.ts
-index 2720eb9..0c48423 100644
+index 9df2256..ba48f97 100644
 --- a/packages/client/src/websocket.ts
 +++ b/packages/client/src/websocket.ts
 @@ -18,7 +18,11 @@ export interface WebSocketConnectionCloseEvent {
@@ -4059,7 +4058,7 @@ index ebe3a8a..5dcb8b7 100644
  
    dispose(reason?: Error): void {
 diff --git a/packages/web/src/main.tsx b/packages/web/src/main.tsx
-index baf5ac6..37cae36 100644
+index e767efb..4576c8e 100644
 --- a/packages/web/src/main.tsx
 +++ b/packages/web/src/main.tsx
 @@ -651,7 +651,15 @@ async function attemptSoftReconnectOnce(
@@ -4108,10 +4107,10 @@ index baf5ac6..37cae36 100644
 2.53.0
 
 
-From c8f27170dcedd0111e8eba0b5021fad4c9731c22 Mon Sep 17 00:00:00 2001
+From 933328973d2f59fe0a025a66fdc7d84b2fdaae44 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 16:43:24 +0800
-Subject: [PATCH 20/26] chore(services): log handshake rejection details for
+Subject: [PATCH 20/29] chore(services): log handshake rejection details for
  intermittent fault diagnosis
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4149,10 +4148,10 @@ index 9fa3233..675de02 100644
 2.53.0
 
 
-From a54fb72314812838b4d7e77d57881bb669e1ccf0 Mon Sep 17 00:00:00 2001
+From d2324dd4a548205ae06b50d73f31fa8d68ba26e2 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 17:17:41 +0800
-Subject: [PATCH 21/26] fix(server,ui): stop killing live connections + silent
+Subject: [PATCH 21/29] fix(server,ui): stop killing live connections + silent
  bounded retry on subscribe failure
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4171,7 +4170,7 @@ error 屏闪红字），重试额度耗尽才显示错误。瞬态竞态对用�
  3 files changed, 24 insertions(+), 4 deletions(-)
 
 diff --git a/packages/server/src/http.ts b/packages/server/src/http.ts
-index 5e440ef..c34ccb1 100644
+index 16c5c27..9769333 100644
 --- a/packages/server/src/http.ts
 +++ b/packages/server/src/http.ts
 @@ -91,7 +91,11 @@ const log = (...args: unknown[]) =>
@@ -4236,7 +4235,7 @@ index 215a4d3..5515fa1 100644
      if (delayMs === undefined) return false;
      this.runtimeRecycleRetryAttempt += 1;
 diff --git a/packages/zcode-server-cli/src/server-core/http.ts b/packages/zcode-server-cli/src/server-core/http.ts
-index 3cf4514..97eab29 100644
+index 95cac80..bc4ef5e 100644
 --- a/packages/zcode-server-cli/src/server-core/http.ts
 +++ b/packages/zcode-server-cli/src/server-core/http.ts
 @@ -42,7 +42,11 @@ const log = createServiceLogger("server-core");
@@ -4256,10 +4255,10 @@ index 3cf4514..97eab29 100644
 2.53.0
 
 
-From ac0f348455c044b4f81ac9ee13bcb6052d03a2b1 Mon Sep 17 00:00:00 2001
+From 00414c17fc77aab796aa359b713121309e73041b Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 17:59:57 +0800
-Subject: [PATCH 22/26] chore(services): log hello/initialize arrival on
+Subject: [PATCH 22/29] chore(services): log hello/initialize arrival on
  connection scope
 
 ---
@@ -4268,7 +4267,7 @@ Subject: [PATCH 22/26] chore(services): log hello/initialize arrival on
  2 files changed, 9 insertions(+)
 
 diff --git a/packages/server/src/http.ts b/packages/server/src/http.ts
-index c34ccb1..4a249c5 100644
+index 9769333..f76f257 100644
 --- a/packages/server/src/http.ts
 +++ b/packages/server/src/http.ts
 @@ -111,12 +111,15 @@ function startWebSocketPingLoop(ws: WebSocket): () => void {
@@ -4312,10 +4311,10 @@ index 675de02..2bed75f 100644
 2.53.0
 
 
-From d2fe1b5820f301ba300c6d10b6225a0752a1c1ba Mon Sep 17 00:00:00 2001
+From e5b7c3f605b4f95c6d55315f05831707d5cc353b Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 18:10:02 +0800
-Subject: [PATCH 23/26] =?UTF-8?q?fix(ui):=20handshake=20cache=20invalidati?=
+Subject: [PATCH 23/29] =?UTF-8?q?fix(ui):=20handshake=20cache=20invalidati?=
  =?UTF-8?q?on=20actually=20works=20=E2=80=94=20epoch=20compared=20on=20loo?=
  =?UTF-8?q?kup?=
 MIME-Version: 1.0
@@ -4382,10 +4381,10 @@ index 467ed58..121d219 100644
 2.53.0
 
 
-From e084a63e9ebb9fb9d7d9569c5bbb86c4c10709e7 Mon Sep 17 00:00:00 2001
+From 75d7ec9e1db5b7c0c572b0bc85904fc345344ec0 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 18:47:59 +0800
-Subject: [PATCH 24/26] =?UTF-8?q?fix(rpc):=20re-send=20active=20event=20su?=
+Subject: [PATCH 24/29] =?UTF-8?q?fix(rpc):=20re-send=20active=20event=20su?=
  =?UTF-8?q?bscriptions=20on=20resetTransport=20=E2=80=94=20restores=20UI?=
  =?UTF-8?q?=20data=20stream?=
 MIME-Version: 1.0
@@ -4408,11 +4407,9 @@ fail-closed 若 dispose activeRequests 会连带清掉 activeEventSubscriptions
 这正是 DSH-mobile 无感重连的第 4 要素：事件订阅随连接代际自动迁移。
 ---
  packages/rpc/src/channelClient.ts     | 22 +++++++
- packages/rpc/test/event-resub.test.ts | 82 +++++++++++++++++++++++++
- test/event-resub.test.ts              | 88 +++++++++++++++++++++++++++
- 3 files changed, 192 insertions(+)
+ packages/rpc/test/event-resub.test.ts | 82 +++++++++++++++++++++++++++
+ 2 files changed, 104 insertions(+)
  create mode 100644 packages/rpc/test/event-resub.test.ts
- create mode 100644 test/event-resub.test.ts
 
 diff --git a/packages/rpc/src/channelClient.ts b/packages/rpc/src/channelClient.ts
 index 5dcb8b7..85a9eea 100644
@@ -4563,108 +4560,14 @@ index 0000000..d5f9e5f
 +  assert.equal(server2Listens, 1, `重发 listen 到达新 server（got=${server2Listens}）`);
 +  assert.ok(got.some((g) => g.startsWith("s2-")), `客户端收到新 server 帧: ${got.join(",")}`);
 +});
-diff --git a/test/event-resub.test.ts b/test/event-resub.test.ts
-new file mode 100644
-index 0000000..70a97f4
---- /dev/null
-+++ b/test/event-resub.test.ts
-@@ -0,0 +1,88 @@
-+import assert from "node:assert/strict";
-+import test from "node:test";
-+import {
-+  Emitter,
-+  VSBuffer,
-+  SocketProtocol,
-+  ChannelClient,
-+  ChannelServer,
-+  type ISocket,
-+} from "../src/index.js";
-+import { ProtocolMessage, writeProtocolMessage, ProtocolMessageType } from "../src/protocol.js";
-+
-+/** 双端 Channel 对：A=client 侧，B=server 侧（带可追踪的事件订阅）。 */
-+function createChannelPair() {
-+  const dataA = new Emitter<VSBuffer>(); // client 收
-+  const dataB = new Emitter<VSBuffer>(); // server 收
-+  let serverGotListen: Array<{ id: number; channel: string; name: string }> = [];
-+  const mkSocket = (inc: Emitter<VSBuffer>, out: Emitter<VSBuffer>): ISocket => ({
-+    onData: inc.event,
-+    onClose: new Emitter<void>().event,
-+    onEnd: new Emitter<void>().event,
-+    write: (b) => setTimeout(() => out.fire(b), 0),
-+    end() {},
-+    drain() { return Promise.resolve(); },
-+    dispose() {},
-+  });
-+  const clientProto = new SocketProtocol(mkSocket(dataA, dataB));
-+  const serverProto = new SocketProtocol(mkSocket(dataB, dataA));
-+  const client = new ChannelClient(clientProto);
-+  const events: unknown[][] = [];
-+  const server = new ChannelServer(serverProto, "server");
-+  server.registerChannel("test", {
-+    listen(_ctx, name) {
-+      const e = new Emitter<unknown>();
-+      serverGotListen.push({ id: serverGotListen.length, channel: "test", name });
-+      // 订阅后立即发两帧
-+      setTimeout(() => { e.fire(`frame-1-${name}`); e.fire(`frame-2-${name}`); }, 10);
-+      return e.event;
-+    },
-+    call: async () => "ok",
-+  });
-+  return { client, clientProto, serverProto, dataB, events, serverGotListen: () => serverGotListen };
-+}
-+
-+test("resetTransport 后事件订阅自动重发（server 收到第二次 listen）", async () => {
-+  const { client, clientProto, serverGotListen } = createChannelPair();
-+  await new Promise((r) => setTimeout(r, 30)); // Initialize
-+  const ch = client.getChannel("test");
-+  const got: string[] = [];
-+  ch.listen("onChange")((e: unknown) => got.push(String(e)));
-+  await new Promise((r) => setTimeout(r, 50));
-+  assert.equal(serverGotListen().length, 1, "首次 listen 到达 server");
-+
-+  // 模拟热换底：重置 client 的底层传输为一个新的 server（新 scope，无订阅状态）
-+  // 直接复用同一对（真实场景是新 WS）——用 resetTransport 换一个全新 server 端：
-+  const dataB2 = new Emitter<VSBuffer>();
-+  const dataA2 = new Emitter<VSBuffer>();
-+  const server2GotListen: Array<{ name: string }> = [];
-+  const serverProto2 = new SocketProtocol(mk(dataA2, dataB2));
-+  function mk(inc: Emitter<VSBuffer>, out: Emitter<VSBuffer>): ISocket {
-+    return {
-+      onData: inc.event,
-+      onClose: new Emitter<void>().event,
-+      onEnd: new Emitter<void>().event,
-+      write: (b) => setTimeout(() => out.fire(b), 0),
-+      end() {},
-+      drain() { return Promise.resolve(); },
-+      dispose() {},
-+    };
-+  }
-+  const server2 = new ChannelServer(serverProto2, "server");
-+  server2.registerChannel("test", {
-+    listen(_ctx, name) {
-+      server2GotListen.push({ name });
-+      const e = new Emitter<unknown>();
-+      setTimeout(() => e.fire(`frame-after-swap-${name}`), 10);
-+      return e.event;
-+    },
-+    call: async () => "ok",
-+  });
-+  // 客户端换底：新 socket 接收端为 dataA2（server2 发来），发送端 dataB2
-+  (client as any).resetTransport(new SocketProtocol(mk(dataA2, dataB2)));
-+  await new Promise((r) => setTimeout(r, 80));
-+  assert.equal(server2GotListen.length, 1, "resetTransport 后 listen 自动重发到新 server");
-+  assert.equal(server2GotListen[0].name, "onChange");
-+  // 客户端持续收到新 server 的帧
-+  assert.ok(got.some((g) => g.includes("frame-after-swap")), `应收到新 server 帧: ${got.join(",")}`);
-+});
 -- 
 2.53.0
 
 
-From 10c480e7376be40c585696c908581c4606f642d3 Mon Sep 17 00:00:00 2001
+From 99b33bd49325cfb5e65555c7623b03095cbacb40 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 19:03:31 +0800
-Subject: [PATCH 25/26] fix(ui): handshake RPC timeout + extended retry budget
+Subject: [PATCH 25/29] fix(ui): handshake RPC timeout + extended retry budget
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -4758,10 +4661,10 @@ index 5515fa1..adc61c2 100644
 2.53.0
 
 
-From 0ded1e7456cda30c88a3000c0124c001616a045e Mon Sep 17 00:00:00 2001
+From 006dc2d9e2c7067638cbe56e4aca0fa8c05e838f Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 19:16:52 +0800
-Subject: [PATCH 26/26] fix(ui): retry schedule tuned to handshake-timeout
+Subject: [PATCH 26/29] fix(ui): retry schedule tuned to handshake-timeout
  rhythm; sessions store budget aligned
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4813,6 +4716,1021 @@ index 7e8a36f..a195807 100644
  const ERROR_RECOVERY_RETRY_DELAYS_MS = [5_000, 15_000, 60_000] as const;
  
  function isTransientSubscribeError(error: unknown): boolean {
+-- 
+2.53.0
+
+
+From 7d09a5995b05adbce584d9bbdc1ee4f45e6f70bc Mon Sep 17 00:00:00 2001
+From: xhwxt <197754549+xhwxt@users.noreply.github.com>
+Date: Thu, 8 Oct 2026 20:29:12 +0800
+Subject: [PATCH 27/29] chore(web): drop dead reconnect-storm counter +
+ orphaned root test
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- 删除 recordSoftReconnectSuccess/webSoftReconnectSuccessStamps：
+  reload 兜底移除后其唯一消费者（风暴保护计数）已不存在，
+  该计数器只写不读（纯观测残留），连带 60s 窗口常量。
+- 同步订正 main.tsx 内四处描述 reload 兜底/风暴保护的过时注释——
+  注释描述的行为代码里已不存在。
+- 删除根目录 test/event-resub.test.ts：搬运残留在错误路径下
+  （相对导入指向不存在的 src/），node --test 实测 ERR_MODULE_NOT_FOUND，
+  且不在任何测试配置内；正本在 packages/rpc/test/event-resub.test.ts。
+
+typecheck/lint(81→77 warnings, 0 errors)/architecture:check 全过，行为无变化。
+---
+ packages/web/src/main.tsx | 49 +++++++++++----------------------------
+ 1 file changed, 14 insertions(+), 35 deletions(-)
+
+diff --git a/packages/web/src/main.tsx b/packages/web/src/main.tsx
+index 4576c8e..211be8c 100644
+--- a/packages/web/src/main.tsx
++++ b/packages/web/src/main.tsx
+@@ -441,17 +441,14 @@ function renderWebBootstrapError(error: unknown): void {
+ // 手机浏览器切后台数秒即可被系统冻结/回收 WebSocket；回前台时 socket 可能已死
+ // 且无任何提示（RPC 调用静默失败）。
+ //
+-// 修复依据（用户反馈：真断线重连要整页刷新，白屏数秒还要重新下载/解析 7MB JS）：
+-// 整页 reload 换成页面内软重连 —— socket 关闭后按 1s→2s→4s→8s 退避重试
+-// connectViaWebSocket，成功后以递增 connectionEpoch 为 React key 重挂 <Root>，
+-// 整树状态回到服务端事实源（web-remote-replayable 快照重放），语义与 reload
+-// 等价但省掉全部静态资源下载与 JS 解析。重连期间旧 React 树保持可见（用户
+-// 还能阅读已渲染内容），顶部横幅提示状态。退避序列走完后持续 8s 周期原地重试，
+-// **绝不做整页 reload**（用户实机日志 10:23:19 实证风暴保护误伤：正常的前后台切换
+-// 重连节奏触发了 reload，打断使用）。state 一致性由服务端事实源 + 原地恢复保证。
++// 设计（用户需求：切后台回来绝不能看到刷新）：socket 关闭后按退避序列软重连，
++// 重连期间旧 React 树保持可见（用户还能阅读已渲染内容）；成功后热换底
++// （reconnect()，零 React 重渲），顶部横幅提示状态。state 一致性由服务端事实源
++// + 原地恢复保证。**绝不整页 reload**——reload 与重连风暴保护已整体移除
++//（用户实机日志 10:23:19 实证：正常的前后台切换重连节奏就会触发风暴保护 reload，
++// 打断使用；原地恢复语义下 React 树不重挂，reload 没有存在理由）。
+ // 锁屏（hidden）期间 socket 死亡不做任何操作；回前台时若 socket 已死则触发软重连。
+ // 秒切回（socket 健在）不触发任何重连（延续 8d4489c 修复）。
+-// reload 兜底频率限制在 3 次/60 秒，server 真不可用时停在启动错误屏（有手动重试）。
+ 
+ declare global {
+   interface Window {
+@@ -459,20 +456,18 @@ declare global {
+   }
+ }
+ 
+-// 软重连退避序列（毫秒）：耗尽后走整页 reload 兜底。
++// 软重连退避序列（毫秒）：耗尽后保持 8s 周期原地重试（见 startWebSoftReconnect）。
+ // 首试不等待（立即重连）：真断线（close 事件已到达）无需再等 1s；
+-// 后续 0.5/1.5/4/8s 覆盖服务端重启窗口，最坏 4 次共 ~14s 到达 reload 兜底。
++// 后续 0.5/1.5/4/8s 覆盖服务端重启窗口。
+ const SOFT_RECONNECT_DELAYS_MS = [0, 500, 1_500, 4_000, 8_000] as const;
+-// 重连风暴保护：60 秒内软重连成功达到该次数后改走整页 reload。
+-const SOFT_RECONNECT_SUCCESS_WINDOW_MS = 60_000;
+ 
+ interface WebReconnectBanner {
+   element: HTMLDivElement;
+   setMessage(message: string): void;
+ }
+ 
+-// 软重连状态横幅：固定顶部、不遮挡已渲染内容。旧的底部 overlay 仍保留给
+-// reload 兜底路径（软重连失败整页恢复前的最后提示）。
++// 软重连状态横幅：固定顶部、不遮挡已渲染内容。惰性挂载：首试（立即重连）
++// 大多在 1s 内成功，用户全程看不到任何提示。
+ function mountWebReconnectBanner(): WebReconnectBanner {
+   // 幂等：横幅惰性化后本函数会在多次失败尝试/退避耗尽时调用，已有横幅直接复用。
+   const existing = document.getElementById("zcode-web-conn-banner");
+@@ -598,23 +593,9 @@ async function probeConnectionAliveOnSameSocket(): Promise<boolean> {
+ // 所有权：唯一入口 startWebSoftReconnect；inflight 防并发重入。
+ // 事件顺序：socket close → markSocketDead → visible 触发/回前台触发 →
+ // 指数退避重连 → 成功：热换底（reconnect()，零 React 重渲）、拆横幅。
+-// 软重连永不失败到 reload：退避走完持续 8s 周期重试。
++// 软重连永不失败到 reload：退避走完持续 8s 周期重试（reload 路径已整体移除）。
+ let webSoftReconnectInflight = false;
+ let softReconnectAttemptNo = 0;
+-const webSoftReconnectSuccessStamps: number[] = [];
+-
+-// 保留观测点（诊断用），不再触发 reload。
+-function recordSoftReconnectSuccess(): boolean {
+-  const now = Date.now();
+-  while (
+-    webSoftReconnectSuccessStamps.length > 0 &&
+-    now - (webSoftReconnectSuccessStamps[0] ?? 0) > SOFT_RECONNECT_SUCCESS_WINDOW_MS
+-  ) {
+-    webSoftReconnectSuccessStamps.shift();
+-  }
+-  webSoftReconnectSuccessStamps.push(now);
+-  return true;
+-}
+ 
+ async function attemptSoftReconnectOnce(
+   wsUrl: string,
+@@ -667,10 +648,8 @@ async function attemptSoftReconnectOnce(
+         },
+       }).catch(reject);
+     });
+-    recordSoftReconnectSuccess();
+     removeWebReconnectBanner();
+-    document.title = "ZCode - Web + Server";
+-    notifyWebReconnected();
++    document.title = "ZCode - Web + Server";    notifyWebReconnected();
+     return true;
+   } catch {
+     softReconnectAttemptNo += 1;
+@@ -696,8 +675,8 @@ async function startWebSoftReconnect(): Promise<void> {
+   // attemptSoftReconnectOnce 第 2 次失败时经 mountWebReconnectBanner 挂载（幂等：已有则跳过）。
+   try {
+     const wsUrl = resolveDefaultWsOrigin() + "/ws";
+-    // 退避序列走完后不再整页 reload（用户实机实证 reload 会打断正常使用）：
+-    // 持续以 8s 周期原地重试，网络/服务恢复的瞬间自动接上。server 不可用时页面
++    // 退避序列走完后保持 8s 周期原地重试（绝不整页 reload——reload 与风暴保护
++    // 已整体移除）：网络/服务恢复的瞬间自动接上。server 不可用时页面
+     // 停留在横幅状态（可继续阅读已渲染内容），恢复后无需任何手动操作。
+     let i = 0;
+     for (;;) {
+-- 
+2.53.0
+
+
+From 8653043f7caeb8490946be163a6cf9757bee7e8f Mon Sep 17 00:00:00 2001
+From: xhwxt <197754549+xhwxt@users.noreply.github.com>
+Date: Thu, 8 Oct 2026 21:14:43 +0800
+Subject: [PATCH 28/29] test(e2e): add connection-recovery browser scripts
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+真浏览器验证脚本随补丁发布：黑洞半开判死（blackhole/healthy）、
+原地恢复（DOM 身份保持）、体感验证（断网恢复无刷新）、真断线恢复、
+SW 缓存时序。脚本以 ZCODE_TOKEN/ZCODE_ORIGIN 环境变量参数化，
+不绑定任何具体部署。补 README 说明判定语义与用法。
+---
+ e2e/README.md           |  27 ++++++++++
+ e2e/drop-test.mjs       |  45 +++++++++++++++++
+ e2e/feel-verify.mjs     |  80 ++++++++++++++++++++++++++++++
+ e2e/halfopen-verify.mjs |  89 +++++++++++++++++++++++++++++++++
+ e2e/inplace-verify.mjs  | 107 ++++++++++++++++++++++++++++++++++++++++
+ e2e/order-test.mjs      |  30 +++++++++++
+ 6 files changed, 378 insertions(+)
+ create mode 100644 e2e/README.md
+ create mode 100644 e2e/drop-test.mjs
+ create mode 100644 e2e/feel-verify.mjs
+ create mode 100644 e2e/halfopen-verify.mjs
+ create mode 100644 e2e/inplace-verify.mjs
+ create mode 100644 e2e/order-test.mjs
+
+diff --git a/e2e/README.md b/e2e/README.md
+new file mode 100644
+index 0000000..f439fd3
+--- /dev/null
++++ b/e2e/README.md
+@@ -0,0 +1,27 @@
++# 直连页连接恢复 E2E 脚本
++
++Playwright 驱动的真浏览器验证脚本，对应补丁 0002（连接守卫）与 0007
++（心跳存活 + 热换底软重连）。这些脚本曾用于真机问题复现与修复回归，
++现随补丁仓库发布，供部署者验证自己的环境。
++
++## 用法
++
++```bash
++# 依赖：node >= 22，playwright-core，本机 Chromium（或用 CHROME_PATH 指定）
++npm i playwright-core
++export ZCODE_TOKEN=<你的服务端 token>
++export ZCODE_ORIGIN=http://127.0.0.1:3030   # 默认值，可省
++export CHROME_PATH=/path/to/chrome          # 可省，让 playwright 自行解析
++
++node halfopen-verify.mjs blackhole   # 半开判死：应出现第 2 条 WS 且无整页 reload
++node halfopen-verify.mjs healthy     # 健康连接：50s 内零重连零误判
++node inplace-verify.mjs              # 原地恢复：重连后 React 树不重挂（DOM 节点身份保持）
++node feel-verify.mjs                 # 体感验证：断网→恢复全程无刷新、消息流自动续上
++node drop-test.mjs                   # 真断线（close 事件）恢复
++node order-test.mjs                  # SW 缓存时序：注入脚本不被 cache-first 锁死
++```
++
++## 语义约定
++
++- 「无整页 reload」是硬判定：脚本在 window 上打标记，reload 后标记消失即失败。
++- 黑洞模式通过 `page.routeWebSocket` 掐断双向转发但不发 close，模拟移动网络下的半开。
+diff --git a/e2e/drop-test.mjs b/e2e/drop-test.mjs
+new file mode 100644
+index 0000000..f452e25
+--- /dev/null
++++ b/e2e/drop-test.mjs
+@@ -0,0 +1,45 @@
++import { chromium } from 'playwright-core';
++if (!process.env.ZCODE_TOKEN) { console.error('usage: ZCODE_TOKEN=<token> [ZCODE_ORIGIN=<origin>] node ' + import.meta.url.split('/').pop()); process.exit(1); }
++const TOK = process.env.ZCODE_TOKEN;
++const ORIGIN = process.env.ZCODE_ORIGIN ?? 'http://127.0.0.1:3030';
++const EXE = process.env.CHROME_PATH ?? undefined;
++const browser = await chromium.launch({ executablePath: EXE, headless: true, args: ['--lang=zh-CN','--no-sandbox'] });
++const ctx = await browser.newContext({ viewport: { width: 393, height: 852 }, locale: 'zh-CN' });
++const page = await ctx.newPage();
++const events = [];
++let sockCount = 0, live = null;
++await page.routeWebSocket(/\/ws(\?|$)/, ws => {
++  sockCount += 1; const id = sockCount;
++  events.push(`#${id} open`);
++  const server = ws.connectToServer();
++  live = { id, ws, server };
++  ws.onMessage(m => server.send(m));
++  server.onMessage(m => ws.send(m));
++  ws.onClose(() => { events.push(`#${id} client-closed`); server.close(); });
++  server.onClose(() => { events.push(`#${id} server-closed`); ws.close(); });
++});
++await page.goto(`${ORIGIN}/?token=${TOK}`, { waitUntil:'domcontentloaded', timeout: 40000 });
++await page.waitForTimeout(12000);
++await page.evaluate(() => { window.__mark = 'ALIVE'; });
++const before = await page.evaluate(() => ({ mark: window.__mark, hasComposer: !!document.querySelector('[data-testid="v4-composer-input"]'),
++  text: (document.body.innerText||'').replace(/\s+/g,' ').slice(0,60) }));
++console.log('  就绪:', JSON.stringify(before), '| WS 连接数:', sockCount);
++
++console.log('\n  ▶ 强制掐断服务端侧 WS（模拟后台冻结/换网）…');
++live.server.close(); live.ws.close();
++await page.waitForTimeout(1500);
++let s = await page.evaluate(() => ({ mark: window.__mark, text: (document.body.innerText||'').replace(/\s+/g,' ').slice(0,80) }));
++console.log('  1.5s 后: 标记 =', s.mark, '| 文案:', s.text);
++
++for (const t of [3000, 5000, 8000]) {
++  await page.waitForTimeout(t);
++  s = await page.evaluate(() => ({ mark: window.__mark, hasComposer: !!document.querySelector('[data-testid="v4-composer-input"]'),
++    text: (document.body.innerText||'').replace(/\s+/g,' ').slice(0,80) }));
++  console.log(`  +${t}ms: 标记=${s.mark} 输入框=${s.hasComposer} 文案: ${s.text}`);
++}
++console.log('\n  === 事件 ===');
++events.forEach(e => console.log('   ', e));
++console.log('  === 判定 ===');
++console.log('  ', sockCount > 1 ? `✓ 页面自己重连了（共 ${sockCount} 次建连）` : '✗ 没有重连');
++console.log('  ', (await page.evaluate(() => window.__mark)) === 'ALIVE' ? '✓ 页面未被整页重载' : '✗ 页面被整页重载');
++await browser.close();
+diff --git a/e2e/feel-verify.mjs b/e2e/feel-verify.mjs
+new file mode 100644
+index 0000000..5d21ff1
+--- /dev/null
++++ b/e2e/feel-verify.mjs
+@@ -0,0 +1,80 @@
++// E2E: 体感优化验证（0007 第二轮）
++// 场景 A（黑洞）: 半开（双向转发掐断不发 close）→ 判死仍需工作（二次探针后杀）→ 软重连
++// 场景 B（健康+hidden 切换）: 健康连接切 hidden 60s 再回来 → 不误杀、不重连（此前误杀主因）
++// 场景 C（横幅惰性）: 黑洞恢复过程首试成功时横幅从不出现
++import { chromium } from 'playwright-core';
++
++if (!process.env.ZCODE_TOKEN) { console.error('usage: ZCODE_TOKEN=<token> [ZCODE_ORIGIN=<origin>] node ' + import.meta.url.split('/').pop()); process.exit(1); }
++const TOK = process.env.ZCODE_TOKEN;
++const ORIGIN = process.env.ZCODE_ORIGIN ?? 'http://127.0.0.1:3030';
++const EXE = process.env.CHROME_PATH ?? undefined;
++const mode = process.argv[2] ?? 'blackhole';
++
++const browser = await chromium.launch({ executablePath: EXE, headless: true, args: ['--lang=zh-CN', '--no-sandbox'] });
++const ctx = await browser.newContext({ viewport: { width: 393, height: 852 }, locale: 'zh-CN' });
++const page = await ctx.newPage();
++const events = [];
++
++let blackholed = false;
++
++let routeCount = 0;
++await page.routeWebSocket(/\/ws(\?|$)/, ws => {
++  routeCount += 1;
++  const id = routeCount;
++  events.push(`#${id} open`);
++  const server = ws.connectToServer();
++  if (mode === 'blackhole') {
++    ws.onMessage(m => { if (!blackholed) server.send(m); });
++    server.onMessage(m => { if (!blackholed) ws.send(m); });
++  } else {
++    ws.onMessage(m => server.send(m));
++    server.onMessage(m => ws.send(m));
++  }
++  ws.onClose(() => events.push(`#${id} client-closed`));
++  server.onClose(() => events.push(`#${id} server-closed`));
++});
++
++await page.goto(`${ORIGIN}/?token=${TOK}`, { waitUntil: 'domcontentloaded', timeout: 40000 });
++await page.waitForTimeout(12000);
++await page.evaluate(() => { window.__mark = 'ALIVE'; });
++const ready = await page.evaluate(() => !!document.querySelector('[data-testid="v4-composer-input"]'));
++console.log(`  就绪: 输入框=${ready} | socks=${routeCount}`);
++if (!ready) { console.log('  ✗ 未就绪，中止'); await browser.close(); process.exit(1); }
++
++if (mode === 'blackhole') {
++  console.log('\n  ▶ 掐断双向转发（半开），等待判死+软重连…');
++  blackholed = true;
++  const t0 = Date.now();
++  let reconnected = false;
++  for (let i = 0; i < 24; i++) {
++    await page.waitForTimeout(2500);
++    if (routeCount > 1) { reconnected = true; break; }
++  }
++  const dt = ((Date.now() - t0) / 1000).toFixed(1);
++  const mark = await page.evaluate(() => window.__mark);
++  const bannerSeen = await page.evaluate(() => !!document.getElementById('zcode-web-conn-banner'));
++  console.log(`  判死+重连耗时: ${dt}s | socks=${routeCount} | 页面未重载=${mark === 'ALIVE'}`);
++  console.log(`  横幅可见=${bannerSeen}`);
++  console.log('  判定:', reconnected && mark === 'ALIVE' ? '✓ 半开判死 + 软重连（未整页刷新）' : '✗ 失败');
++} else {
++  console.log('\n  ▶ 健康连接切 hidden 60s → 回 visible，验证不误杀…');
++  await page.evaluate(() => {
++    Object.defineProperty(document, 'visibilityState', { get: () => 'hidden', configurable: true });
++    document.dispatchEvent(new Event('visibilitychange'));
++  });
++  await page.waitForTimeout(60000);
++  await page.evaluate(() => {
++    Object.defineProperty(document, 'visibilityState', { get: () => 'visible', configurable: true });
++    document.dispatchEvent(new Event('visibilitychange'));
++  });
++  await page.waitForTimeout(8000);
++  const mark = await page.evaluate(() => window.__mark);
++  const composer = await page.evaluate(() => !!document.querySelector('[data-testid="v4-composer-input"]'));
++  const banner = await page.evaluate(() => document.getElementById('zcode-web-conn-banner')?.textContent ?? null);
++  console.log(`  socks=${routeCount} | 输入框=${composer} | 横幅=${banner ?? '无'}`);
++  console.log('  判定:', routeCount === 1 && composer && mark === 'ALIVE' ? '✓ 短切回零重连（无感）' : routeCount > 1 ? `✗ 误杀重连（${routeCount} 次）` : '✗ 页面异常');
++}
++
++console.log('\n  === 事件 ===');
++events.forEach(e => console.log('   ', e));
++await browser.close();
+diff --git a/e2e/halfopen-verify.mjs b/e2e/halfopen-verify.mjs
+new file mode 100644
+index 0000000..f66ea95
+--- /dev/null
++++ b/e2e/halfopen-verify.mjs
+@@ -0,0 +1,89 @@
++// E2E: 半开连接判死验证
++// 场景 A（黑洞）: 拦下页面的 /ws，之后把双向转发掐断但不发 close —— 模拟半开。
++//   旧代码: 永远不会恢复（页面无感死亡）。
++//   新代码: 客户端心跳监视器 15s 探针 / 30s 无帧判死 → 主动 close → 软重连。
++//   判定: 45s 内出现第 2 条 WS 连接，且页面未被整页 reload。
++// 场景 B（健康不误判）: 正常连接 50s，确认无重连、无 reload、无横幅。
++import { chromium } from 'playwright-core';
++
++if (!process.env.ZCODE_TOKEN) { console.error('usage: ZCODE_TOKEN=<token> [ZCODE_ORIGIN=<origin>] node ' + import.meta.url.split('/').pop()); process.exit(1); }
++const TOK = process.env.ZCODE_TOKEN;
++const ORIGIN = process.env.ZCODE_ORIGIN ?? 'http://127.0.0.1:3030';
++const EXE = process.env.CHROME_PATH ?? undefined;
++const mode = process.argv[2] ?? 'blackhole';
++
++const browser = await chromium.launch({ executablePath: EXE, headless: true, args: ['--lang=zh-CN', '--no-sandbox'] });
++const ctx = await browser.newContext({ viewport: { width: 393, height: 852 }, locale: 'zh-CN' });
++const page = await ctx.newPage();
++const events = [];
++let sockCount = 0;
++let live = null;
++let blackholed = false;
++
++await page.routeWebSocket(/\/ws(\?|$)/, ws => {
++  sockCount += 1;
++  const id = sockCount;
++  events.push(`#${id} open`);
++  const server = ws.connectToServer();
++  live = { id, ws, server };
++  if (mode === 'blackhole' && sockCount === 1) {
++    // 第一条连接：先正常握手（让页面完成 bootstrap），等标记后再掐断转发。
++    ws.onMessage(m => { if (!blackholed) server.send(m); });
++    server.onMessage(m => { if (!blackholed) ws.send(m); });
++  } else {
++    ws.onMessage(m => server.send(m));
++    server.onMessage(m => ws.send(m));
++  }
++  ws.onClose(() => { events.push(`#${id} client-closed`); server.close(); });
++  server.onClose(() => { events.push(`#${id} server-closed`); ws.close(); });
++});
++
++await page.goto(`${ORIGIN}/?token=${TOK}`, { waitUntil: 'domcontentloaded', timeout: 40000 });
++await page.waitForTimeout(12000);
++await page.evaluate(() => { window.__mark = 'ALIVE'; });
++
++const before = await page.evaluate(() => ({
++  mark: window.__mark,
++  hasComposer: !!document.querySelector('[data-testid="v4-composer-input"]'),
++}));
++console.log('  就绪:', JSON.stringify(before), '| WS 连接数:', sockCount);
++if (!before.hasComposer) { console.log('  ✗ 页面未就绪（无输入框），中止'); await browser.close(); process.exit(1); }
++
++if (mode === 'blackhole') {
++  console.log('\n  ▶ 掐断双向转发（不发 close）—— 模拟半开连接…');
++  blackholed = true;
++  // 同时清空 page 级缓冲？不需要：routeWebSocket 层直接丢弃即可。
++  for (const t of [10000, 10000, 10000, 10000]) {
++    await page.waitForTimeout(t);
++    const s = await page.evaluate(() => ({
++      mark: window.__mark,
++      hasComposer: !!document.querySelector('[data-testid="v4-composer-input"]'),
++      banner: document.getElementById('zcode-web-conn-banner')?.textContent ?? null,
++    }));
++    console.log(`  +${t / 1000}s: 标记=${s.mark} 输入框=${s.hasComposer} 横幅=${s.banner ? s.banner.slice(0, 30) : '无'}`);
++  }
++} else {
++  console.log('\n  ▶ 健康连接保持 50s，验证不误判…');
++  for (const t of [10000, 10000, 10000, 10000, 10000]) {
++    await page.waitForTimeout(t);
++    const s = await page.evaluate(() => ({
++      mark: window.__mark,
++      hasComposer: !!document.querySelector('[data-testid="v4-composer-input"]'),
++      banner: document.getElementById('zcode-web-conn-banner')?.textContent ?? null,
++    }));
++    console.log(`  +${t / 1000}s: 标记=${s.mark} 输入框=${s.hasComposer} 横幅=${s.banner ? '有' : '无'}`);
++  }
++}
++
++console.log('\n  === 事件 ===');
++events.forEach(e => console.log('   ', e));
++console.log('  === 判定 ===');
++const alive = await page.evaluate(() => window.__mark);
++if (mode === 'blackhole') {
++  console.log('  ', sockCount > 1 ? `✓ 半开被判定，页面发起了重连（共 ${sockCount} 次建连）` : '✗ 没有重连（半开未被判死）');
++  console.log('  ', alive === 'ALIVE' ? '✓ 页面未被整页重载（软重连）' : '✗ 页面被整页重载');
++} else {
++  console.log('  ', sockCount === 1 ? '✓ 健康连接无重连（不误判）' : `✗ 出现了 ${sockCount} 次建连（误判重连）`);
++  console.log('  ', alive === 'ALIVE' ? '✓ 页面未被重载' : '✗ 页面被重载');
++}
++await browser.close();
+diff --git a/e2e/inplace-verify.mjs b/e2e/inplace-verify.mjs
+new file mode 100644
+index 0000000..40b197d
+--- /dev/null
++++ b/e2e/inplace-verify.mjs
+@@ -0,0 +1,107 @@
++// E2E: 原地恢复（无重挂）验证
++// 场景: 页面 hidden 期间服务端真杀 socket（terminate，非优雅 close）→ 回 visible
++//   → 守卫判死 → 软重连 → 原地恢复。
++// 判定「未整树重挂」：在 body 挂一个不可删除的标记元素（重挂不删 body 子节点，
++// 但 connectionEpoch 方案会重挂 Root——Root 卸载不会清 body 外部节点，所以改用
++// 「全局自增计数 + React root 内标记节点」双证据）。
++// 更硬的证据：window.__zcodeConnProbe 存活性 + 页面内一个挂在 documentElement 上的
++// 属性计数。最直接：比较 Root 渲染前后 document.querySelector('#root') 内首个
++// zcode 容器节点引用是否同一对象——重挂会创建新 DOM 节点。
++import { chromium } from 'playwright-core';
++
++if (!process.env.ZCODE_TOKEN) { console.error('usage: ZCODE_TOKEN=<token> [ZCODE_ORIGIN=<origin>] node ' + import.meta.url.split('/').pop()); process.exit(1); }
++const TOK = process.env.ZCODE_TOKEN;
++const ORIGIN = process.env.ZCODE_ORIGIN ?? 'http://127.0.0.1:3030';
++const EXE = process.env.CHROME_PATH ?? undefined;
++const mode = process.argv[2] ?? 'kill-hidden';
++
++const browser = await chromium.launch({ executablePath: EXE, headless: true, args: ['--lang=zh-CN', '--no-sandbox'] });
++const ctx = await browser.newContext({ viewport: { width: 393, height: 852 }, locale: 'zh-CN' });
++const page = await ctx.newPage();
++let liveServerWs = null;
++let killCount = 0;
++
++await page.routeWebSocket(/\/ws(\?|$)/, ws => {
++  const server = ws.connectToServer();
++  liveServerWs = server;
++  ws.onMessage(m => server.send(m));
++  server.onMessage(m => ws.send(m));
++  ws.onClose(() => { liveServerWs = null; });
++  server.onClose(() => { liveServerWs = null; });
++});
++
++await page.goto(`${ORIGIN}/?token=${TOK}`, { waitUntil: 'domcontentloaded', timeout: 40000 });
++await page.waitForTimeout(12000);
++const ready = await page.evaluate(() => !!document.querySelector('[data-testid="v4-composer-input"]'));
++console.log('  就绪: 输入框=' + ready);
++if (!ready) { console.log('  ✗ 未就绪'); await browser.close(); process.exit(1); }
++
++// 打开一个会话视图并制造 DOM 标记：给 composer 的父级容器挂自定义属性（重挂后丢失）
++await page.evaluate(() => {
++  const composer = document.querySelector('[data-testid="v4-composer-input"]');
++  let el = composer;
++  while (el && el.parentElement) {
++    if (el.id === 'root' || !el.parentElement.parentElement) break;
++    el = el.parentElement;
++  }
++  // composer 到 #root 路径上最深的稳定容器打标（重挂 = 新节点 = 标记消失）
++  el.setAttribute('data-e2e-epoch', 'first-mount');
++  window.__firstComposerNode = document.querySelector('[data-testid="v4-composer-input"]')?.parentElement ?? null;
++});
++
++if (mode === 'kill-hidden') {
++  console.log('\n  ▶ 切 hidden → 服务端 terminate socket（真断线）→ 回 visible…');
++  await page.evaluate(() => {
++    Object.defineProperty(document, 'visibilityState', { get: () => 'hidden', configurable: true });
++    document.dispatchEvent(new Event('visibilitychange'));
++  });
++  await page.waitForTimeout(1500);
++  if (liveServerWs) { liveServerWs.close({ code: 1006, wasClean: false, reason: '' }); killCount += 1; }
++  else console.log('  (无活 socket 可杀——可能已被判死)');
++  await page.waitForTimeout(2000);
++  await page.evaluate(() => {
++    Object.defineProperty(document, 'visibilityState', { get: () => 'visible', configurable: true });
++    document.dispatchEvent(new Event('visibilitychange'));
++  });
++} else {
++  console.log('\n  ▶ visible 态直接服务端杀 socket（非 hidden 场景回归）…');
++  if (liveServerWs) { liveServerWs.close({ code: 1006, wasClean: false, reason: '' }); killCount += 1; }
++}
++
++// 等待软重连完成（新 WS 建立 + 输入框回归）
++let reconnected = false;
++for (let i = 0; i < 30; i++) {
++  await page.waitForTimeout(2000);
++  const c = await page.evaluate(() => !!document.querySelector('[data-testid="v4-composer-input"]'));
++  if (c && killCount > 0) {
++    // 给原地恢复/重挂一点时间显形
++    await page.waitForTimeout(3000);
++    reconnected = true;
++    break;
++  }
++}
++const result = await page.evaluate(() => {
++  const composer = document.querySelector('[data-testid="v4-composer-input"]');
++  const currentParent = composer?.parentElement ?? null;
++  const sameNode = window.__firstComposerNode && currentParent &&
++    (window.__firstComposerNode === currentParent ||
++     window.__firstComposerNode.querySelector('[data-testid="v4-composer-input"]') === composer) ||
++    (composer?.closest('[data-e2e-epoch="first-mount"]') != null);
++  return {
++    sameDomNode: Boolean(sameNode),
++    epochMark: composer?.closest('[data-e2e-epoch]')?.getAttribute('data-e2e-epoch') ?? null,
++    banner: document.getElementById('zcode-web-conn-banner')?.textContent ?? null,
++    composer: Boolean(composer),
++  };
++});
++console.log(`\n  === 结果（杀 socket ${killCount} 次）===`);
++console.log('  重连完成:', reconnected);
++console.log('  DOM 节点同一（未重挂）:', result.sameDomNode, '| epoch 标记:', result.epochMark);
++console.log('  输入框:', result.composer, '| 横幅:', result.banner ?? '无');
++const verdict = reconnected && result.composer;
++if (mode === 'kill-hidden') {
++  console.log('  判定:', verdict ? (result.sameDomNode ? '✓ 原地恢复（无重挂）' : '△ 恢复成功但发生了重挂') : '✗ 未恢复');
++} else {
++  console.log('  判定:', verdict ? '✓ 恢复成功' : '✗ 未恢复');
++}
++await browser.close();
+diff --git a/e2e/order-test.mjs b/e2e/order-test.mjs
+new file mode 100644
+index 0000000..2f9c324
+--- /dev/null
++++ b/e2e/order-test.mjs
+@@ -0,0 +1,30 @@
++import { chromium } from 'playwright-core';
++if (!process.env.ZCODE_TOKEN) { console.error('usage: ZCODE_TOKEN=<token> [ZCODE_ORIGIN=<origin>] node ' + import.meta.url.split('/').pop()); process.exit(1); }
++const TOK = process.env.ZCODE_TOKEN;
++const ORIGIN = process.env.ZCODE_ORIGIN ?? 'http://127.0.0.1:3030';
++const EXE = process.env.CHROME_PATH ?? undefined;
++const b = await chromium.launch({ executablePath: EXE, headless: true, args: ['--no-sandbox'] });
++const ctx = await b.newContext({ viewport: { width: 393, height: 852 } });
++const page = await ctx.newPage();
++// 在最早的时刻记录：应用第一次 new WebSocket 时，boot.js 的标记是否已存在
++await page.addInitScript(() => {
++  window.__order = [];
++  const N = window.WebSocket;
++  function W(u, p) {
++    window.__order.push({ ev: 'app-new-WebSocket', bootReady: !!window.__zusageBoot, at: Math.round(performance.now()) });
++    return p === undefined ? new N(u) : new N(u, p);
++  }
++  W.prototype = N.prototype; ['CONNECTING','OPEN','CLOSING','CLOSED'].forEach(k => W[k] = N[k]);
++  window.WebSocket = W;
++});
++await page.goto(`${ORIGIN}/?token=${TOK}`, { waitUntil: 'domcontentloaded', timeout: 40000 });
++await page.waitForTimeout(10000);
++const r = await page.evaluate(() => ({ order: window.__order, bootReadyNow: !!window.__zusageBoot,
++  bootFlag: window.__zusageBoot ? Object.keys(window.__zusageBoot).join(',') : null }));
++console.log('  应用建 WS 的时刻记录:');
++r.order.forEach(o => console.log('   ', JSON.stringify(o)));
++console.log('  boot.js 最终标记:', r.bootReadyNow, r.bootFlag);
++const ok = r.order.length > 0 && r.order[0].bootReady;
++console.log('\n  判定:', ok ? '✓ boot.js 先于应用建连执行 —— 可以安全替换 window.WebSocket'
++                            : '✗ boot.js 晚于应用建连 —— 替换方案不成立');
++await b.close();
+-- 
+2.53.0
+
+
+From 44b8212b5e3627e235ed5abbc629fe4ae6ca63a8 Mon Sep 17 00:00:00 2001
+From: xhwxt <197754549+xhwxt@users.noreply.github.com>
+Date: Thu, 8 Oct 2026 21:18:14 +0800
+Subject: [PATCH 29/29] docs: point E2E reference at published e2e/ directory
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+README 此前引用本地取证目录（evidence/连接恢复/direct-recovery/），
+该目录不在仓库内且含部署环境信息；现指向随仓库发布的 e2e/。
+---
+ README.md | 409 ++++++++++++++++++++++++++----------------------------
+ 1 file changed, 196 insertions(+), 213 deletions(-)
+
+diff --git a/README.md b/README.md
+index bd6247f..42db58b 100644
+--- a/README.md
++++ b/README.md
+@@ -1,223 +1,206 @@
+-# ZCode
+-
+-<div align="center">
+-  <img src="public/logo/icons/1024x1024.png" alt="ZCode" width="128" height="128" />
+-</div>
+-<p align="center">
+-  <a href="https://applink.feishu.cn/client/chat/chatter/add_by_link?link_token=47ag983c-8fcb-4d6d-814b-5395193a712c&amp;qr_code=true">飞书社群</a> ·
+-  <a href="https://discord.gg/z9aBcQXZQ3">Discord</a>
+-</p>
+-<p align="center">
+-  简体中文 | <a href="README.en.md">English</a>
+-</p>
+-
+-
+-
+-ZCode 是 AI 编程工作台，提供桌面应用、浏览器界面和终端 Agent。本仓库包含客户端、后端服务、共享 UI，以及 Agent CLI 与运行时源码。
+-
+-## 更新
+-
+-- 2026-9-23：更新至 ZCode v3.14.3 版本。
+-
+-## 初始化
+-
+-准备 Git、Node.js **24.14.0** 和 pnpm **10.33.2**，版本以 [mise.toml](mise.toml) 为准。以下开发和打包命令均在仓库根目录执行。
+-
+-```bash
+-pnpm bootstrap
+-```
+-
+-`pnpm bootstrap` 安装 workspace 依赖、准备桌面本地运行资源，再执行 `build:bootstrap`。
+-
+-Agent CLI 与运行时源码位于 [apps/zcode-cli/](apps/zcode-cli/)，作为普通目录随本仓库一起克隆，无需单独拉取或初始化 Git submodule。
+-
+-根据需要选择其他初始化或构建入口：
+-
+-| 命令                           | 用途                                                              |
+-| ------------------------------ | ----------------------------------------------------------------- |
+-| `pnpm install`                 | 安装依赖                                                          |
+-| `pnpm prepare:desktop-runtime` | 准备桌面运行资源，默认包含远程资源准备                            |
+-| `pnpm prepare:remote-assets`   | 单独准备远程运行资源                                              |
+-| `pnpm bootstrap:with-remote`   | 初始化依赖、本地与远程资源，并串行构建相关包；跳过桌面应用 bundle |
+-| `pnpm build`                   | 递归执行各 workspace 包的构建脚本，包括包内的资源准备步骤         |
+-
+-默认 `bootstrap` 跳过远程资源准备，适合本地桌面开发。使用远程工作区或验证远程发行资源时，再运行对应准备命令。
+-
+-## 开发与运行
+-
+-### 桌面版
+-
+-```bash
+-pnpm dev:desktop
+-
+-# 使用测试环境
+-pnpm dev:desktop:test
+-```
+-
+-`pnpm dev:desktop` 默认等同于 `pnpm dev:desktop:prod`，使用生产服务配置。启动脚本会准备本地运行资源、构建桌面 Agent，再启动 Electron 和源码监听。
+-
+-需要独立开发数据目录时，可设置 `ZCODE_DATA_BASE_DIR`。例如在 macOS / Linux 中：
+-
+-```bash
+-ZCODE_DATA_BASE_DIR="$HOME/.zcode-dev-home" pnpm dev:desktop:test
+-```
+-
+-### 远程功能（SSH/WSL）
+-
+-先执行 `pnpm bootstrap:with-remote` 准备远程资源（mock-cdn），再 `pnpm dev:desktop`；连接远程项目时资源选择「本地下载后上传」。开发态资源取自本地 `packages/desktop/mock-cdn` 和本地构建产物，经 SFTP 上传到远程，不访问 CDN。
+-
+-### Web 开发
+-
+-修改 Web 或后端源码时，使用开发模式：
+-
+-```bash
+-pnpm dev:web
+-
+-# 指定后端工作区（macOS / Linux）
+-ZCODE_SERVER_WORKSPACE=/path/to/project pnpm dev:web
+-```
+-
+-该命令同时启动 Web 开发服务器（默认 `http://localhost:5173`）和后端（默认 `http://localhost:3030`）；浏览器访问前者。`/ws` 和一般 `/api` 请求代理到本地后端，`/api/v1/oauth/token` 单独代理到当前配置的产品服务。
+-
+-Agent 源码修改后，执行 `pnpm --filter @zcode/cli... build` 并重启服务。需要验证完整发行包时，按下方“ZCode 命令行版”打包章节解压运行。
+-
+-### ZCode 命令行版
+-
+-命令行发行包包含 TUI、Web 和 Agent，统一使用 `zcode` 启动：无参数进入 TUI；第一个参数为 `--web` 时启动 Web；其他参数交给现有 Agent CLI 处理。两种模式都在本机运行，无需 Electron。
+-
+-```bash
+-# 默认进入终端交互界面
+-zcode
+-
+-# 启动 Web 界面
+-zcode --web
+-
+-# 指定项目和端口，不自动打开浏览器
+-zcode --web --workspace /path/to/project --port 3030 --no-open
+-
+-# 查看 CLI 或 Web 参数
+-zcode --help
+-zcode --web --help
+-```
+-
+-Web 模式默认工作目录为当前目录，监听 `127.0.0.1`，默认不启用访问令牌，自动选择空闲端口并打开浏览器。访问终端输出的地址，按 `Ctrl+C` 停止服务。局域网访问可使用 `--host 0.0.0.0`；监听非本机地址时默认生成访问令牌，使用终端输出的带令牌链接。可通过 `--token` 指定令牌或 `--no-token` 关闭令牌认证。
+-
+-直接启动通用 Web 服务的 HTTP 入口时，通过 `ZCODE_SERVER_AUTH_TOKEN` 配置 API／WebSocket 认证；通过程序接口创建服务时，使用 `authToken` 选项。
+-
+-构建方式见下方打包章节。`pnpm build:zcode` 只生成发行包，不会替换 `PATH` 中已有的 `zcode`。如果命令仍指向旧安装或其他源码目录，macOS / Linux 可用 `command -v zcode` 检查，Windows 可用 `where.exe zcode` 检查。
+-
+-### CLI 源码开发
+-
+-直接开发 TUI 或 Agent 时，运行源码入口：
+-
+-```bash
+-pnpm --filter @zcode/cli dev --help
+-pnpm --filter @zcode/cli dev
+-
+-# 构建 CLI 及其 workspace 依赖
+-pnpm --filter @zcode/cli... build
+-node apps/zcode-cli/packages/cli/dist/zcode.cjs --help
+-```
+-
+-这个入口直接运行 Agent CLI，不经过发行包的 `--web` 分流。开发 Web 用 `pnpm dev:web`；验证统一的 `zcode` 命令，用下方解压后的 `bin/zcode.mjs`。
+-
+-## 配置
+-
+-根目录 [.env.example](.env.example) 提供服务地址与构建配置示例，可按需复制到 `.env`，本地覆盖放入 `.env.local`。Desktop 的开发环境通过 `dev:desktop:test` / `dev:desktop:prod` 选择。
+-
+-| 配置                                 | 用途                                             |
+-| ------------------------------------ | ------------------------------------------------ |
+-| `ZCODE_DATA_BASE_DIR`                | 应用数据基目录，数据写入其下的 `.zcode/`         |
+-| `ZCODE_SERVER_WORKSPACE`             | Web 后端的工作区路径                             |
+-| `ZCODE_BUILTIN_PROVIDER_CONFIG_FILE` | 本地 Provider 配置文件路径；未设置时使用内置配置 |
+-| `ZCODE_DIST_BASE_URL`                | 命令行安装脚本使用的下载根地址                   |
+-
+-运行时变量可在启动命令的环境中显式设置。随客户端发布的默认配置见 [config/README.md](config/README.md)。
+-
+-## 打包
+-
+-第三方声明生成、发行校验流程及声明在发行物中的位置见 [third-party/README.md](third-party/README.md)。
+-
+-### 桌面版
+-
+-```bash
+-pnpm bundle:desktop
+-
+-# 指定目标平台与 CPU 架构
+-pnpm bundle:desktop -- --os win --arch x64
+-
+-pnpm bundle:desktop -- --help
+-```
+-
+-默认目标为 macOS arm64，默认输出目录为 `packages/desktop/dist/`。`--os` 支持 `mac`、`win`、`linux`，`--arch` 支持 `x64`、`arm64`；实际打包与签名需要目标平台对应的工具和配置。
+-
+-安装：双击打开产物 DMG，将 ZCode 拖入"应用程序"。本地构建未签名，首次打开若被 macOS 拦截，执行：
++<h1 align="center">Z÷</h1>
++
++<div align="center"><pre>
++                      /´¯/)
++                    ,/¯../
++                   /..../
++             /´¯/'...'/´¯¯`·¸
++          /'/.../..../......./¨¯\
++        ('(...´...´.... ¯~/'...')
++         \.................'..../
++          ''...\.......... _.·´
++            \..............(
++             \.............\
++</pre></div>
++
++# ZCode Self-Hosted Web Parity Patches
++
++Enhancements that make a self-hosted [ZCode](https://github.com/zai-org/ZCode) web
++deployment work as a standalone service (no desktop app required), for both the
++built-in web UI ("direct page") and the official mobile remote-control page.
++
++Base: ZCode v3.14.3 (commit `29628c9`).
++
++## What's included
++
++| # | Area | Problem | Fix |
++|---|------|---------|-----|
++| a | Remote page `@` menu | Official remote page (v3.14.0) calls the pre-3.14.3 one-shot `file.listWorkspaceFiles`; server only implements the `Length`/`Range` chunked API → `Method not found` | Add a compat method that reuses the host-side workspace file index cache and unpacks it to the legacy array shape |
++| b | Direct page sidebar task list | The sidebar "Tasks" section queries the `window-controller` RPC channel, which is only registered by the desktop Host → queries time out, list stays empty | Register a minimal server-side `IWindowControllerService` that forwards to the in-process `IZCodeTaskService` (same tasks-index.sqlite source as desktop) |
++| c | Token-mode server-info | The web entry fetches `/api/server-info` without credentials → always 401 when the server runs with `--token`, workspace announcement never reaches the page | Forward the URL `?token=` query to the fetch (same credential the WebSocket already uses) |
++| d | Session restore | Web entry never enabled `restoreSession`, so no workspace tabs are restored at startup and scoped task queries have no data source | Enable the same `useTabPersistence` restore path the desktop app uses |
++| e | Workspace purpose | `server-info` workspaces carry no purpose; the conversation backing workspace can't be distinguished from user projects | Add optional `workspacePurpose` to the workspace info schema (backward compatible) |
++| f | Mobile background disconnects (direct page) | Mobile browsers freeze/kill the page's WebSocket within seconds of backgrounding; on return the socket is dead with no indication and RPC calls fail silently | Connection guard: a real `close` event marks the socket dead; a dead socket on return to foreground triggers recovery (see item j for the in-page reconnect that replaced the original full-page reload) |
++| g | Mobile drawer layout (direct page) | Below 768px the sidebar and right side pane are in-flow split columns; opening either squeezes the conversation area | Drawer viewport: sidebar and side pane become sliding overlays (min(85vw,480px), 200ms transition) over a click-to-dismiss backdrop; sidebar drag handle not rendered; drawers are mutually exclusive; the top-left sidebar toggle (web branch of `DesktopTopOverlay`) sits at z-40 above the drawers so it always works |
++| h | Directory browser create folder | The server-side directory browser could only pick existing directories — no way to create a project folder on a phone | `IFileService.createDirectory` (server-side single-segment mkdir, `recursive: false`, path separators rejected in the name; final path is joined server-side); inline "New folder" form in `DirectoryBrowser` refreshes the listing on success; i18n zh-CN/en-US |
++| i | Mobile header offset & touch affordances (direct page) | (1) The header applied a desktop window-controls left padding (152px) whenever the sidebar was collapsed — on the drawer viewport the sidebar is collapsed by default, so the conversation title and buttons were pushed off-screen/clipped; (2) message action bars (time/copy) were hover-only, i.e. permanently invisible on touch devices; (3) a false-positive guard marked the socket dead on every background/foreground cycle, forcing a reload on each quick tab switch; (4) `AskUserQuestion` answers rendered as "未提供回答" because the CLI serializes them as text while the parser only accepted JSON | Gate the window-controls padding on the desktop platform and reserve 80px on the web drawer viewport for the floating overlay buttons (mobile title cap 46vw); make action bars always visible under `@media (hover: none)`; only a real `close` event marks the socket dead; parse the CLI's `"Q"="A"` text form in addition to JSON |
++| j | Reconnect without page reload + scroll-position restore (direct page) | A real disconnect reloaded the entire page: blank screen, ~7MB of JS re-downloaded and re-parsed (2s+); the reload also lost the reading position, and the late restore could yank the scroll position while the user was already scrolling | Soft reconnect with short backoff — no page reload, the old UI stays readable under a top banner, and recovery semantics are unchanged (server remains the source of truth). Originally re-mounted the React tree under a `connectionEpoch` key; item k later replaced that with a hot transport swap (no re-render at all). Scroll memory is mirrored to `sessionStorage` (LRU 40) and restored by **distance-from-bottom** with a bounded 4s convergence pass; any real user scroll intent cancels the restore immediately |
++
++All changes are source-level, protocol-compatible additions — no desktop behavior
++changes, no environment-specific values.
++
++## Applying
+ 
+ ```bash
+-sudo xattr -rd com.apple.quarantine /Applications/ZCode.app
+-```
+-
+-### ZCode 命令行版
+-
+-构建入口为 `pnpm build:zcode`。脚本会依次构建 CLI/TUI、后端和 Web，收集 TUI 的原生库、worker 与运行时依赖，再组装发行包；运行发行包仍需要 Node.js，版本以 `mise.toml` 为准。
++# inside a checkout of zai-org/ZCode at v3.14.3
++bash apply-selfhosted-web-patches.sh
+ 
+-打包前必须设置下载根地址 `ZCODE_DIST_BASE_URL`（可放在 `.env`、`.env.local` 或环境变量中），也可以通过 `--base-url` 传入。以下地址是占位示例，发布时替换为实际托管地址：
+-
+-```bash
+-pnpm build:zcode --base-url https://downloads.example.com/zcode/
+-
+-# 已配置 ZCODE_DIST_BASE_URL 时
+-pnpm build:zcode
+-
+-# 仅重新组包，复用已有的 Agent、后端和 Web 构建产物
+-pnpm build:zcode --skip-build
+-
+-# 查看版本、输出目录等可选参数
+-pnpm build:zcode --help
++# build the distribution
++pnpm install
++pnpm build:zcode --base-url https://your-dist-host/dist/
++# artifact: dist/zcode/releases/<version>/zcode-<version>.tar.gz
+ ```
+ 
+-默认版本取根目录 `package.json`，输出目录为 `dist/zcode/`：
+-
+-- `releases/<version>/zcode-<version>.tar.gz`：运行包。
+-- `releases/<version>/sha256.txt`：校验摘要。
+-- `latest.json`、`install.sh`：版本索引和安装脚本。
+-
+-完整目录可上传到配置的下载根地址。安装脚本从该地址下载运行包，默认安装到 `~/.zcode/runtime`，并在 `~/.local/bin` 创建 `zcode` 命令。安装目录可通过 `ZCODE_DIST_HOME` 修改，命令目录可通过 `ZCODE_DIST_BIN_DIR` 修改。
+-
+-旧 Lite 用户需要改用上述构建命令、环境变量和新的安装脚本。新安装不会删除旧 Lite 目录，也不会迁移或删除已有会话数据。
+-
+-本地调试打包产物时，可直接解压运行，无需上传或安装：
++Run the server with a token (the web UI accepts `?token=<token>` on first visit):
+ 
+ ```bash
+-zcode_version=$(node -p "require('./dist/zcode/latest.json').version")
+-mkdir -p dist/zcode/debug
+-tar -xzf "dist/zcode/releases/$zcode_version/zcode-$zcode_version.tar.gz" \
+-  -C dist/zcode/debug
+-# 默认启动 TUI
+-node dist/zcode/debug/zcode/bin/zcode.mjs
+-
+-# 启动 Web
+-node dist/zcode/debug/zcode/bin/zcode.mjs --web \
+-  --workspace "$PWD" --port 3030 --no-open
++node bin/zcode.mjs --web --workspace <dir> --host 127.0.0.1 --port 3030 --token <token>
+ ```
+ 
+-浏览器打开 `http://127.0.0.1:3030`，即可验证同一后端服务托管 Web 页面和 Agent 的完整链路。该端口需要空闲；如正在运行 `pnpm dev:web`，可改用其他 `--port`。
+-
+-## 仓库结构
+-
+-| 目录                                                 | 职责                                       |
+-| ---------------------------------------------------- | ------------------------------------------ |
+-| `packages/desktop`                                   | Electron Main、Host、Renderer 与桌面打包   |
+-| `packages/web`                                       | Web 客户端                                 |
+-| `packages/server`                                    | HTTP / WebSocket 服务与远程连接            |
+-| `packages/zcode-server-cli`                          | 独立 Server 启动与进程管理                 |
+-| `packages/ui`                                        | 共享 React 组件、hooks 与 Zustand 状态     |
+-| `packages/services`                                  | 业务服务与持久化                           |
+-| `packages/shared`、`packages/rpc`、`packages/client` | 共享协议和类型、RPC 框架、Agent 客户端 SDK |
+-| `packages/provider`、`packages/provider-node`        | Provider 公共能力与 Node 实现              |
+-| `apps/zcode-cli`                                     | Agent CLI、TUI、运行时与工具               |
+-| `scripts`、`config`、`third-party`                   | 构建维护脚本、内置配置与第三方声明材料     |
+-
+-## 项目声明
++`--workspace` pointing at the app-managed conversation workspace
++(`<dataBaseDir>/.zcode/workspace/default`) is announced as
++`workspacePurpose: "conversation"` — the UI shows it as "not working in a
++project" (draft mode). Create real projects from the UI as needed.
++
++## Optional add-on: official mobile remote-control page
++
++The relay that lets the **official** mobile remote-control page run against a
++self-hosted server is published under [`relay/`](relay/) with its own README
++(endpoints, environment variables, systemd/nginx wiring, optional offline page
++mirror, version pinning). It is deployment tooling, not a source patch — the patch
++set above is what makes the server itself usable; the relay only adds the vendor
++page on top.
++
++## Notes
++
++- Item j also fixes a latent render crash that fired once per page load:
++  `useProviderSettingsView` passed `getServerSnapshot` a second time; under
++  React 19 the update path compared against an undefined hook slot and threw
++  `TypeError: Cannot read properties of undefined (reading 'length')`. The
++  parameter is redundant for client-only rendering and was dropped.
++- The official mobile remote-control page (`/remote/v4`) needs the relay in
++  [`relay/`](relay/) (plus TLS/reverse-proxy wiring); without it only the direct
++  page (built-in web UI) is reachable.
++- Known limitation: if the server is killed mid-conversation, the task row can
++  stay `running` in tasks-index.sqlite (no orphan cleanup on startup yet).
++
++## Self-hosting checklist (beyond the patch set)
++
++These are deployment steps, not source patches — they are listed here so a
++self-hosted install is complete:
++
++- **Plugin packages.** The plugin bundles that ship in the official release
++  (`skill-creator-plugin`, `zcode-guide-plugin`, `documents-plugin`,
++  `spreadsheets-plugin`, `pdf-plugin`, `presentations-plugin`,
++  `restore-legacy-sessions-plugin`, `browser-use-plugin`, …, plus
++  `bundled-skills`) are **not part of the source tree** and are not produced by
++  `pnpm build:zcode`. Make sure `<install>/packages/` contains them (copy from an
++  official release artifact / AppImage); otherwise the plugin store and the
++  skill/guide tooling are missing.
++- **Keep plugin copies and the agent bundle from the same release.** Official
++  plugin definitions declare `requiredSeedPaths` (for example `zcode-guide`
++  requires `commands/workflow.md` and `skills/dynamic-workflows/*`). At startup
++  the agent checks those paths against the plugin copy on disk; if any are
++  missing it logs `ZCODE_PLUGIN_SEED_INCOMPLETE` and **skips seeding that
++  plugin** (the guide skill silently stays absent). Source and plugin copies must
++  therefore come from a matching release: either use plugin directories that
++  contain the paths your `installed agent/zcode.cjs` requires, or install the
++  agent bundle that matches the plugin copies you have.
++- **Agent runtime bundle.** `<install>/agent/zcode.cjs` is the prebuilt agent
++  runtime. Rebuilding it from source replaces whatever the installer put there,
++  so re-check the point above after every agent-bundle update.
++
++## Patches
++
++- `0001-self-hosted-web-parity.patch` — items a–e (single commit)
++- `0002-web-connection-guard.patch` — item f (single commit)
++- `0003-feat-ui-mobile-drawer-layout-for-sidebar-and-side-pa.patch` — item g
++- `0004-fix-ui-mobile-drawer-polish-directory-browser-create.patch` — item h
++- `0005-fix-ui-web-round2-mobile-fixes.patch` — item i
++- `0006-fix-ui-web-mobile-header-window-controls-padding-per.patch` — item j
++- `0007-fix-rpc-client-server-websocket-keepalive-liveness.patch` — item k
++- `0003-0004-selfhosted-web-patches-mobile.patch` — items g+h combined (legacy convenience file)
++
++Apply against upstream `v3.14.3` (commit `29628c9`) in order 0001 → 0007
++(0001+0002 may also be applied as one combined file historically named
++`0001-0002-selfhosted-web-patches.patch`; do not apply the combined file together
++with 0001/0002). All variants are verified with `git apply --check`, and applying
++0001 → 0007 to a clean `29628c9` checkout reproduces the maintainer tree
++byte-for-byte. `apply-selfhosted-web-patches.sh` runs the full sequence.
++
++### Item k — WebSocket keepalive liveness (half-open detection)
++
++The direct web page previously had zero liveness probes on its browser ↔ server
++WebSocket: `SocketProtocol` silently dropped `KeepAlive` frames, neither end sent
++heartbeats, and the foreground guard probed with an HTTP fetch — which opens a
++*different* connection and cannot detect a half-open one. A dead-but-open socket
++looked normal while every new RPC failed silently.
++
++- `packages/rpc` — `SocketProtocol` now answers a `KeepAlive` probe (`ack=0`)
++  with exactly one echo (`ack=1`); new `sendKeepAlive()` / `onKeepAlive`.
++  Queue/MessagePort transports moved to `port-protocol.ts` (line-limit split).
++- `packages/client` — `connectViaWebSocket` attaches a heartbeat monitor by
++  default (15 s probe / 30 s no-frame deadline). On deadline it closes the
++  socket so the existing guard + soft-reconnect take over; `onHeartbeat` exposes
++  a same-socket liveness handle to the host page.
++- `packages/web` — the visibility guard's foreground check now uses that
++  same-socket handle (fresh timestamp → healthy; stale → one probe + short wait
++  → dead ⇒ soft reconnect) instead of an HTTP fetch.
++- `packages/server` & `packages/zcode-server-cli` — `/ws` connections get an
++  RFC 6455 ping loop (30 s interval, terminate after 2 missed pongs), freeing
++  server-side half-open sockets and triggering the browser `close` path.
++
++Spec: `packages/rpc/specs/socket-keepalive.md`; unit tests:
++`packages/rpc/test/socket-keepalive.test.ts`.
++
++### Item k (evolved) — hot transport swap, in-place recovery
++
++Item k grew well past its original "heartbeat" scope through real-device
++iteration. Current recovery architecture (all inside patch 0007):
++
++1. **Hot transport swap** — on reconnect, the new WebSocket is swapped into
++   the *same* `ChannelClient` (`resetTransport`): pending Promise requests are
++   fail-closed, buffered frames (including the server's `Initialize`) are
++   replayed, **active event subscriptions are re-sent**, and the handshake
++   cache is invalidated by epoch. The React tree never re-mounts and
++   `IServiceAccessor` object identity never changes — the UI shows zero
++   visual change across a reconnect.
++2. **Bounded silent retry** — every subscribe failure runs a backoff
++   (250ms → 8s rhythm, aligned to the 8s handshake-RPC timeout, ~75s budget)
++   before any error surface. Transient races (handshake/session swap/network
++   jitter) are invisible to the user.
++3. **Server-side connection hygiene** — RFC 6455 ping loop with a relaxed
++   pong tolerance (4 misses ≈ 2.5 min): mobile Chrome stops answering pings
++   for backgrounded pages (power saving) while the connection is still alive.
++4. **Service Worker shell cache** (v7) — navigation and assets replay from
++   local cache on page discard (instant recovery), background revalidation
++   keeps deployments reaching clients; injected scripts (`/zusage/boot.js`)
++   are network-first so they always update.
++
++Known behavioral notes:
++- `document.wasDiscarded` reloads (Android Chrome memory management) still
++  produce a page load — replayed from local cache in ~1s; not preventable
++  from web code.
++- The `/web-remote` official page is closed-source (token flow has no native
++  recovery coordinator); its recovery relies on the relay's injected shim
++  (banner + reload only on unrecoverable error screens).
++
++E2E scripts: [`e2e/`](e2e/) (half-open blackhole,
++in-place recovery, reload telemetry).
++
++### Release discipline (for maintainers)
++
++- **Patch application is atomic.** `apply-selfhosted-web-patches.sh` runs a
++  cumulative dry-run on a temp index before touching the worktree; any failure
++  leaves the worktree clean. Baseline mismatch is a hard error (`STRICT=0`
++  overrides at your own risk). Rollback is `git checkout -- .` or
++  `git apply -R`.
++- **Every patch-set update must re-verify the chain.** Apply 0001→000N to a
++  clean `29628c9` worktree; the resulting tree hash must equal the maintainer
++  HEAD tree hash. This is checked on every patch-repo push.
++- **Known verification gap (accepted for now):** unit tests cover the protocol
++  layer (keepalive echo, event re-send); end-to-end recovery was validated
++  against real devices via the E2E scripts above, but there is no automated
++  clean-baseline build + offline-recovery CI. Contributions in that direction
++  are the highest-value next step.
+ 
+-功能与优惠范围、维护规则、执行与数据风险，以及许可和第三方版权说明，详见 [NOTICE.md](NOTICE.md)。
 -- 
 2.53.0
 

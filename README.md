@@ -185,7 +185,7 @@ Known behavioral notes:
   recovery coordinator); its recovery relies on the relay's injected shim
   (banner + reload only on unrecoverable error screens).
 
-E2E scripts: `evidence/连接恢复/direct-recovery/` (half-open blackhole,
+E2E scripts: [`e2e/`](e2e/) (half-open blackhole,
 in-place recovery, reload telemetry).
 
 ### Release discipline (for maintainers)
