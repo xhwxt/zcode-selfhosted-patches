@@ -34,7 +34,7 @@ Base: ZCode v3.14.3 (commit `29628c9`).
 | g | Mobile drawer layout (direct page) | Below 768px the sidebar and right side pane are in-flow split columns; opening either squeezes the conversation area | Drawer viewport: sidebar and side pane become sliding overlays (min(85vw,480px), 200ms transition) over a click-to-dismiss backdrop; sidebar drag handle not rendered; drawers are mutually exclusive; the top-left sidebar toggle (web branch of `DesktopTopOverlay`) sits at z-40 above the drawers so it always works |
 | h | Directory browser create folder | The server-side directory browser could only pick existing directories — no way to create a project folder on a phone | `IFileService.createDirectory` (server-side single-segment mkdir, `recursive: false`, path separators rejected in the name; final path is joined server-side); inline "New folder" form in `DirectoryBrowser` refreshes the listing on success; i18n zh-CN/en-US |
 | i | Mobile header offset & touch affordances (direct page) | (1) The header applied a desktop window-controls left padding (152px) whenever the sidebar was collapsed — on the drawer viewport the sidebar is collapsed by default, so the conversation title and buttons were pushed off-screen/clipped; (2) message action bars (time/copy) were hover-only, i.e. permanently invisible on touch devices; (3) a false-positive guard marked the socket dead on every background/foreground cycle, forcing a reload on each quick tab switch; (4) `AskUserQuestion` answers rendered as "未提供回答" because the CLI serializes them as text while the parser only accepted JSON | Gate the window-controls padding on the desktop platform and reserve 80px on the web drawer viewport for the floating overlay buttons (mobile title cap 46vw); make action bars always visible under `@media (hover: none)`; only a real `close` event marks the socket dead; parse the CLI's `"Q"="A"` text form in addition to JSON |
-| j | Reconnect without page reload + scroll-position restore (direct page) | A real disconnect reloaded the entire page: blank screen, ~7MB of JS re-downloaded and re-parsed (2s+); the reload also lost the reading position, and the late restore could yank the scroll position while the user was already scrolling | Soft reconnect: retry the WebSocket with 1/2/4/8s backoff and re-mount the React tree under a new `connectionEpoch` key — no page reload, the old UI stays readable under a top banner, and recovery semantics are unchanged (server remains the source of truth, snapshot replay restores the session); full reload only after the backoff is exhausted or on a reconnect storm. Scroll memory is mirrored to `sessionStorage` (LRU 40) and restored by **distance-from-bottom** with a bounded 4s convergence pass over measurement/prepend changes; any real user scroll intent cancels the restore immediately, and a degenerate snapshot (`pinned=false` but at the bottom) is never persisted |
+| j | Reconnect without page reload + scroll-position restore (direct page) | A real disconnect reloaded the entire page: blank screen, ~7MB of JS re-downloaded and re-parsed (2s+); the reload also lost the reading position, and the late restore could yank the scroll position while the user was already scrolling | Soft reconnect with short backoff — no page reload, the old UI stays readable under a top banner, and recovery semantics are unchanged (server remains the source of truth). Originally re-mounted the React tree under a `connectionEpoch` key; item k later replaced that with a hot transport swap (no re-render at all). Scroll memory is mirrored to `sessionStorage` (LRU 40) and restored by **distance-from-bottom** with a bounded 4s convergence pass; any real user scroll intent cancels the restore immediately |
 
 All changes are source-level, protocol-compatible additions — no desktop behavior
 changes, no environment-specific values.
@@ -152,4 +152,55 @@ looked normal while every new RPC failed silently.
 
 Spec: `packages/rpc/specs/socket-keepalive.md`; unit tests:
 `packages/rpc/test/socket-keepalive.test.ts`.
+
+### Item k (evolved) — hot transport swap, in-place recovery
+
+Item k grew well past its original "heartbeat" scope through real-device
+iteration. Current recovery architecture (all inside patch 0007):
+
+1. **Hot transport swap** — on reconnect, the new WebSocket is swapped into
+   the *same* `ChannelClient` (`resetTransport`): pending Promise requests are
+   fail-closed, buffered frames (including the server's `Initialize`) are
+   replayed, **active event subscriptions are re-sent**, and the handshake
+   cache is invalidated by epoch. The React tree never re-mounts and
+   `IServiceAccessor` object identity never changes — the UI shows zero
+   visual change across a reconnect.
+2. **Bounded silent retry** — every subscribe failure runs a backoff
+   (250ms → 8s rhythm, aligned to the 8s handshake-RPC timeout, ~75s budget)
+   before any error surface. Transient races (handshake/session swap/network
+   jitter) are invisible to the user.
+3. **Server-side connection hygiene** — RFC 6455 ping loop with a relaxed
+   pong tolerance (4 misses ≈ 2.5 min): mobile Chrome stops answering pings
+   for backgrounded pages (power saving) while the connection is still alive.
+4. **Service Worker shell cache** (v7) — navigation and assets replay from
+   local cache on page discard (instant recovery), background revalidation
+   keeps deployments reaching clients; injected scripts (`/zusage/boot.js`)
+   are network-first so they always update.
+
+Known behavioral notes:
+- `document.wasDiscarded` reloads (Android Chrome memory management) still
+  produce a page load — replayed from local cache in ~1s; not preventable
+  from web code.
+- The `/web-remote` official page is closed-source (token flow has no native
+  recovery coordinator); its recovery relies on the relay's injected shim
+  (banner + reload only on unrecoverable error screens).
+
+E2E scripts: `evidence/连接恢复/direct-recovery/` (half-open blackhole,
+in-place recovery, reload telemetry).
+
+### Release discipline (for maintainers)
+
+- **Patch application is atomic.** `apply-selfhosted-web-patches.sh` runs a
+  cumulative dry-run on a temp index before touching the worktree; any failure
+  leaves the worktree clean. Baseline mismatch is a hard error (`STRICT=0`
+  overrides at your own risk). Rollback is `git checkout -- .` or
+  `git apply -R`.
+- **Every patch-set update must re-verify the chain.** Apply 0001→000N to a
+  clean `29628c9` worktree; the resulting tree hash must equal the maintainer
+  HEAD tree hash. This is checked on every patch-repo push.
+- **Known verification gap (accepted for now):** unit tests cover the protocol
+  layer (keepalive echo, event re-send); end-to-end recovery was validated
+  against real devices via the E2E scripts above, but there is no automated
+  clean-baseline build + offline-recovery CI. Contributions in that direction
+  are the highest-value next step.
 

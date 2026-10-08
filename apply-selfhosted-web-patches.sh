@@ -23,10 +23,15 @@ PATCHES=(
   "$DIR/0007-fix-rpc-client-server-websocket-keepalive-liveness.patch"
 )
 
-echo "==> 检查基线（应为 v3.14.3 / 29628c9，其他版本需自行确认可合并）"
+echo "==> 检查基线（严格模式：基线不符即退出）"
 current="$(git rev-parse --short HEAD)"
 if [[ "$current" != "29628c9" ]]; then
-  echo "警告: 当前 HEAD 是 $current 而非 29628c9，将尝试直接 apply（冲突需手工处理）"
+  echo "错误: 当前 HEAD 是 $current 而非基线 29628c9。" >&2
+  echo "      本补丁组只对基线 29628c9 做过整组验证；其他版本请先 checkout 基线。" >&2
+  echo "      （确需强行为之：修改本脚本的 STRICT=0，风险自负）" >&2
+  if [[ "${STRICT:-1}" == "1" ]]; then
+    exit 1
+  fi
 fi
 
 echo "==> 检查工作区干净"
@@ -35,23 +40,50 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
   exit 1
 fi
 
-echo "==> 应用补丁"
+echo "==> 整组预检（在临时 index 上按序累积应用，任一失败即退出，不留半应用状态）"
+TMPINDEX="$(mktemp)"
+export GIT_INDEX_FILE="$TMPINDEX"
+git read-tree HEAD
+PRECHECK_OK=1
 for p in "${PATCHES[@]}"; do
   if [[ ! -f "$p" ]]; then
     echo "错误: 找不到补丁文件 $p" >&2
-    exit 1
+    PRECHECK_OK=0
+    break
   fi
+  # --cached 在临时 index 上累积应用：与真实应用的工作区状态完全同构
+  if ! git apply --cached --check "$p" 2>/dev/null; then
+    echo "错误: 预检失败 $p（与前面补丁叠加后冲突或基线不符）" >&2
+    echo "      未应用任何改动，工作区保持干净。" >&2
+    PRECHECK_OK=0
+    break
+  fi
+  git apply --cached "$p" 2>/dev/null
+  echo "    预检通过 $(basename "$p")"
+done
+rm -f "$TMPINDEX"
+unset GIT_INDEX_FILE
+if [[ "$PRECHECK_OK" != "1" ]]; then
+  git read-tree HEAD   # 还原临时 index 之外的任何残留
+  exit 1
+fi
+echo "    预检通过：全部 ${#PATCHES[@]} 个补丁可依次应用"
+
+echo "==> 应用补丁"
+for p in "${PATCHES[@]}"; do
   name="$(basename "$p")"
-  if git apply --check "$p" 2>/dev/null; then
-    git apply "$p"
-    echo "    已应用 $name"
-  else
-    echo "错误: $name 无法应用（冲突或基线不符）" >&2
-    exit 1
-  fi
+  git apply "$p"
+  echo "    已应用 $name"
 done
 
-echo "==> 完成（全部未提交）。检查无误后自行提交: git add -A && git commit"
+cat <<'ROLLBACK'
+
+==> 完成（全部未提交）。
+    检查无误后提交:  git add -A && git commit
+    发现问题需要回滚: git apply -R --reverse <补丁文件> 逐个逆向应用，
+                      或直接 git checkout -- . 丢弃全部未提交改动
+                    （本脚本保证失败时不会留下半应用状态）。
+ROLLBACK
 echo "==> 重建发行包:"
 echo "    pnpm install && pnpm build:zcode"
 echo "    产物在 dist/zcode/releases/<version>/，解压到部署目录后重启服务即可。"
