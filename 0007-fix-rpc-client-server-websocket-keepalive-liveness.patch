@@ -1,7 +1,7 @@
 From 96336e91211171eeb035fe21deb187e9ffa7d453 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:13:39 +0800
-Subject: [PATCH 1/4] fix(rpc,client,server): websocket keepalive liveness for
+Subject: [PATCH 1/6] fix(rpc,client,server): websocket keepalive liveness for
  half-open detection
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1061,7 +1061,7 @@ index 8a8a827..3cf4514 100644
 From 702fbb92e174c690cf5d7f0e225f2f49ca7506f5 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:38:20 +0800
-Subject: [PATCH 2/4] fix(client,web): heartbeat deadline fires onHeartbeatDead
+Subject: [PATCH 2/6] fix(client,web): heartbeat deadline fires onHeartbeatDead
  before close
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1147,7 +1147,7 @@ index ceec191..690393f 100644
 From 7fbf4b856e5d5feafaa41b0ee495483f4b23c1c7 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 08:34:01 +0800
-Subject: [PATCH 3/4] perf(web,client): seamless background returns, faster
+Subject: [PATCH 3/6] perf(web,client): seamless background returns, faster
  reconnect, lazy banner
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1423,7 +1423,7 @@ index 690393f..4719771 100644
 From ff95eabdaf8f94210f71f06462d5aec9d3cdc8de Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 09:24:05 +0800
-Subject: [PATCH 4/4] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
+Subject: [PATCH 4/6] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
  =?UTF-8?q?=E2=80=94=20no=20React=20remount=20on=20soft=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1840,6 +1840,453 @@ index 4719771..879e9b7 100644
 +}
 +
  void bootstrapWebApp();
+-- 
+2.53.0
+
+
+From 4b5abe08b2b01c1cea956092d373a390cd4f71fd Mon Sep 17 00:00:00 2001
+From: xhwxt <197754549+xhwxt@users.noreply.github.com>
+Date: Thu, 8 Oct 2026 10:16:18 +0800
+Subject: [PATCH 5/6] fix(ui): md preview text fences invisible on dark UI +
+ mobile settings row squeeze
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Bug 1（右侧面板 md 的 text 围栏隐形）：previewPaneContent.tsx 文件分支调
+MarkdownPreviewContent 漏传 theme，MessageResponse 缺省按 "system" 读
+prefers-color-scheme。系统浅色偏好 + zai-dark UI 时，markdown 代码块按
+light 主题取基础字色（#24292E）画在深色卡片（#2B2B2B）上——纯文本围栏
+无 token 高亮 span，整体隐形；bash 等有着色的块不受影响。同文件 text 源
+分支（210 行）一直有传 theme。修复：文件分支补传 theme={theme}。
+验证：修复后 colorScheme=dark、字色 rgb(225,228,232)，text/无语言/bash
+围栏全部可见（headless Chromium light/dark 两种 prefers-color-scheme）。
+
+Bug 2（手机设置页标签逐字竖排）：SettingsRow 默认布局控制列固定 192px
+无断点回退，390px 视口内容列 254px 时标签列仅 46px。修复：默认布局与
+wide 布局对齐（grid-cols-1 sm:双列）；行内 5 处固定 260px Select 与
+1 处 w-64 改为 w-full min-w-0 sm:w-固定值。桌面 ≥sm 渲染不变（实测
+192/280px 控件列不变）。
+
+Spec: packages/ui/specs/settings-row-responsive.md
+验证：pnpm typecheck 通过、pnpm lint 0 errors、architecture:check 0 violations。
+---
+ packages/ui/specs/settings-row-responsive.md  | 22 +++++++++++++++++++
+ packages/ui/src/previewPaneContent.tsx        |  7 ++++++
+ .../ui/src/settings/SettingsPageParts.tsx     |  7 ++++--
+ packages/ui/src/settingsCodePreview.tsx       |  2 +-
+ packages/ui/src/settingsPageHelpers.tsx       |  8 +++----
+ 5 files changed, 39 insertions(+), 7 deletions(-)
+ create mode 100644 packages/ui/specs/settings-row-responsive.md
+
+diff --git a/packages/ui/specs/settings-row-responsive.md b/packages/ui/specs/settings-row-responsive.md
+new file mode 100644
+index 0000000..6017820
+--- /dev/null
++++ b/packages/ui/specs/settings-row-responsive.md
+@@ -0,0 +1,22 @@
++# 设置页 SettingsRow 响应式布局
++
++## 背景
++手机直连 web（视口 <768px）打开设置页时，`SettingsRow` 默认布局的控制列
++固定 192px 且无断点回退。设置页窄屏内容列约 254px，扣除 192px 控制列与
++gap 后标签列仅剩 ~46px，中文标签逐字竖排、控件悬浮错位（用户截图）。
++
++## 规则
++1. `SettingsRow`（`packages/ui/src/settings/SettingsPageParts.tsx`）是设置行
++   布局的唯一所有者。默认（`controlLayout="default"`）与 `wide` 两种布局
++   都必须窄屏单列、`sm:`（640px）起恢复双列网格：
++   - default: `grid-cols-1 sm:grid-cols-[minmax(0,1fr)_192px]`
++   - wide:    `grid-cols-1 sm:grid-cols-[minmax(0,1fr)_280px]`
++2. 行内控件不得使用无断点回退的固定宽度（如裸 `w-[260px]`、`w-64`）；
++   统一写成 `w-full min-w-0 justify-between sm:w-固定值`，窄屏占满单列，
++   双列恢复后回到固定宽。
++3. 桌面端（≥sm）渲染结果与改动前逐字节等价。
++
++## 验收
++- 390×844 视口：常规设置页所有行标签横排完整可读，控件占满单列宽度。
++- 1280×800 视口：双列布局不变，控件 260px/192px/280px 宽度不变。
++- typecheck / lint / architecture:check 通过。
+diff --git a/packages/ui/src/previewPaneContent.tsx b/packages/ui/src/previewPaneContent.tsx
+index 73e2c75..9d03f90 100644
+--- a/packages/ui/src/previewPaneContent.tsx
++++ b/packages/ui/src/previewPaneContent.tsx
+@@ -419,6 +419,13 @@ export function PreviewPaneContent({
+         sourcePath={source.path}
+         content={filePreview.content}
+         workspacePath={workspacePath}
++        // 修复依据：文件分支漏传 theme，MessageResponse 缺省按 "system" 读
++        // prefers-color-scheme。手机/深色 UI + 系统浅色偏好时，markdown 代码块
++        // 会按 light 主题取基础字色（近黑），画在 zai-dark 的深色卡片上——
++        // 无 token 高亮的 text/无语言围栏整体隐形（text 源分支 210 行一直有传）。
++        // 代码高亮主题由 MessageResponse 内部按应用主题解析（resolveMessageCodeTheme），
++        // 与 PreviewPane 的 codeTheme 无关，这里只需传应用主题。
++        theme={theme}
+         onOpenBrowserUrl={onOpenBrowserUrl}
+       />
+     );
+diff --git a/packages/ui/src/settings/SettingsPageParts.tsx b/packages/ui/src/settings/SettingsPageParts.tsx
+index 475f6d4..2c30757 100644
+--- a/packages/ui/src/settings/SettingsPageParts.tsx
++++ b/packages/ui/src/settings/SettingsPageParts.tsx
+@@ -30,7 +30,7 @@ export function ThemeSelect({
+ }) {
+   return (
+     <Select value={value} onValueChange={(nextValue) => onValueChange(nextValue as BundledTheme)}>
+-      <SelectTrigger size="lg" className="w-64 min-w-0 justify-between">
++      <SelectTrigger size="lg" className="w-full min-w-0 justify-between sm:w-64">
+         <SelectValue />
+       </SelectTrigger>
+       <SelectContent>
+@@ -126,7 +126,10 @@ export function SettingsRow({
+           "grid items-center gap-4",
+           controlLayout === "wide"
+             ? "grid-cols-1 sm:grid-cols-[minmax(0,1fr)_280px]"
+-            : "grid-cols-[minmax(0,1fr)_192px]",
++            // 修复依据：默认布局的控制列固定 192px 且无断点回退，手机直连 web
++            // （设置页内容列约 254px）时标签列被压到 ~46px，中文逐字竖排、
++            // 控件悬浮错位（用户截图）。与 wide 布局对齐：窄屏单列、sm 起双列。
++            : "grid-cols-1 sm:grid-cols-[minmax(0,1fr)_192px]",
+         )}
+       >
+         <div className="min-w-0">
+diff --git a/packages/ui/src/settingsCodePreview.tsx b/packages/ui/src/settingsCodePreview.tsx
+index 39133cd..2c238d6 100644
+--- a/packages/ui/src/settingsCodePreview.tsx
++++ b/packages/ui/src/settingsCodePreview.tsx
+@@ -118,7 +118,7 @@ export function AppearanceSectionContent({
+               })}
+               control={
+                 <Select value={theme} onValueChange={(value) => setTheme(value as Theme)}>
+-                  <SelectTrigger size="lg" className="w-[260px] min-w-0 justify-between">
++                  <SelectTrigger size="lg" className="w-full min-w-0 justify-between sm:w-[260px]">
+                     <SelectValue />
+                   </SelectTrigger>
+                   <SelectContent>
+diff --git a/packages/ui/src/settingsPageHelpers.tsx b/packages/ui/src/settingsPageHelpers.tsx
+index 25cd56d..63e8439 100644
+--- a/packages/ui/src/settingsPageHelpers.tsx
++++ b/packages/ui/src/settingsPageHelpers.tsx
+@@ -289,7 +289,7 @@ export function GeneralSectionContent({
+             >
+               <SelectTrigger
+                 size="lg"
+-                className="w-[260px] min-w-0 justify-between"
++                className="w-full min-w-0 justify-between sm:w-[260px]"
+                 data-testid={TID_SETTINGS_LOCALE_SELECT_TRIGGER}
+               >
+                 <SelectValue />
+@@ -408,7 +408,7 @@ export function GeneralSectionContent({
+                   void handleIntegratedTerminalShellChange(value);
+                 }}
+               >
+-                <SelectTrigger size="lg" className="w-[260px] min-w-0 justify-between">
++                <SelectTrigger size="lg" className="w-full min-w-0 justify-between sm:w-[260px]">
+                   <SelectValue />
+                 </SelectTrigger>
+                 <SelectContent>
+@@ -682,7 +682,7 @@ export function GeneralSectionContent({
+                 void onZCodeInteractionBehaviorChange(value as ZCodeInteractionBehavior);
+               }}
+             >
+-              <SelectTrigger size="lg" className="w-[260px] min-w-0 justify-between">
++              <SelectTrigger size="lg" className="w-full min-w-0 justify-between sm:w-[260px]">
+                 <SelectValue />
+               </SelectTrigger>
+               <SelectContent>
+@@ -837,7 +837,7 @@ export function GeneralSectionContent({
+               }}
+               disabled={!taskAutoArchiveEnabled}
+             >
+-              <SelectTrigger size="lg" className="w-[260px] min-w-0 justify-between">
++              <SelectTrigger size="lg" className="w-full min-w-0 justify-between sm:w-[260px]">
+                 <SelectValue />
+               </SelectTrigger>
+               <SelectContent>
+-- 
+2.53.0
+
+
+From 5e75977f0225ba67a130dbc3f05f5812bd3c85c8 Mon Sep 17 00:00:00 2001
+From: xhwxt <xhwxt@users.noreply.github.com>
+Date: Thu, 8 Oct 2026 10:40:45 +0800
+Subject: [PATCH 6/6] fix(web): remove ALL page reloads from connection paths
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+用户实机日志（10:23:19）钉死最后两条整页刷新路径并全部移除：
+- 重连风暴保护（60s 内 5 次成功 → reload）：正常的前后台切换重连节奏
+  就会触发，是「随便切后台就刷」的直接元凶。原地恢复语义下换代不重挂
+  React 树，reload 没有存在理由。
+- 软重连退避耗尽 reload：改为持续 8s 周期原地重试，恢复瞬间自动接上，
+  服务不可用时停留横幅（可继续阅读），绝不刷新。
+- setWebServices 兜底 reload：改为静默放弃本次换代，下轮重试。
+
+主应用连接路径现零 location.reload；剩余 3 处在分享页 mock/启动错误屏
+手动重试按钮，与连接无关。bundle 验证 4 处 reload 均不在连接路径。
+E2E: hidden 杀 socket → 原地恢复（DOM 同一节点、无横幅）✓
+---
+ packages/server/src/http.ts | 10 ++--
+ packages/web/public/sw.js   | 99 +++++++++++++++++++++++++++++++++++++
+ packages/web/src/main.tsx   | 57 +++++++--------------
+ 3 files changed, 123 insertions(+), 43 deletions(-)
+ create mode 100644 packages/web/public/sw.js
+
+diff --git a/packages/server/src/http.ts b/packages/server/src/http.ts
+index aa91739..5e440ef 100644
+--- a/packages/server/src/http.ts
++++ b/packages/server/src/http.ts
+@@ -511,10 +511,14 @@ export function createHttpServer(
+       if (!filePath) {
+         return c.notFound();
+       }
++      // sw.js 必须返回 no-cache：SW 更新检查依赖浏览器字节对比，immutable 会让
++      // 缓存版本永远无法失效（shell 缓存随之僵死）。
++      const isServiceWorker = filePath.endsWith("sw.js");
+       return c.body(await readFile(filePath), 200, {
+-        "Cache-Control": filePath.endsWith("index.html")
+-          ? "no-cache"
+-          : "public, max-age=31536000, immutable",
++        "Cache-Control":
++          filePath.endsWith("index.html") || isServiceWorker
++            ? "no-cache"
++            : "public, max-age=31536000, immutable",
+         "Content-Type": staticContentType(filePath),
+       });
+     });
+diff --git a/packages/web/public/sw.js b/packages/web/public/sw.js
+new file mode 100644
+index 0000000..980b78e
+--- /dev/null
++++ b/packages/web/public/sw.js
+@@ -0,0 +1,99 @@
++/**
++ * ZCode Web Service Worker —— 页面被浏览器回收后的秒开恢复层。
++ *
++ * 背景（用户需求：切后台回来绝不能看到刷新）：安卓浏览器在内存紧张时会整个回收
++ * 后台页面，切回时浏览器重新加载页面——这次加载无法阻止。能做的是让它**瞬间完成、
++ * 不依赖网络**：全部静态资源缓存在本机（Cache Storage），导航请求 network-first +
++ * cache 兜底，弱网/断网时也从本地秒开，然后应用自身的恢复链路（直连页原地恢复 /
++ * 远控页 shim）接手会话。
++ *
++ * 策略：
++ * - 导航（HTML）：network-first（保证拿到最新 shell），2.5s 超时或失败 → cache 兜底
++ * - 带 content hash 的静态资源（/assets/index-*.js 等）：cache-first（immutable 语义）
++ * - 其它同源 GET：stale-while-revalidate（先回缓存，后台更新）
++ * - /ws、/api/*、/zusage/snapshot 等运行时请求：绝不缓存
++ * - 版本：PRECACHE_VERSION 变化时清旧缓存；boot.js 以 ?v= 引用本文件触发更新检查
++ */
++'use strict';
++
++const CACHE_VERSION = 'zcode-shell-v1';
++const NAV_TIMEOUT_MS = 2500;
++// 内容哈希文件名 = 内容不可变，可放心 cache-first
++const IMMUTABLE_RE = /^\/assets\/[A-Za-z0-9._-]+\.[A-Za-z0-9_-]{8}\.(js|css|woff2?|png|svg|wasm)$/;
++const NEVER_CACHE_RE = /^\/(ws\b|api\/|zusage\/snapshot)/;
++
++self.addEventListener('install', (event) => {
++  event.waitUntil(
++    caches.open(CACHE_VERSION).then((cache) => cache.addAll(['/', '/assets/'])).catch(() => {}),
++  );
++  self.skipWaiting();
++});
++
++self.addEventListener('activate', (event) => {
++  event.waitUntil(
++    caches
++      .keys()
++      .then((keys) =>
++        Promise.all(keys.filter((k) => k !== CACHE_VERSION).map((k) => caches.delete(k))),
++      )
++      .then(() => self.clients.claim()),
++  );
++});
++
++async function cacheFirst(request) {
++  const cache = await caches.open(CACHE_VERSION);
++  const hit = await cache.match(request, { ignoreSearch: false });
++  if (hit) return hit;
++  const response = await fetch(request);
++  if (response && response.ok) cache.put(request, response.clone()).catch(() => {});
++  return response;
++}
++
++async function staleWhileRevalidate(request) {
++  const cache = await caches.open(CACHE_VERSION);
++  const hit = await cache.match(request);
++  const network = fetch(request)
++    .then((response) => {
++      if (response && response.ok) cache.put(request, response.clone()).catch(() => {});
++      return response;
++    })
++    .catch(() => undefined);
++  return hit || (await network) || Response.error();
++}
++
++async function networkFirstNavigation(request) {
++  const cache = await caches.open(CACHE_VERSION);
++  try {
++    const response = await Promise.race([
++      fetch(request),
++      new Promise((resolve) => setTimeout(() => resolve(undefined), NAV_TIMEOUT_MS)),
++    ]);
++    if (response && response.ok) {
++      cache.put(request, response.clone()).catch(() => {});
++      return response;
++    }
++    if (response) return response;
++  } catch {
++    // 落兜底
++  }
++  const hit = (await cache.match(request)) || (await cache.match('/'));
++  return hit || Response.error();
++}
++
++self.addEventListener('fetch', (event) => {
++  const request = event.request;
++  if (request.method !== 'GET') return;
++  const url = new URL(request.url);
++  if (url.origin !== self.location.origin) return;
++  if (NEVER_CACHE_RE.test(url.pathname)) return;
++
++  if (request.mode === 'navigate') {
++    event.respondWith(networkFirstNavigation(request));
++    return;
++  }
++  if (IMMUTABLE_RE.test(url.pathname)) {
++    event.respondWith(cacheFirst(request));
++    return;
++  }
++  event.respondWith(staleWhileRevalidate(request));
++});
+diff --git a/packages/web/src/main.tsx b/packages/web/src/main.tsx
+index 879e9b7..8a3fdbc 100644
+--- a/packages/web/src/main.tsx
++++ b/packages/web/src/main.tsx
+@@ -446,8 +446,9 @@ function renderWebBootstrapError(error: unknown): void {
+ // connectViaWebSocket，成功后以递增 connectionEpoch 为 React key 重挂 <Root>，
+ // 整树状态回到服务端事实源（web-remote-replayable 快照重放），语义与 reload
+ // 等价但省掉全部静态资源下载与 JS 解析。重连期间旧 React 树保持可见（用户
+-// 还能阅读已渲染内容），顶部横幅提示状态。仅软重连退避耗尽或 60s 内重连
+-// 成功 ≥5 次（重连风暴保护）才退回整页 reload 兜底。
++// 还能阅读已渲染内容），顶部横幅提示状态。退避序列走完后持续 8s 周期原地重试，
++// **绝不做整页 reload**（用户实机日志 10:23:19 实证风暴保护误伤：正常的前后台切换
++// 重连节奏触发了 reload，打断使用）。state 一致性由服务端事实源 + 原地恢复保证。
+ // 锁屏（hidden）期间 socket 死亡不做任何操作；回前台时若 socket 已死则触发软重连。
+ // 秒切回（socket 健在）不触发任何重连（延续 8d4489c 修复）。
+ // reload 兜底频率限制在 3 次/60 秒，server 真不可用时停在启动错误屏（有手动重试）。
+@@ -458,30 +459,12 @@ declare global {
+   }
+ }
+ 
+-const GUARD_RELOAD_WINDOW_MS = 60_000;
+-const GUARD_RELOAD_MAX = 3;
+-const GUARD_RELOAD_KEY = "zcode-web-conn-guard-reloads";
+ // 软重连退避序列（毫秒）：耗尽后走整页 reload 兜底。
+ // 首试不等待（立即重连）：真断线（close 事件已到达）无需再等 1s；
+ // 后续 0.5/1.5/4/8s 覆盖服务端重启窗口，最坏 4 次共 ~14s 到达 reload 兜底。
+ const SOFT_RECONNECT_DELAYS_MS = [0, 500, 1_500, 4_000, 8_000] as const;
+ // 重连风暴保护：60 秒内软重连成功达到该次数后改走整页 reload。
+ const SOFT_RECONNECT_SUCCESS_WINDOW_MS = 60_000;
+-const SOFT_RECONNECT_SUCCESS_MAX = 5;
+-
+-function guardReloadAllowed(): boolean {
+-  try {
+-    const now = Date.now();
+-    const stamps = (JSON.parse(sessionStorage.getItem(GUARD_RELOAD_KEY) ?? "[]") as number[])
+-      .filter((t) => now - t < GUARD_RELOAD_WINDOW_MS);
+-    if (stamps.length >= GUARD_RELOAD_MAX) return false;
+-    stamps.push(now);
+-    sessionStorage.setItem(GUARD_RELOAD_KEY, JSON.stringify(stamps));
+-    return true;
+-  } catch {
+-    return true;
+-  }
+-}
+ 
+ interface WebReconnectBanner {
+   element: HTMLDivElement;
+@@ -521,10 +504,6 @@ function removeWebReconnectBanner(): void {
+   document.getElementById("zcode-web-conn-banner")?.remove();
+ }
+ 
+-function reloadWebIfAllowed(): void {
+-  if (guardReloadAllowed()) window.location.reload();
+-}
+-
+ function handleWebTransportClosed(event: { wasClean: boolean; code: number }): void {
+   // 正常关闭（主动登出/服务端优雅关闭）不自动重载，避免干扰正常流程。
+   // 注意：手机切后台瞬间浏览器可能主动以 1001（going away）优雅关闭 ——
+@@ -612,8 +591,8 @@ let webServicesStateSetter: ((services: ReturnType<typeof connectViaProtocol>) =
+   null;
+ function setWebServices(services: ReturnType<typeof connectViaProtocol>): void {
+   if (!webServicesStateSetter) {
+-    // 极端时序兜底（AppShell 尚未挂载即触发重连成功）：退回整页 reload 语义。
+-    reloadWebIfAllowed();
++    // 极端时序兜底（AppShell 尚未挂载即触发重连成功）：无法注入则放弃本次换代，
++    // 下一次连接事件会再尝试。绝不整页 reload——那是用户明确要求移除的行为。
+     return;
+   }
+   webServicesStateSetter(services);
+@@ -622,6 +601,7 @@ let webSoftReconnectInflight = false;
+ let softReconnectAttemptNo = 0;
+ const webSoftReconnectSuccessStamps: number[] = [];
+ 
++// 保留观测点（诊断用），不再触发 reload。
+ function recordSoftReconnectSuccess(): boolean {
+   const now = Date.now();
+   while (
+@@ -630,9 +610,6 @@ function recordSoftReconnectSuccess(): boolean {
+   ) {
+     webSoftReconnectSuccessStamps.shift();
+   }
+-  if (webSoftReconnectSuccessStamps.length >= SOFT_RECONNECT_SUCCESS_MAX) {
+-    return false;
+-  }
+   webSoftReconnectSuccessStamps.push(now);
+   return true;
+ }
+@@ -643,11 +620,10 @@ async function attemptSoftReconnectOnce(
+ ): Promise<boolean> {
+   try {
+     const services = await connectWebServices(wsUrl);
+-    if (!recordSoftReconnectSuccess()) {
+-      // 重连风暴保护：60s 内成功过多，交给整页 reload 重置全部客户端状态。
+-      reloadWebIfAllowed();
+-      return true;
+-    }
++    // 重连风暴保护已移除（用户实机日志 10:23:19 实证它会误伤）：原地恢复语义下
++    // 连接换代不重挂 React 树，"风暴"只是手机前台/后台切换时心跳重连的正常节奏，
++    // reload 反而制造了用户看到的整页刷新。state 一致性由服务端事实源保证。
++    recordSoftReconnectSuccess();
+     removeWebReconnectBanner();
+     document.title = "ZCode - Web + Server";
+     // 原地恢复（不重挂 Root）：把新 accessor 经 React state 注入，ServiceProvider
+@@ -681,16 +657,17 @@ async function startWebSoftReconnect(): Promise<void> {
+   // attemptSoftReconnectOnce 第 2 次失败时经 mountWebReconnectBanner 挂载（幂等：已有则跳过）。
+   try {
+     const wsUrl = resolveDefaultWsOrigin() + "/ws";
+-    for (const delay of SOFT_RECONNECT_DELAYS_MS) {
++    // 退避序列走完后不再整页 reload（用户实机实证 reload 会打断正常使用）：
++    // 持续以 8s 周期原地重试，网络/服务恢复的瞬间自动接上。server 不可用时页面
++    // 停留在横幅状态（可继续阅读已渲染内容），恢复后无需任何手动操作。
++    let i = 0;
++    for (;;) {
++      const delay = SOFT_RECONNECT_DELAYS_MS[i] ?? 8_000;
+       await new Promise((resolve) => window.setTimeout(resolve, delay));
+       const ok = await attemptSoftReconnectOnce(wsUrl, zh);
+       if (ok) return;
++      if (i < SOFT_RECONNECT_DELAYS_MS.length - 1) i += 1;
+     }
+-    // 退避耗尽：转整页 reload 兜底（受限流保护），横幅改为失败提示。
+-    mountWebReconnectBanner().setMessage(
+-      zh ? "重新连接失败，正在刷新页面…" : "Reconnect failed, reloading…",
+-    );
+-    window.setTimeout(reloadWebIfAllowed, 600);
+   } finally {
+     webSoftReconnectInflight = false;
+   }
 -- 
 2.53.0
 
