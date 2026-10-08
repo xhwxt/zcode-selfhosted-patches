@@ -1,7 +1,7 @@
 From 96336e91211171eeb035fe21deb187e9ffa7d453 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:13:39 +0800
-Subject: [PATCH 01/18] fix(rpc,client,server): websocket keepalive liveness
+Subject: [PATCH 01/19] fix(rpc,client,server): websocket keepalive liveness
  for half-open detection
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1061,7 +1061,7 @@ index 8a8a827..3cf4514 100644
 From 702fbb92e174c690cf5d7f0e225f2f49ca7506f5 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:38:20 +0800
-Subject: [PATCH 02/18] fix(client,web): heartbeat deadline fires
+Subject: [PATCH 02/19] fix(client,web): heartbeat deadline fires
  onHeartbeatDead before close
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1147,7 +1147,7 @@ index ceec191..690393f 100644
 From 7fbf4b856e5d5feafaa41b0ee495483f4b23c1c7 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 08:34:01 +0800
-Subject: [PATCH 03/18] perf(web,client): seamless background returns, faster
+Subject: [PATCH 03/19] perf(web,client): seamless background returns, faster
  reconnect, lazy banner
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1423,7 +1423,7 @@ index 690393f..4719771 100644
 From ff95eabdaf8f94210f71f06462d5aec9d3cdc8de Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 09:24:05 +0800
-Subject: [PATCH 04/18] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
+Subject: [PATCH 04/19] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
  =?UTF-8?q?=E2=80=94=20no=20React=20remount=20on=20soft=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1847,7 +1847,7 @@ index 4719771..879e9b7 100644
 From 4b5abe08b2b01c1cea956092d373a390cd4f71fd Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:16:18 +0800
-Subject: [PATCH 05/18] fix(ui): md preview text fences invisible on dark UI +
+Subject: [PATCH 05/19] fix(ui): md preview text fences invisible on dark UI +
  mobile settings row squeeze
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2010,7 +2010,7 @@ index 25cd56d..63e8439 100644
 From 5e75977f0225ba67a130dbc3f05f5812bd3c85c8 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:40:45 +0800
-Subject: [PATCH 06/18] fix(web): remove ALL page reloads from connection paths
+Subject: [PATCH 06/19] fix(web): remove ALL page reloads from connection paths
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -2294,7 +2294,7 @@ index 879e9b7..8a3fdbc 100644
 From e02912dd3796eaae65feed51d8a4d88dcf2b8330 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:56:25 +0800
-Subject: [PATCH 07/18] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20navi?=
+Subject: [PATCH 07/19] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20navi?=
  =?UTF-8?q?gation=20=E2=80=94=20zero=20network=20on=20foreground=20return?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2435,7 +2435,7 @@ index 980b78e..4ab2def 100644
 From fdf2b3636481a207012a1db2c9023553fa630a73 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 11:34:06 +0800
-Subject: [PATCH 08/18] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transp?=
+Subject: [PATCH 08/19] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transp?=
  =?UTF-8?q?ort=20=E2=80=94=20zero=20visual=20change=20on=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2817,7 +2817,7 @@ index 8a3fdbc..69f6756 100644
 From e88c05a5cd3f951dc0e23a36f42e741e5558c124 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:04:53 +0800
-Subject: [PATCH 09/18] =?UTF-8?q?fix(ui,web):=20re-subscribe=20stores=20af?=
+Subject: [PATCH 09/19] =?UTF-8?q?fix(ui,web):=20re-subscribe=20stores=20af?=
  =?UTF-8?q?ter=20hot-swap=20=E2=80=94=20data=20flows=20again?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3170,7 +3170,7 @@ index 69f6756..c28f612 100644
 From f01b4739900110b64e308ba5b266b41297ab8483 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:25:49 +0800
-Subject: [PATCH 10/18] =?UTF-8?q?fix(ui):=20model=20submenu=20squeeze=20on?=
+Subject: [PATCH 10/19] =?UTF-8?q?fix(ui):=20model=20submenu=20squeeze=20on?=
  =?UTF-8?q?=20mobile=20=E2=80=94=20wrap=20names,=20width=20follows=20viewp?=
  =?UTF-8?q?ort?=
 MIME-Version: 1.0
@@ -3237,7 +3237,7 @@ index c2387ed..61943f9 100644
 From 3f0a17b47706177b86f424110be1e8de94448367 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:31:29 +0800
-Subject: [PATCH 11/18] =?UTF-8?q?fix(ui,web):=20re-handshake=20after=20hot?=
+Subject: [PATCH 11/19] =?UTF-8?q?fix(ui,web):=20re-handshake=20after=20hot?=
  =?UTF-8?q?-swap=20=E2=80=94=20fixes=20fault.connection.handshakeRequired?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3361,7 +3361,7 @@ index c28f612..80a252c 100644
 From 0ae927b0890afb00c2382e34b5f2a47cd2a68512 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 13:51:57 +0800
-Subject: [PATCH 12/18] fix(web): SW v3 cache bust + /sw-reset.html escape
+Subject: [PATCH 12/19] fix(web): SW v3 cache bust + /sw-reset.html escape
  hatch
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3465,7 +3465,7 @@ index 4ab2def..6338372 100644
 From c9f66c8bce983a5a0229bc8ccd7ab1ae492db8e1 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:19:51 +0800
-Subject: [PATCH 13/18] =?UTF-8?q?fix(web):=20SW=20v4=20=E2=80=94=20drop=20?=
+Subject: [PATCH 13/19] =?UTF-8?q?fix(web):=20SW=20v4=20=E2=80=94=20drop=20?=
  =?UTF-8?q?dirty=20/assets/=20prefetch=20key=20from=20install?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3528,7 +3528,7 @@ index 6338372..3ea1938 100644
 From 4f1063487fbf196f5704a363db6d75fca5dce60c Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:35:37 +0800
-Subject: [PATCH 14/18] =?UTF-8?q?fix(web):=20ignore=20stale=20close=20even?=
+Subject: [PATCH 14/19] =?UTF-8?q?fix(web):=20ignore=20stale=20close=20even?=
  =?UTF-8?q?ts=20=E2=80=94=20stops=20reconnect=20loop=20after=20hot-swap?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3599,7 +3599,7 @@ index 80a252c..dcbd15c 100644
 From 439b3886b10b4be2d1b24caff6a0e64246324363 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:58:29 +0800
-Subject: [PATCH 15/18] =?UTF-8?q?fix(web):=20SW=20v5=20=E2=80=94=20backgro?=
+Subject: [PATCH 15/19] =?UTF-8?q?fix(web):=20SW=20v5=20=E2=80=94=20backgro?=
  =?UTF-8?q?und=20revalidate=20navigations=20(deploy=20path=20restored)?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3724,7 +3724,7 @@ index 3ea1938..e7d6769 100644
 From e1c087861698832f2f3366f7e40f753e1f2f92d7 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:13:29 +0800
-Subject: [PATCH 16/18] =?UTF-8?q?fix(ui):=20usage=20stats=20readability=20?=
+Subject: [PATCH 16/19] =?UTF-8?q?fix(ui):=20usage=20stats=20readability=20?=
  =?UTF-8?q?on=20mobile=20=E2=80=94=20short=20axis=20dates,=20scrollable=20?=
  =?UTF-8?q?heatmap?=
 MIME-Version: 1.0
@@ -3805,7 +3805,7 @@ index 74f4374..4d0119e 100644
 From 2b16f04a279f7bfab703b3c359cae548bb5737d3 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:20:00 +0800
-Subject: [PATCH 17/18] fix(web,client): close stale WebSocket on hot-swap +
+Subject: [PATCH 17/19] fix(web,client): close stale WebSocket on hot-swap +
  crash telemetry
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3897,7 +3897,7 @@ index dcbd15c..baf5ac6 100644
 From a612236eb1a7d0dec7baa02865bbb85f1499ce43 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:59:13 +0800
-Subject: [PATCH 18/18] =?UTF-8?q?fix(web):=20SW=20v7=20=E2=80=94=20network?=
+Subject: [PATCH 18/19] =?UTF-8?q?fix(web):=20SW=20v7=20=E2=80=94=20network?=
  =?UTF-8?q?-first=20for=20zusage=20injected=20scripts?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3951,6 +3951,159 @@ index 829e60f..b13d167 100644
    if (request.mode === 'navigate') {
      event.respondWith(cacheFirst(request));
      // 导航命中缓存后，后台异步 revalidate 该 HTML——部署的新版本在下次导航生效，
+-- 
+2.53.0
+
+
+From 547e7625ecb64f72ecdbe9e6cb9825b17ec32e05 Mon Sep 17 00:00:00 2001
+From: xhwxt <xhwxt@users.noreply.github.com>
+Date: Thu, 8 Oct 2026 16:32:20 +0800
+Subject: [PATCH 19/19] =?UTF-8?q?fix(rpc,client,web):=20replay=20buffered?=
+ =?UTF-8?q?=20frames=20on=20hot-swap=20=E2=80=94=20fixes=20handshake=20dea?=
+ =?UTF-8?q?dlock?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+深挖热换底后 handshakeRequired 闪现的竞态：server 的 Initialize 帧在 WS open
+瞬间到达，而 ChannelClient 绑定新 protocol 发生在其后的 resetTransport——
+绑定前到达的 Initialize 被丢弃，state 永远停在 Uninitialized，后续 hello
+排队永不执行（间歇性触发，取决于 Initialize 与绑定的相对时序）。
+
+- rpc: resetTransport(protocol, bufferedFrames?)——绑定后立即重放缓冲帧，
+  Initialize 得到处理，state 正确进入 Idle
+- client: HotSwapConnection.reconnect 透传缓冲帧
+- web: onOpenProtocol 缓冲 open 之后到达的所有帧，reconnect 时全部重放
+
+E2E：短后台杀 socket 恢复 → 无横幅、发送消息成功上屏 ✓（测试会话已清理）。
+typecheck 全过。
+---
+ packages/client/src/websocket.ts  | 17 +++++++++++++----
+ packages/rpc/src/channelClient.ts | 13 ++++++++++---
+ packages/web/src/main.tsx         | 20 +++++++++++++++++++-
+ 3 files changed, 42 insertions(+), 8 deletions(-)
+
+diff --git a/packages/client/src/websocket.ts b/packages/client/src/websocket.ts
+index 2720eb9..0c48423 100644
+--- a/packages/client/src/websocket.ts
++++ b/packages/client/src/websocket.ts
+@@ -18,7 +18,11 @@ export interface WebSocketConnectionCloseEvent {
+ interface WebSocketConnectionOptions {
+   onClose?: (event: WebSocketConnectionCloseEvent) => void;
+   onOpenSocket?: (socket: WebSocket) => void;
+-  /** 连接建立、SocketProtocol 就绪后回调（宿主可据此挂探针桥）。 */
++  /**
++   * 连接建立、SocketProtocol 就绪后回调（宿主可据此挂探针桥、帧缓冲等）。
++   * 热换底场景宿主必须缓冲 onOpenProtocol 之后到达的帧——server 的 Initialize
++   * 在 WS open 时已发出，而 ChannelClient 绑定发生在其后的 resetTransport。
++   */
+   onOpenProtocol?: (protocol: SocketProtocol) => void;
+   /** 心跳监视器就绪后回调（宿主保存把手用于同 socket 活性查询/补探）。 */
+   onHeartbeat?: (handle: WebSocketHeartbeatHandle) => void;
+@@ -285,8 +289,12 @@ export function connectViaProtocol(protocol: IMessagePassingProtocol): IServiceA
+  */
+ export interface HotSwapConnection {
+   services: IServiceAccessor;
+-  /** 断线重连成功后调用：把新连接换进既有 ChannelClient（对象身份不变）。 */
+-  reconnect: (protocol: IMessagePassingProtocol) => void;
++  /**
++   * 断线重连成功后调用：把新连接换进既有 ChannelClient（对象身份不变）。
++   * bufferedFrames：新 SocketProtocol 在绑定 ChannelClient 前已解析的帧
++   * （含 server 的 Initialize）——必须重放，否则握手永远无法完成。
++   */
++  reconnect: (protocol: IMessagePassingProtocol, bufferedFrames: unknown[]) => void;
+ }
+ 
+ export function connectViaHotSwapProtocol(
+@@ -295,6 +303,7 @@ export function connectViaHotSwapProtocol(
+   const client = new ChannelClient(protocol);
+   return {
+     services: new RemoteServiceAccess(client),
+-    reconnect: (next) => client.resetTransport(next),
++    reconnect: (next, bufferedFrames) =>
++      client.resetTransport(next, bufferedFrames as VSBuffer[]),
+   };
+ }
+diff --git a/packages/rpc/src/channelClient.ts b/packages/rpc/src/channelClient.ts
+index ebe3a8a..5dcb8b7 100644
+--- a/packages/rpc/src/channelClient.ts
++++ b/packages/rpc/src/channelClient.ts
+@@ -264,7 +264,7 @@ export class ChannelClient implements IChannelClient, IDisposable {
+    * 那样直接 dispose（那会终止订阅语义），这里逐个记录其 (type,id,channel,name)
+    * 并在新连接 Initialize 后重新 sendRequest(EventListen)。
+    */
+-  resetTransport(protocol: IMessagePassingProtocol): void {
++  resetTransport(protocol: IMessagePassingProtocol, bufferedFrames?: VSBuffer[]): void {
+     if (this.isDisposed) {
+       return;
+     }
+@@ -282,11 +282,18 @@ export class ChannelClient implements IChannelClient, IDisposable {
+     this.protocol = protocol;
+     this.protocolListener = this.protocol.onMessage((msg) => this.onBuffer(msg));
+ 
+-    // 3. 重置握手状态：新连接的 ChannelServer 会发 Initialize，等待其到达后
+-    //    上层再发起请求（whenInitialized 门禁保证时序）。
++    // 3. 重置握手状态：等待新连接的 Initialize。
+     this.state = State.Uninitialized;
+     this._onDidInitialize = new Emitter<void>();
+     this.onDidInitialize = this._onDidInitialize.event;
++
++    // 4. 重放缓冲帧。关键时序：server 的 Initialize 在 WS open 时立即到达，
++    //    而 ChannelClient 绑定新 protocol 发生在其后的 resetTransport——
++    //    若不重放，Initialize 已丢失，state 永远停在 Uninitialized，
++    //    所有后续请求（含握手 hello）永久排队 → fault.connection.handshakeRequired。
++    for (const frame of bufferedFrames ?? []) {
++      this.onBuffer(frame);
++    }
+   }
+ 
+   dispose(reason?: Error): void {
+diff --git a/packages/web/src/main.tsx b/packages/web/src/main.tsx
+index baf5ac6..37cae36 100644
+--- a/packages/web/src/main.tsx
++++ b/packages/web/src/main.tsx
+@@ -651,7 +651,15 @@ async function attemptSoftReconnectOnce(
+         },
+         onOpenProtocol: (protocol) => {
+           try {
+-            webHotSwapConnection?.reconnect(protocol);
++            const buffered: any[] = [];
++            protocol.onMessage((frame) => buffered.push(frame));
++            bufferedReconnect = (p, frames) => {
++              bufferedReconnect = undefined;
++              webHotSwapConnection?.reconnect(p, frames);
++            };
++            bufferedFramesRef = buffered;
++            // Initialize 帧大概率已到（server open 即发）——立即换底并重放。
++            bufferedReconnect?.(protocol, buffered.splice(0));
+             resolve();
+           } catch (error) {
+             reject(error instanceof Error ? error : new Error(String(error)));
+@@ -742,6 +750,9 @@ function installWebConnectionGuard(): void {
+ // ── 热换底连接 ──────────────────────────────────────────────────────────────
+ // accessor 对象身份恒定；软重连成功后经 reconnect() 换底，零 React 重渲。
+ let webHotSwapConnection: HotSwapConnection | null = null;
++// 热换底之间的帧缓冲引用（reconnect 消费后清空）。
++let bufferedReconnect: ((p: any, frames: any[]) => void) | undefined;
++let bufferedFramesRef: unknown[] = [];
+ 
+ // 传输换代后需要上层重挂的事件订阅：沿用 RemoteServiceAccess 的 channel 名单不可行
+ // （订阅方各异），由 onReconnected 通知各监听方自行重订。订阅清单由 zustand/transport
+@@ -788,7 +799,14 @@ async function connectWebHotSwap(
+         }
+       },
+       onOpenProtocol: (protocol) => {
++        // 帧缓冲：server 的 Initialize 在 WS open 瞬间已到达，而 ChannelClient
++        // 绑定发生在 reconnect()（resetTransport）——缓冲期间的帧必须重放，
++        // 否则 Initialize 丢失、握手永远无法完成（fault.connection.handshakeRequired）。
++        const buffered: any[] = [];
++        protocol.onMessage((frame) => buffered.push(frame));
+         const connection = connectViaHotSwapProtocol(protocol);
++        bufferedReconnect = (p, frames) => connection.reconnect(p, frames);
++        bufferedFramesRef = buffered;
+         resolve(connection);
+       },
+     }).catch(reject);
 -- 
 2.53.0
 
