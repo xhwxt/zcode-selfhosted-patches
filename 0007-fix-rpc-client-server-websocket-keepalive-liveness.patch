@@ -5867,7 +5867,7 @@ index f751e82..6fd32bb 100644
 2.53.0
 
 
-From 11ec4c0a44fa1610152a8dd9adcc35f841332949 Mon Sep 17 00:00:00 2001
+From df7190a61285de2c4e851a8aad17fd8351b502b7 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 09:40:15 +0800
 Subject: [PATCH 31/31] fix(ui): mutex scoped to drawer viewport + unified top
@@ -5894,8 +5894,9 @@ typecheck 0 错误 / lint 78 warnings 0 errors / architecture:check 通过。
 ---
  packages/ui/specs/app-shell-drawer.md | 19 ++++++++++++-------
  packages/ui/src/DesktopTopOverlay.tsx | 13 +++++--------
+ packages/ui/src/WorkspaceHeader.tsx   | 13 +++++++++----
  packages/ui/src/hooks/useAppPanels.ts | 20 +++++++++++++++-----
- 3 files changed, 32 insertions(+), 20 deletions(-)
+ 4 files changed, 41 insertions(+), 24 deletions(-)
 
 diff --git a/packages/ui/specs/app-shell-drawer.md b/packages/ui/specs/app-shell-drawer.md
 index 805b219..3a6ba96 100644
@@ -5958,6 +5959,38 @@ index 6e5f356..9702c93 100644
            // Windows/Linux 工具组计入 4px 外沿留白和 1px 边框，较 8px 左边距右移 5px。
            usesCustomCaptionArea && "pl-3 ml-px",
            isMacDesktop &&
+diff --git a/packages/ui/src/WorkspaceHeader.tsx b/packages/ui/src/WorkspaceHeader.tsx
+index dd33248..4a0b445 100644
+--- a/packages/ui/src/WorkspaceHeader.tsx
++++ b/packages/ui/src/WorkspaceHeader.tsx
+@@ -129,9 +129,10 @@ export function WorkspaceHeader({
+   //
+   // 追加（用户实测 2026-10-09：宽屏 web 侧栏收起时左上角浮层按钮压住会话标题）：
+   // 侧栏收起后 DesktopTopOverlay（z-40，w-fit）悬在标题上方——桌面端由
+-  // shouldOffsetHeaderForWindowControls 命中 pl-38+ 留白；web 此前只有窄视口
+-  // 分支（pl-20），宽视口 + 侧栏收起时无任何留白。web 收起态与桌面对称：
+-  // 非窄视口也命中 pl-20（浮层按钮组 = 侧栏开关+新建+更新，80px 覆盖其宽）。
++  // shouldOffsetHeaderForWindowControls 命中 pl-38+ 留白；web 宽视口此前无留白。
++  // 注意宽视口 web 的浮层按钮组 = 侧栏开关+前进+后退+新建（isWebDrawerViewport
++  // 才隐藏前进/后退），4×28px+3×gap-1 ≈ 124px，pl-20(80px) 不够
++  //（用户二轮实测 09:35 仍重叠 44px）——与桌面收起态同用 pl-38(152px)。
+   const isDesktopPlatform = isDesktop === true;
+   const isWebDrawerHeaderViewport = !isDesktopPlatform && Boolean(useIsNarrowViewport());
+   const shouldOffsetHeaderForWindowControls = !isSidebarVisible && isDesktopPlatform;
+@@ -141,8 +142,12 @@ export function WorkspaceHeader({
+   const usesInlineWindowControls = Boolean(isWindowsDesktop || (isDesktop && !isMacDesktop));
+ 
+   let headerWindowControlsPaddingClass: string | false = false;
+-  if (isWebDrawerHeaderViewport || shouldOffsetHeaderForTopOverlay) {
++  if (isWebDrawerHeaderViewport) {
++    // 窄屏抽屉视口：前进/后退隐藏，按钮组 = 侧栏开关+新建 ≈ 60px，pl-20(80px) 覆盖。
+     headerWindowControlsPaddingClass = "pl-20";
++  } else if (shouldOffsetHeaderForTopOverlay) {
++    // 宽屏 web 收起态：按钮组含前进/后退 ≈124px，与桌面收起态同标度 pl-38(152px)。
++    headerWindowControlsPaddingClass = "pl-38";
+   } else if (shouldOffsetHeaderForWindowControls) {
+     if (isMacDesktop) {
+       if (hasUpdateReady) {
 diff --git a/packages/ui/src/hooks/useAppPanels.ts b/packages/ui/src/hooks/useAppPanels.ts
 index 6fd32bb..cbef6c5 100644
 --- a/packages/ui/src/hooks/useAppPanels.ts

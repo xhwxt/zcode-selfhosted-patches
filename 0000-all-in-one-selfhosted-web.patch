@@ -2919,7 +2919,7 @@ index d907d77..61943f9 100644
                          {renderModelItems(group.items)}
                        </DropdownMenuSubContent>
 diff --git a/packages/ui/src/WorkspaceHeader.tsx b/packages/ui/src/WorkspaceHeader.tsx
-index 328733d..dd33248 100644
+index 328733d..4a0b445 100644
 --- a/packages/ui/src/WorkspaceHeader.tsx
 +++ b/packages/ui/src/WorkspaceHeader.tsx
 @@ -9,6 +9,7 @@ import type {
@@ -2946,7 +2946,7 @@ index 328733d..dd33248 100644
    onRefreshGit: () => void;
    onToggleTerminal: () => void;
    onToggleBrowser: () => void;
-@@ -115,12 +118,32 @@ export function WorkspaceHeader({
+@@ -115,12 +118,37 @@ export function WorkspaceHeader({
    allowOpenWorkspace?: boolean;
  }) {
    const [selectedEditor, setSelectedEditor] = useState<EditorInfo | null>(null);
@@ -2962,9 +2962,10 @@ index 328733d..dd33248 100644
 +  //
 +  // 追加（用户实测 2026-10-09：宽屏 web 侧栏收起时左上角浮层按钮压住会话标题）：
 +  // 侧栏收起后 DesktopTopOverlay（z-40，w-fit）悬在标题上方——桌面端由
-+  // shouldOffsetHeaderForWindowControls 命中 pl-38+ 留白；web 此前只有窄视口
-+  // 分支（pl-20），宽视口 + 侧栏收起时无任何留白。web 收起态与桌面对称：
-+  // 非窄视口也命中 pl-20（浮层按钮组 = 侧栏开关+新建+更新，80px 覆盖其宽）。
++  // shouldOffsetHeaderForWindowControls 命中 pl-38+ 留白；web 宽视口此前无留白。
++  // 注意宽视口 web 的浮层按钮组 = 侧栏开关+前进+后退+新建（isWebDrawerViewport
++  // 才隐藏前进/后退），4×28px+3×gap-1 ≈ 124px，pl-20(80px) 不够
++  //（用户二轮实测 09:35 仍重叠 44px）——与桌面收起态同用 pl-38(152px)。
 +  const isDesktopPlatform = isDesktop === true;
 +  const isWebDrawerHeaderViewport = !isDesktopPlatform && Boolean(useIsNarrowViewport());
 +  const shouldOffsetHeaderForWindowControls = !isSidebarVisible && isDesktopPlatform;
@@ -2975,13 +2976,17 @@ index 328733d..dd33248 100644
  
    let headerWindowControlsPaddingClass: string | false = false;
 -  if (shouldOffsetHeaderForWindowControls) {
-+  if (isWebDrawerHeaderViewport || shouldOffsetHeaderForTopOverlay) {
++  if (isWebDrawerHeaderViewport) {
++    // 窄屏抽屉视口：前进/后退隐藏，按钮组 = 侧栏开关+新建 ≈ 60px，pl-20(80px) 覆盖。
 +    headerWindowControlsPaddingClass = "pl-20";
++  } else if (shouldOffsetHeaderForTopOverlay) {
++    // 宽屏 web 收起态：按钮组含前进/后退 ≈124px，与桌面收起态同标度 pl-38(152px)。
++    headerWindowControlsPaddingClass = "pl-38";
 +  } else if (shouldOffsetHeaderForWindowControls) {
      if (isMacDesktop) {
        if (hasUpdateReady) {
          headerWindowControlsPaddingClass = isMacFullscreen ? "pl-48" : "pl-66";
-@@ -187,6 +210,7 @@ export function WorkspaceHeader({
+@@ -187,6 +215,7 @@ export function WorkspaceHeader({
              isMacDesktop={isMacDesktop}
              isMacFullscreen={isMacFullscreen}
              isWindowsDesktop={isWindowsDesktop}
@@ -2989,7 +2994,7 @@ index 328733d..dd33248 100644
              simplifyForNarrowRemote={simplifyForNarrowRemote}
              selectedEditor={selectedEditor}
              onReloadSession={onReloadSession}
-@@ -209,6 +233,7 @@ export function WorkspaceHeader({
+@@ -209,6 +238,7 @@ export function WorkspaceHeader({
            isDesktop={isDesktop}
            isTerminalOpen={isTerminalOpen}
            isSidePaneOpen={isSidePaneOpen}
