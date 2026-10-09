@@ -1,7 +1,7 @@
 From de68d20b699ddcb30f64f6237153c96a13aab14f Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:13:39 +0800
-Subject: [PATCH 01/31] fix(rpc,client,server): websocket keepalive liveness
+Subject: [PATCH 01/32] fix(rpc,client,server): websocket keepalive liveness
  for half-open detection
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1061,7 +1061,7 @@ index 8a8a827..95cac80 100644
 From 114e9d43071f3a3c8ba7b813022c1bc848822734 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:38:20 +0800
-Subject: [PATCH 02/31] fix(client,web): heartbeat deadline fires
+Subject: [PATCH 02/32] fix(client,web): heartbeat deadline fires
  onHeartbeatDead before close
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1147,7 +1147,7 @@ index 305ea3f..7c36e7d 100644
 From 99fb8f4e201e5b5e0b1a1ca20237730f177483cf Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 08:34:01 +0800
-Subject: [PATCH 03/31] perf(web,client): seamless background returns, faster
+Subject: [PATCH 03/32] perf(web,client): seamless background returns, faster
  reconnect, lazy banner
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1423,7 +1423,7 @@ index 7c36e7d..ae5c3bb 100644
 From 368a50b1b68be87966fced31424aef5486bf39d0 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 09:24:05 +0800
-Subject: [PATCH 04/31] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
+Subject: [PATCH 04/32] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
  =?UTF-8?q?=E2=80=94=20no=20React=20remount=20on=20soft=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1847,7 +1847,7 @@ index ae5c3bb..dcdef96 100644
 From 07843f5a5f00afa71faea45282c31bf59150970a Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:16:18 +0800
-Subject: [PATCH 05/31] fix(ui): md preview text fences invisible on dark UI +
+Subject: [PATCH 05/32] fix(ui): md preview text fences invisible on dark UI +
  mobile settings row squeeze
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2010,7 +2010,7 @@ index 25cd56d..63e8439 100644
 From eb1e5605eeeb99b042ae219b009abd4e91451973 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:40:45 +0800
-Subject: [PATCH 06/31] fix(web): remove ALL page reloads from connection paths
+Subject: [PATCH 06/32] fix(web): remove ALL page reloads from connection paths
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -2294,7 +2294,7 @@ index dcdef96..4311a39 100644
 From 354f07061e285014e1004b93b91e60af98dc2c82 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:56:25 +0800
-Subject: [PATCH 07/31] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20navi?=
+Subject: [PATCH 07/32] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20navi?=
  =?UTF-8?q?gation=20=E2=80=94=20zero=20network=20on=20foreground=20return?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2435,7 +2435,7 @@ index 980b78e..4ab2def 100644
 From db282af6c0f949f2f3bfd4b6850b8475c4851c0e Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 11:34:06 +0800
-Subject: [PATCH 08/31] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transp?=
+Subject: [PATCH 08/32] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transp?=
  =?UTF-8?q?ort=20=E2=80=94=20zero=20visual=20change=20on=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2817,7 +2817,7 @@ index 4311a39..7790234 100644
 From 1575737a4f601d74e09dc19894da96d19ed797b6 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:04:53 +0800
-Subject: [PATCH 09/31] =?UTF-8?q?fix(ui,web):=20re-subscribe=20stores=20af?=
+Subject: [PATCH 09/32] =?UTF-8?q?fix(ui,web):=20re-subscribe=20stores=20af?=
  =?UTF-8?q?ter=20hot-swap=20=E2=80=94=20data=20flows=20again?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3170,7 +3170,7 @@ index 7790234..e5a91b0 100644
 From 1f43dc774e46a27205dfe0a0ea6d03b0eec51640 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:25:49 +0800
-Subject: [PATCH 10/31] =?UTF-8?q?fix(ui):=20model=20submenu=20squeeze=20on?=
+Subject: [PATCH 10/32] =?UTF-8?q?fix(ui):=20model=20submenu=20squeeze=20on?=
  =?UTF-8?q?=20mobile=20=E2=80=94=20wrap=20names,=20width=20follows=20viewp?=
  =?UTF-8?q?ort?=
 MIME-Version: 1.0
@@ -3236,7 +3236,7 @@ index c2387ed..61943f9 100644
 From 1b11d905c0e6eab7a26ae2240fa0f0ff405ac961 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:31:29 +0800
-Subject: [PATCH 11/31] =?UTF-8?q?fix(ui,web):=20re-handshake=20after=20hot?=
+Subject: [PATCH 11/32] =?UTF-8?q?fix(ui,web):=20re-handshake=20after=20hot?=
  =?UTF-8?q?-swap=20=E2=80=94=20fixes=20fault.connection.handshakeRequired?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3360,7 +3360,7 @@ index e5a91b0..ea4c885 100644
 From 02f5be69a51cf66104acb5a2d8fef4ab9b7e4a29 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 13:51:57 +0800
-Subject: [PATCH 12/31] fix(web): SW v3 cache bust + /sw-reset.html escape
+Subject: [PATCH 12/32] fix(web): SW v3 cache bust + /sw-reset.html escape
  hatch
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3464,7 +3464,7 @@ index 4ab2def..6338372 100644
 From 08dcd3f515dc280d359409e6b364daaa385fdd22 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:19:51 +0800
-Subject: [PATCH 13/31] =?UTF-8?q?fix(web):=20SW=20v4=20=E2=80=94=20drop=20?=
+Subject: [PATCH 13/32] =?UTF-8?q?fix(web):=20SW=20v4=20=E2=80=94=20drop=20?=
  =?UTF-8?q?dirty=20/assets/=20prefetch=20key=20from=20install?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3527,7 +3527,7 @@ index 6338372..3ea1938 100644
 From 201e0c331c779b39c463fd436c4ae22ea39497c7 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:35:37 +0800
-Subject: [PATCH 14/31] =?UTF-8?q?fix(web):=20ignore=20stale=20close=20even?=
+Subject: [PATCH 14/32] =?UTF-8?q?fix(web):=20ignore=20stale=20close=20even?=
  =?UTF-8?q?ts=20=E2=80=94=20stops=20reconnect=20loop=20after=20hot-swap?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3598,7 +3598,7 @@ index ea4c885..5b4f167 100644
 From c5306790dd763477ee4c1ed5b018f83cff5104b6 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:58:29 +0800
-Subject: [PATCH 15/31] =?UTF-8?q?fix(web):=20SW=20v5=20=E2=80=94=20backgro?=
+Subject: [PATCH 15/32] =?UTF-8?q?fix(web):=20SW=20v5=20=E2=80=94=20backgro?=
  =?UTF-8?q?und=20revalidate=20navigations=20(deploy=20path=20restored)?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3723,7 +3723,7 @@ index 3ea1938..e7d6769 100644
 From 4e768ffd1beacdd2b2bd299796e6845124ca84e6 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:13:29 +0800
-Subject: [PATCH 16/31] =?UTF-8?q?fix(ui):=20usage=20stats=20readability=20?=
+Subject: [PATCH 16/32] =?UTF-8?q?fix(ui):=20usage=20stats=20readability=20?=
  =?UTF-8?q?on=20mobile=20=E2=80=94=20short=20axis=20dates,=20scrollable=20?=
  =?UTF-8?q?heatmap?=
 MIME-Version: 1.0
@@ -3804,7 +3804,7 @@ index 74f4374..4d0119e 100644
 From d56f5f9faf78d9dda1d28ca9a76b5d08d8f316b4 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:20:00 +0800
-Subject: [PATCH 17/31] fix(web,client): close stale WebSocket on hot-swap +
+Subject: [PATCH 17/32] fix(web,client): close stale WebSocket on hot-swap +
  crash telemetry
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3896,7 +3896,7 @@ index 5b4f167..e767efb 100644
 From 923e3f1ffe8145d946e5a58b7c8afb9f985e215a Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:59:13 +0800
-Subject: [PATCH 18/31] =?UTF-8?q?fix(web):=20SW=20v7=20=E2=80=94=20network?=
+Subject: [PATCH 18/32] =?UTF-8?q?fix(web):=20SW=20v7=20=E2=80=94=20network?=
  =?UTF-8?q?-first=20for=20zusage=20injected=20scripts?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3957,7 +3957,7 @@ index 829e60f..b13d167 100644
 From 53f07053a90070fad64c8bdc06bf53ca0b21b7f2 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 16:32:20 +0800
-Subject: [PATCH 19/31] =?UTF-8?q?fix(rpc,client,web):=20replay=20buffered?=
+Subject: [PATCH 19/32] =?UTF-8?q?fix(rpc,client,web):=20replay=20buffered?=
  =?UTF-8?q?=20frames=20on=20hot-swap=20=E2=80=94=20fixes=20handshake=20dea?=
  =?UTF-8?q?dlock?=
 MIME-Version: 1.0
@@ -4110,7 +4110,7 @@ index e767efb..4576c8e 100644
 From 933328973d2f59fe0a025a66fdc7d84b2fdaae44 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 16:43:24 +0800
-Subject: [PATCH 20/31] chore(services): log handshake rejection details for
+Subject: [PATCH 20/32] chore(services): log handshake rejection details for
  intermittent fault diagnosis
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4151,7 +4151,7 @@ index 9fa3233..675de02 100644
 From d2324dd4a548205ae06b50d73f31fa8d68ba26e2 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 17:17:41 +0800
-Subject: [PATCH 21/31] fix(server,ui): stop killing live connections + silent
+Subject: [PATCH 21/32] fix(server,ui): stop killing live connections + silent
  bounded retry on subscribe failure
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4258,7 +4258,7 @@ index 95cac80..bc4ef5e 100644
 From 00414c17fc77aab796aa359b713121309e73041b Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 17:59:57 +0800
-Subject: [PATCH 22/31] chore(services): log hello/initialize arrival on
+Subject: [PATCH 22/32] chore(services): log hello/initialize arrival on
  connection scope
 
 ---
@@ -4314,7 +4314,7 @@ index 675de02..2bed75f 100644
 From e5b7c3f605b4f95c6d55315f05831707d5cc353b Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 18:10:02 +0800
-Subject: [PATCH 23/31] =?UTF-8?q?fix(ui):=20handshake=20cache=20invalidati?=
+Subject: [PATCH 23/32] =?UTF-8?q?fix(ui):=20handshake=20cache=20invalidati?=
  =?UTF-8?q?on=20actually=20works=20=E2=80=94=20epoch=20compared=20on=20loo?=
  =?UTF-8?q?kup?=
 MIME-Version: 1.0
@@ -4384,7 +4384,7 @@ index 467ed58..121d219 100644
 From 75d7ec9e1db5b7c0c572b0bc85904fc345344ec0 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 18:47:59 +0800
-Subject: [PATCH 24/31] =?UTF-8?q?fix(rpc):=20re-send=20active=20event=20su?=
+Subject: [PATCH 24/32] =?UTF-8?q?fix(rpc):=20re-send=20active=20event=20su?=
  =?UTF-8?q?bscriptions=20on=20resetTransport=20=E2=80=94=20restores=20UI?=
  =?UTF-8?q?=20data=20stream?=
 MIME-Version: 1.0
@@ -4567,7 +4567,7 @@ index 0000000..d5f9e5f
 From 99b33bd49325cfb5e65555c7623b03095cbacb40 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 19:03:31 +0800
-Subject: [PATCH 25/31] fix(ui): handshake RPC timeout + extended retry budget
+Subject: [PATCH 25/32] fix(ui): handshake RPC timeout + extended retry budget
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -4664,7 +4664,7 @@ index 5515fa1..adc61c2 100644
 From 006dc2d9e2c7067638cbe56e4aca0fa8c05e838f Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 19:16:52 +0800
-Subject: [PATCH 26/31] fix(ui): retry schedule tuned to handshake-timeout
+Subject: [PATCH 26/32] fix(ui): retry schedule tuned to handshake-timeout
  rhythm; sessions store budget aligned
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4723,7 +4723,7 @@ index 7e8a36f..a195807 100644
 From 7d09a5995b05adbce584d9bbdc1ee4f45e6f70bc Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 20:29:12 +0800
-Subject: [PATCH 27/31] chore(web): drop dead reconnect-storm counter +
+Subject: [PATCH 27/32] chore(web): drop dead reconnect-storm counter +
  orphaned root test
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4851,7 +4851,7 @@ index 4576c8e..211be8c 100644
 From 8653043f7caeb8490946be163a6cf9757bee7e8f Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 21:14:43 +0800
-Subject: [PATCH 28/31] test(e2e): add connection-recovery browser scripts
+Subject: [PATCH 28/32] test(e2e): add connection-recovery browser scripts
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -5296,7 +5296,7 @@ index 0000000..2f9c324
 From 44b8212b5e3627e235ed5abbc629fe4ae6ca63a8 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 21:18:14 +0800
-Subject: [PATCH 29/31] docs: point E2E reference at published e2e/ directory
+Subject: [PATCH 29/32] docs: point E2E reference at published e2e/ directory
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -5738,7 +5738,7 @@ index bd6247f..42db58b 100644
 From a3768012f671bc84aa85a2a671fb42c099c326da Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 09:25:50 +0800
-Subject: [PATCH 30/31] fix(ui): drawer mutual exclusion via state owner +
+Subject: [PATCH 30/32] fix(ui): drawer mutual exclusion via state owner +
  wide-web overlay title offset
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -5870,7 +5870,7 @@ index f751e82..6fd32bb 100644
 From df7190a61285de2c4e851a8aad17fd8351b502b7 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 09:40:15 +0800
-Subject: [PATCH 31/31] fix(ui): mutex scoped to drawer viewport + unified top
+Subject: [PATCH 31/32] fix(ui): mutex scoped to drawer viewport + unified top
  overlay alignment
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -6042,6 +6042,449 @@ index 6fd32bb..cbef6c5 100644
          setIsSidebarVisible(false);
        }
        logger.info(
+-- 
+2.53.0
+
+
+From ff4a2a2660b0b20bb7abd91cb9a8a0b4b038926f Mon Sep 17 00:00:00 2001
+From: xhwxt <197754549+xhwxt@users.noreply.github.com>
+Date: Fri, 9 Oct 2026 10:51:59 +0800
+Subject: [PATCH 32/32] feat(services,server): cross-client task list live
+ refresh + cron icon cleanup
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+两个用户实测问题（2026-10-09）：
+
+① 电脑新建对话，手机侧栏列表不出现、整页刷新才出现——
+   server 端 windowControllerShim 的订阅语义是纯快照（onDynamicControllerFrame
+   永不 fire），客户端列表只在挂载/版本签名变化时重查，跨客户端的任务写
+   对本端零信号。补最小实时通道：list() 记住查询的 workspace scopes 并订阅
+   taskService 的 workspace_task_list_changed；任何变更向所有活跃订阅 fire
+   空 deltas 帧（seq 单调递增不触发 gap resync），客户端 registry 收到帧即
+   bump revision → 各列表 hook 重查 listTaskList，新会话实时出现。
+   空 deltas 有意为之：本服务不维护 row 级增量投影，重查以 listTaskList 为准。
+
+② 定时任务删除/暂停后，历史对话行仍挂定时图标——cronAutomationId 只在
+   会话内创建 automation 时写入，关闭后无人回写清除。链路：
+   AutomationService 增加 changeEmitter（delete/enabled/disabled）→
+   IZCodeAgentService.onAutomationLifecycleChanged 暴露 →
+   node.ts 装配处订阅：TaskIndexRepo.clearCronAutomationId（直接 UPDATE，
+   绕开 syncTaskMeta 的 existingMeta 兜底——否则下次快照同步把标记写回）
+   + syncer.emitWorkspaceTaskListChanged(task_meta_changed) 广播刷新。
+
+typecheck 0 错误 / lint 0 errors / architecture:check 通过。
+---
+ packages/server/src/windowControllerShim.ts   | 105 +++++++++++++++---
+ packages/services/src/node.ts                 |  31 ++++++
+ .../services/src/session/automationService.ts |  31 +++++-
+ .../services/src/session/taskIndexRepo.ts     |  63 +++++++++++
+ .../services/src/zcode-agent/zcodeAgent.ts    |   8 ++
+ .../src/zcode-agent/zcodeAgentService.ts      |   6 +-
+ 6 files changed, 225 insertions(+), 19 deletions(-)
+
+diff --git a/packages/server/src/windowControllerShim.ts b/packages/server/src/windowControllerShim.ts
+index 47ba340..88538dc 100644
+--- a/packages/server/src/windowControllerShim.ts
++++ b/packages/server/src/windowControllerShim.ts
+@@ -7,7 +7,16 @@
+ // 本文件提供一个 server 端的最小 Window Controller 实现：把 Window Controller 的
+ // 任务列表/变更契约转发到同进程的 IZCodeTaskService（tasks-index.sqlite 同一数据源，
+ // 与桌面端 listTaskList 的 local source 投影一致），使自托管 web 直连页获得与桌面端
+-// 一致的侧栏任务列表。订阅语义为快照式（无实时帧推送），供开源部署复用。
++// 一致的侧栏任务列表。
++//
++// 实时性（2026-10-09 用户实测：电脑 web 新建对话，手机侧栏不出现、整页刷新才出现）：
++// 此前订阅语义是纯快照（subscribe 返回 snapshot ack、onDynamicControllerFrame 永不
++// fire）——客户端列表只在挂载/版本签名变化时重查，其它客户端新建的对话对本端完全
++// 不可见。现补最小实时通道：list() 到达时记住查询的 workspace scopes 并订阅
++// taskService 的 workspace 事件；任何 workspace_task_list_changed 向所有活跃订阅
++// fire 一个空 deltas 帧（seq 单调递增，不触发客户端 gap resync）。客户端 registry
++// 收到帧即 bump revision → 各列表 hook 重查 listTaskList → 新会话实时出现。
++// 空 deltas 是有意为之：本服务不维护 row 级增量投影，重查以 listTaskList 为准。
+ import { randomUUID } from "node:crypto";
+ import { Emitter, type Event } from "@zcode/rpc";
+ import {
+@@ -20,14 +29,15 @@ import {
+   type ZCodeTaskListQuery,
+   type ZCodeArchivedTaskDeletionResult,
+ } from "@zcode/services";
+-import type { ZCodeTaskMeta } from "@zcode/shared";
+-import type {
+-  ControllerResyncParams,
+-  ControllerResyncResult,
+-  ControllerSubscribeParams,
+-  ControllerSubscribeResult,
+-  ControllerUnsubscribeParams,
+-  WindowHostTaskAddress,
++import type { ZCodeTaskMeta, ZCodeWorkspaceEvent } from "@zcode/shared";
++import {
++  CONTROLLER_TASKS_INDEX_TOPIC,
++  type ControllerResyncParams,
++  type ControllerResyncResult,
++  type ControllerSubscribeParams,
++  type ControllerSubscribeResult,
++  type WindowHostControllerTaskFrame,
++  type WindowHostTaskAddress,
+ } from "@zcode/shared/zcode-protocol-v4";
+ 
+ // 与桌面端 windowHostControllerService.ts 的 liveStatusFromMeta 同规则
+@@ -54,10 +64,64 @@ export function createServerWindowControllerService(options: {
+   taskService: IZCodeTaskService;
+ }): IWindowControllerService {
+   const { taskService } = options;
+-  // web 场景只消费列表投影；controller V4 订阅帧暂无 server 端发布者，
+-  // onDynamicControllerFrame 保持空事件流（订阅方收不到帧时以查询为准）。
+   const dynamicFrameEmitter = new Emitter<WindowHostControllerFrame>();
+ 
++  // 活跃的 controller 订阅：subscriptionId → 已发送 toSeq（单调递增，防止
++  // 客户端 gap 检测误判触发 resync 风暴）。
++  const subscriptions = new Map<string, { seq: number }>();
++  // list() 到达过的 workspace scopes（workspacePath + identity 解析 key）→ 事件订阅。
++  // 客户端列表查询先 subscribe 后 list，list 是 scopes 的唯一可靠来源。
++  const watchedScopes = new Map<
++    string,
++    { workspacePath: string; workspaceIdentity?: string; disposable: { dispose(): void } }
++  >();
++  let watchNotifyScheduled = false;
++
++  function notifyAllSubscriptions(): void {
++    if (watchNotifyScheduled) return;
++    // 同一调度周期内的多次事件合并为一帧，避免密集广播刷帧。
++    watchNotifyScheduled = true;
++    queueMicrotask(() => {
++      watchNotifyScheduled = false;
++      if (subscriptions.size === 0) return;
++      for (const [subscriptionId, state] of subscriptions) {
++        state.seq += 1;
++        const frame: WindowHostControllerTaskFrame = {
++          topic: CONTROLLER_TASKS_INDEX_TOPIC,
++          subscriptionId,
++          logEpoch: "server",
++          fromSeq: state.seq - 1,
++          toSeq: state.seq,
++          sentAt: Date.now(),
++          payload: { kind: "deltas", deltas: [] },
++        };
++        dynamicFrameEmitter.fire(frame);
++      }
++    });
++  }
++
++  function ensureScopeWatched(scope: {
++    workspacePath: string;
++    workspaceIdentity?: string;
++  }): void {
++    const key = `${scope.workspacePath} ${scope.workspaceIdentity?.trim() || ""}`;
++    if (watchedScopes.has(key)) return;
++    const disposable = taskService
++      .onDynamicWorkspaceEvent({
++        workspacePath: scope.workspacePath,
++        ...(scope.workspaceIdentity ? { workspaceIdentity: scope.workspaceIdentity } : {}),
++      })((event: ZCodeWorkspaceEvent) => {
++        if (event.type === "workspace_task_list_changed") {
++          notifyAllSubscriptions();
++        }
++      });
++    watchedScopes.set(key, {
++      workspacePath: scope.workspacePath,
++      ...(scope.workspaceIdentity ? { workspaceIdentity: scope.workspaceIdentity } : {}),
++      disposable,
++    });
++  }
++
+   function mutationParams(address: WindowHostTaskAddress) {
+     return {
+       taskId: address.taskId,
+@@ -68,6 +132,11 @@ export function createServerWindowControllerService(options: {
+ 
+   return {
+     async listTaskList(query: ZCodeTaskListQuery): Promise<WindowHostControllerTaskListResult> {
++      // list 是 scopes 的权威来源：每个被查询的 workspace 都开始监听变更，
++      // 后续任何客户端对该 workspace 的任务写广播都会推给本服务的订阅方。
++      for (const scope of query.workspaceScopes) {
++        ensureScopeWatched(scope);
++      }
+       const result = await taskService.listTaskList(query);
+       return {
+         ...result,
+@@ -129,17 +198,25 @@ export function createServerWindowControllerService(options: {
+     async subscribeControllerV4(
+       _params: ControllerSubscribeParams,
+     ): Promise<ControllerSubscribeResult> {
+-      // 快照语义：ack 指示客户端按 snapshot 自行拉列表（本服务无增量帧）。
+-      return { ack: { subscriptionId: `srv-${randomUUID()}`, mode: "snapshot", logEpoch: "server" } };
++      // 订阅即进入增量流：首次列表由客户端 snapshot 语义自行拉取（mode 仍标 snapshot，
++      // 客户端 registry 首查不依赖帧），此后 workspace 任务变更经空 deltas 帧通知重查。
++      const subscriptionId = `srv-${randomUUID()}`;
++      subscriptions.set(subscriptionId, { seq: 0 });
++      return { ack: { subscriptionId, mode: "snapshot", logEpoch: "server" } };
+     },
+ 
+     async resyncControllerV4(params: ControllerResyncParams): Promise<ControllerResyncResult> {
++      // 客户端 gap resync：重置该订阅的 seq 基线，继续走空 deltas 通知。
++      const existing = subscriptions.get(params.subscriptionId);
++      if (existing) existing.seq = 0;
+       return {
+         ack: { subscriptionId: params.subscriptionId, mode: "snapshot", logEpoch: "server" },
+       };
+     },
+ 
+-    async unsubscribeControllerV4(_params: ControllerUnsubscribeParams): Promise<void> {},
++    async unsubscribeControllerV4(params: { subscriptionId: string }): Promise<void> {
++      subscriptions.delete(params.subscriptionId);
++    },
+ 
+     onDynamicControllerFrame(): Event<WindowHostControllerFrame> {
+       return dynamicFrameEmitter.event;
+diff --git a/packages/services/src/node.ts b/packages/services/src/node.ts
+index a6b5f98..98d1a2a 100644
+--- a/packages/services/src/node.ts
++++ b/packages/services/src/node.ts
+@@ -2281,6 +2281,37 @@ export function createLocalServices(options: {
+     agentService: zcodeAgentService,
+     taskIndexRepo,
+   });
++  // 定时任务删除/暂停后清除对话 meta 上残留的 cronAutomationId（对话行定时图标），
++  // 并广播列表刷新（用户实测 2026-10-09：关闭定时任务后图标永挂）。
++  // 注意 syncTaskMeta 写路径对 cronAutomationId 有 existingMeta 兜底，
++  // 必须用 clearCronAutomationId 直接清，否则下一次快照同步会把标记写回。
++  const automationLifecycleLog = createServiceLogger("automation-lifecycle");
++  const automationLifecycleDisposable = zcodeAgentService.onAutomationLifecycleChanged(
++    (change) => {
++      void taskIndexRepo
++        .clearCronAutomationId({ automationId: change.automationId })
++        .then((touched) => {
++          for (const task of touched) {
++            zcodeTaskIndexSyncer.emitWorkspaceTaskListChanged(
++              {
++                workspacePath: task.workspacePath,
++                ...(task.workspaceIdentity ? { workspaceIdentity: task.workspaceIdentity } : {}),
++                taskId: task.taskId,
++              },
++              undefined,
++              "task_meta_changed",
++            );
++          }
++        })
++        .catch((error) => {
++          automationLifecycleLog.error(
++            undefined,
++            `[automation-lifecycle] 清除定时任务标记失败 automationId=${change.automationId} kind=${change.kind}`,
++            error instanceof Error ? error : new Error(String(error)),
++          );
++        });
++    },
++  );
+   // The plugin can be toggled at runtime. Do not let a previously created resolver continue
+   // health-checking/restarting Helper after disable, and create it lazily after enable.
+   // 动态 resolver：isPluginEnabled 与 helper 创建用同一个 isCuaEnabledForContext 门控（dev mode 一致），
+diff --git a/packages/services/src/session/automationService.ts b/packages/services/src/session/automationService.ts
+index 4b4d28e..c68024a 100644
+--- a/packages/services/src/session/automationService.ts
++++ b/packages/services/src/session/automationService.ts
+@@ -1,3 +1,4 @@
++/* eslint-disable max-lines -- 定时任务服务：调度规则校验、生命周期与运行记录查询集中收口。 */
+ import type {
+   ZCodeAutomation,
+   ZCodeAutomationCreateParams,
+@@ -6,6 +7,7 @@ import type {
+   ZCodeAutomationUpdateParams,
+ } from "@zcode/shared";
+ import { resolveWorkspaceKey } from "@zcode/shared";
++import { Emitter } from "@zcode/rpc";
+ import { AutomationRepo } from "#src/session/automationRepo.js";
+ import {
+   assertValidAutomationIntervalCarrier,
+@@ -28,6 +30,12 @@ interface AutomationWorkspaceScope {
+   workspaceIdentity?: string;
+ }
+ 
++/** 定时任务生命周期变更（供 tasks-index 同步清理对话 meta 上的 cron 标记）。 */
++export interface AutomationLifecycleChange {
++  automationId: string;
++  kind: "deleted" | "enabled" | "disabled";
++}
++
+ /** scope → workspaceKey；缺省返回 undefined（不加归属过滤，供 scheduler/host 跨 workspace 用）。 */
+ function resolveScopeKey(scope?: AutomationWorkspaceScope): string | undefined {
+   if (!scope?.workspacePath) return undefined;
+@@ -47,8 +55,7 @@ export class InvalidCronExprError extends Error {
+ 
+ /** 非法的有限次数更新错误；用于阻止矛盾状态写入并误结束仍在运行的任务。 */
+ class InvalidAutomationMaxRunsUpdateError extends Error {
+-  constructor(message = "清空 maxRuns 时必须在同一次更新中设置 recurring=true") {
+-    super(message);
++  constructor(message = "清空 maxRuns 时必须在同一次更新中设置 recurring=true") {    super(message);
+     this.name = "InvalidAutomationMaxRunsUpdateError";
+   }
+ }
+@@ -141,6 +148,13 @@ function assertValidAutomationScheduleRule(rule: ZCodeAutomationScheduleRule): v
+ export class AutomationService {
+   constructor(private readonly repo: AutomationRepo = new AutomationRepo()) {}
+ 
++  /**
++   * 定时任务生命周期变更事件（删除/启停）。tasks-index 消费它清理对话 meta 上
++   * 残留的 cronAutomationId 标记——此前关闭定时任务后对话行仍挂着定时图标。
++   */
++  readonly changeEmitter = new Emitter<AutomationLifecycleChange>();
++  onChange = this.changeEmitter.event;
++
+   async create(params: ZCodeAutomationCreateParams): Promise<ZCodeAutomation> {
+     const createdAt = Date.now();
+     const relativeDelayMinutes = params.relativeDelayMinutes;
+@@ -425,7 +439,13 @@ export class AutomationService {
+   }
+ 
+   async delete(automationId: string, scope?: AutomationWorkspaceScope): Promise<boolean> {
+-    return this.repo.delete(automationId, resolveScopeKey(scope));
++    const deleted = await this.repo.delete(automationId, resolveScopeKey(scope));
++    if (deleted) {
++      // 生命周期事件：供 tasks-index 清理残留的 cronAutomationId 标记
++      // （对话行上的定时任务图标），见 node.ts 装配处的订阅。
++      this.changeEmitter.fire({ automationId, kind: "deleted" });
++    }
++    return deleted;
+   }
+ 
+   /** 暂停 / 恢复。 */
+@@ -434,7 +454,10 @@ export class AutomationService {
+     enabled: boolean,
+     scope?: AutomationWorkspaceScope,
+   ): Promise<void> {
+-    return this.repo.setEnabled(automationId, enabled, resolveScopeKey(scope));
++    await this.repo.setEnabled(automationId, enabled, resolveScopeKey(scope));
++    // 暂停的定时任务不再产生运行，对话行的定时标记同步清除（恢复时由
++    // automation→session 绑定在下次派发重写；图标恢复不影响数据正确性）。
++    this.changeEmitter.fire({ automationId, kind: enabled ? "enabled" : "disabled" });
+   }
+ 
+   /** 失败任务手动重跑：回 active、清计数，按 cron 重算下次时间。 */
+diff --git a/packages/services/src/session/taskIndexRepo.ts b/packages/services/src/session/taskIndexRepo.ts
+index 4bfc84e..e0c10cb 100644
+--- a/packages/services/src/session/taskIndexRepo.ts
++++ b/packages/services/src/session/taskIndexRepo.ts
+@@ -1798,6 +1798,69 @@ export class TaskIndexRepo {
+     return rows.map(rowToMeta);
+   }
+ 
++  /**
++   * 清除引用指定 automation 的所有对话 meta 上的 cronAutomationId 标记。
++   * 用途：定时任务被删除/暂停后，对话行不应再挂定时图标（用户实测 2026-10-09：
++   * cronAutomationId 只在会话内创建 automation 时写入，禁用/删除后无人回写清除）。
++   * cron 身份在 syncTaskMeta 写路径有 `existingMeta 兜底`（protocol snapshot 不带
++   * cron 标记），所以直接 UPDATE meta_json + 索引列是安全且必要的——否则兜底会把
++   * 清除动作又写回去。返回受影响 task 的定位（供调用方广播刷新）。
++   */
++  async clearCronAutomationId(params: {
++    automationId: string;
++  }): Promise<Array<{ workspacePath: string; workspaceIdentity?: string; taskId: string }>> {
++    await this.ensureReady();
++    const database = this.getDatabase();
++    const rows = database
++      .prepare(
++        `SELECT workspace_key, workspace_path, workspace_identity, task_id, meta_json
++        FROM tasks
++        WHERE cron_automation_id = @automation_id AND deleted = 0`,
++      )
++      .all({ automation_id: params.automationId }) as Array<{
++      workspace_key: string;
++      workspace_path: string;
++      workspace_identity: string | null;
++      task_id: string;
++      meta_json: string | null;
++    }>;
++    if (rows.length === 0) return [];
++    const clear = database.prepare(
++      `UPDATE tasks
++      SET cron_automation_id = NULL,
++          meta_json = json_remove(meta_json, '$.cronAutomationId'),
++          updated_at = @now
++      WHERE workspace_key = @workspace_key AND task_id = @task_id`,
++    );
++    database.exec("BEGIN IMMEDIATE");
++    try {
++      const now = Date.now();
++      const touched: Array<{
++        workspacePath: string;
++        workspaceIdentity?: string;
++        taskId: string;
++      }> = [];
++      for (const row of rows) {
++        clear.run({
++          automation_id: params.automationId,
++          now,
++          workspace_key: row.workspace_key,
++          task_id: row.task_id,
++        });
++        touched.push({
++          workspacePath: row.workspace_path,
++          ...(row.workspace_identity ? { workspaceIdentity: row.workspace_identity } : {}),
++          taskId: row.task_id,
++        });
++      }
++      database.exec("COMMIT");
++      return touched;
++    } catch (error) {
++      database.exec("ROLLBACK");
++      throw error;
++    }
++  }
++
+   async queryTaskList(
+     params: ZCodeTaskListQuery & { provider?: ZCodeProvider },
+   ): Promise<ZCodeTaskListResult> {
+diff --git a/packages/services/src/zcode-agent/zcodeAgent.ts b/packages/services/src/zcode-agent/zcodeAgent.ts
+index 719985a..325772d 100644
+--- a/packages/services/src/zcode-agent/zcodeAgent.ts
++++ b/packages/services/src/zcode-agent/zcodeAgent.ts
+@@ -4,6 +4,7 @@ import type { Event, IDisposable } from "@zcode/rpc";
+ import { ServiceChannels } from "@zcode/shared";
+ import type { AppUsageRange, AppUsageSnapshot, ZCodeTaskTokenUsageResult } from "@zcode/shared";
+ import type { ZCodeAutomation, ZCodeAutomationRun } from "@zcode/shared";
++import type { AutomationLifecycleChange } from "#src/session/automationService.js";
+ import type {
+   ZCodeStorageStartupState,
+   ZCodeDeliveryKind,
+@@ -680,6 +681,13 @@ export interface IZCodeAgentService {
+   updateAutomation(params: ZCodeAgentUpdateAutomationParams): Promise<ZCodeAutomation | null>;
+   deleteAutomation(params: ZCodeAgentAutomationIdParams): Promise<void>;
+   setAutomationEnabled(params: ZCodeAgentSetAutomationEnabledParams): Promise<void>;
++  /**
++   * 定时任务生命周期变更（删除/启停）。tasks-index 消费：清除对话 meta 上残留的
++   * cronAutomationId 标记（对话行的定时图标），否则关闭的定时任务图标永挂。
++   */
++  onAutomationLifecycleChanged(
++    listener: (change: AutomationLifecycleChange) => void,
++  ): { dispose(): void };
+   restartAutomation(params: ZCodeAgentAutomationIdParams): Promise<void>;
+   runAutomationNow(params: ZCodeAgentAutomationIdParams): Promise<ZCodeAgentRunAutomationNowResult>;
+   listAutomationRuns(params: ZCodeAgentAutomationIdParams): Promise<ZCodeAutomationRun[]>;
+diff --git a/packages/services/src/zcode-agent/zcodeAgentService.ts b/packages/services/src/zcode-agent/zcodeAgentService.ts
+index 9b33c71..aca6f3a 100644
+--- a/packages/services/src/zcode-agent/zcodeAgentService.ts
++++ b/packages/services/src/zcode-agent/zcodeAgentService.ts
+@@ -292,7 +292,7 @@ import {
+   type ZCodeAgentV4ConnectionContext,
+ } from "./zcodeAgentConnectionScope.js";
+ import { createBackgroundSessionEventCoalescer } from "#src/zcode-agent/zcodeSessionEventCoalescer.js";
+-import { AutomationService } from "#src/session/automationService.js";
++import { AutomationService, type AutomationLifecycleChange } from "#src/session/automationService.js";
+ import { AutomationRepo } from "#src/session/automationRepo.js";
+ import { TaskIndexRepo } from "#src/session/taskIndexRepo.js";
+ import { ZCodeAgentMcpStatusModeUnsupportedError } from "#src/zcode-agent/zcodeAgentErrors.js";
+@@ -4311,6 +4311,10 @@ export function createZCodeAgentService(
+       });
+     },
+ 
++    onAutomationLifecycleChanged(listener: (change: AutomationLifecycleChange) => void) {
++      return automationService.onChange(listener);
++    },
++
+     async restartAutomation(params: ZCodeAgentAutomationIdParams) {
+       return automationService.restart(params.automationId, {
+         workspacePath: params.workspacePath,
 -- 
 2.53.0
 
