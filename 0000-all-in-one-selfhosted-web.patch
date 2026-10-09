@@ -1108,55 +1108,19 @@ index 2eded6a..ba48f97 100644
 +      client.resetTransport(next, bufferedFrames as VSBuffer[]),
 +  };
 +}
-diff --git a/packages/desktop/src/host/windowHostControllerProjection.ts b/packages/desktop/src/host/windowHostControllerProjection.ts
-index 9a1b30d..a378bc2 100644
---- a/packages/desktop/src/host/windowHostControllerProjection.ts
-+++ b/packages/desktop/src/host/windowHostControllerProjection.ts
-@@ -15,6 +15,14 @@ import {
-   type WindowHostControllerWorkspaceFrame,
-   type WindowHostTaskAddress,
- } from "@zcode/shared/zcode-protocol-v4";
-+// overlay 类型已下沉到共享层：server 端 window controller shim 同样消费
-+// （server 不能反向依赖 desktop），desktop 经这里 re-export 保持既有引用路径不变。
-+export type {
-+  WindowHostControllerSessionOverlay,
-+} from "@zcode/services/window-controller/sessionsIndexObserver.js";
-+import type {
-+  WindowHostControllerSessionOverlay,
-+} from "@zcode/services/window-controller/sessionsIndexObserver.js";
- 
- export type WindowHostControllerSourceScope =
-   | {
-@@ -39,16 +47,6 @@ interface WindowHostControllerTaskMembership {
-   searchSnippets?: string[];
- }
- 
--export interface WindowHostControllerSessionOverlay {
--  taskId: string;
--  liveStatus: WindowHostControllerTaskRow["liveStatus"];
--  title?: string;
--  titleSource?: "default" | "generated" | "custom";
--  updatedAt?: number;
--  pendingInteraction?: ZCodeTaskMeta["pendingInteraction"];
--  activity?: NonNullable<WindowHostControllerTaskRow["activity"]>;
--}
--
- export type WindowHostControllerMutation =
-   | { kind: "pin"; pinned: boolean }
-   | { kind: "archive"; archived: boolean }
-diff --git a/packages/desktop/src/host/windowHostControllerService.ts b/packages/desktop/src/host/windowHostControllerService.ts
-index 6c53060..a49d625 100644
---- a/packages/desktop/src/host/windowHostControllerService.ts
-+++ b/packages/desktop/src/host/windowHostControllerService.ts
-@@ -27,7 +27,7 @@ import {
- import {
-   createWindowHostSessionsIndexObserver,
-   type WindowHostSessionsIndexObserver,
--} from "./windowHostSessionsIndexObserver.js";
-+} from "@zcode/services/window-controller/sessionsIndexObserver.js";
- 
- interface ResolvedWindowHostControllerSource {
-   scope: WindowHostControllerSourceScope;
+diff --git a/packages/desktop/src/host/index.ts b/packages/desktop/src/host/index.ts
+index 9de80f6..1e1d8c7 100644
+--- a/packages/desktop/src/host/index.ts
++++ b/packages/desktop/src/host/index.ts
+@@ -147,7 +147,7 @@ import {
+   type WindowRemoteConnectionCloseEvent,
+   type WindowRemoteConnectionHandle,
+ } from "./windowRemoteConnectionRegistry.js";
+-import { createWindowHostControllerRuntime } from "./windowHostControllerService.js";
++import { createWindowHostControllerRuntime } from "@zcode/services/window-controller/windowHostControllerService.js";
+ import { resolveAutomationSubmissionModelSelection } from "./automationModelSelection.js";
+ import { createRemoteConnectionProgressContext } from "@zcode/server/remote/remoteConnectionProgressContext.js";
+ import { startHostSelfResourceTelemetry } from "./hostSelfResourceTelemetry.js";
 diff --git a/packages/rpc/specs/socket-keepalive.md b/packages/rpc/specs/socket-keepalive.md
 new file mode 100644
 index 0000000..037b4e3
@@ -2119,364 +2083,76 @@ index 9af1bb1..f76f257 100644
      });
 diff --git a/packages/server/src/windowControllerShim.ts b/packages/server/src/windowControllerShim.ts
 new file mode 100644
-index 0000000..ac19be6
+index 0000000..795c231
 --- /dev/null
 +++ b/packages/server/src/windowControllerShim.ts
-@@ -0,0 +1,344 @@
-+// 修复依据：直连页侧栏「任务」分组的数据源是 IWindowControllerService（channel
-+// "window-controller"，useGlobalTaskList → controllerRegistry.list）。该服务此前只在
-+// 桌面 Host（packages/desktop/src/host/index.ts）注册，web 直连页连接自托管 server 时
-+// 查询直接超时（Unknown channel: window-controller），任务列表恒空。
-+// 远控页不受影响（其列表来自 relay bootstrap 清单）。
+@@ -0,0 +1,54 @@
++// Server 端 Window Controller：自托管 web（无桌面 Host）的 IWindowControllerService 实现。
 +//
-+// 本文件提供一个 server 端的最小 Window Controller 实现：把 Window Controller 的
-+// 任务列表/变更契约转发到同进程的 IZCodeTaskService（tasks-index.sqlite 同一数据源，
-+// 与桌面端 listTaskList 的 local source 投影一致），使自托管 web 直连页获得与桌面端
-+// 一致的侧栏任务列表。
-+//
-+// 实时性（2026-10-09 用户实测：电脑 web 新建对话，手机侧栏不出现、整页刷新才出现）：
-+// 此前订阅语义是纯快照（subscribe 返回 snapshot ack、onDynamicControllerFrame 永不
-+// fire）——客户端列表只在挂载/版本签名变化时重查，其它客户端新建的对话对本端完全
-+// 不可见。现补最小实时通道：list() 到达时记住查询的 workspace scopes 并订阅
-+// taskService 的 workspace 事件；任何 workspace_task_list_changed 向所有活跃订阅
-+// fire 一个空 deltas 帧（seq 单调递增，不触发客户端 gap resync）。客户端 registry
-+// 收到帧即 bump revision → 各列表 hook 重查 listTaskList → 新会话实时出现。
-+// 空 deltas 是有意为之：本服务不维护 row 级增量投影，重查以 listTaskList 为准。
++// 重构说明（2026-10-09）：此前本文件是桌面 host 的「第二份实现」——订阅/帧通道/
++// overlay 投影/membership 各自为政，几天内从 148 行涨到 344 行，仍缺桌面端的
++// 真实 deltas、gap resync、membership 精确失效、live overlays。
++// 根因是桌面核心本就可移植：windowHostControllerService + windowHostControllerProjection
++// 零 electron 依赖、环境输入全走 DI（createId/resolveSource/onSourceError）。
++// 两者已下沉到 packages/services/src/window-controller/（与 sessionsIndexObserver 同层），
++// desktop 与 server 各自只保留 resolveSource 接线；本文件随之退化为薄接线层：
++// server 侧单源（同进程 taskService/agentService）、恒 online、无 remote 路由。
++// 桌面端能力（live overlays、gap resync、membership 精确失效、真实 deltas、
++// refresh flight 去重）由共享 runtime 提供，不再是本文件里的第二份实现。
 +import { randomUUID } from "node:crypto";
-+import { Emitter, type Event } from "@zcode/rpc";
 +import {
 +  IWindowControllerService,
-+  IZCodeTaskService,
-+  type WindowHostControllerFrame,
-+  type WindowHostControllerMutation,
-+  type WindowHostControllerTaskListItem,
-+  type WindowHostControllerTaskListResult,
-+  type ZCodeTaskListQuery,
-+  type ZCodeArchivedTaskDeletionResult,
++  type IZCodeAgentService,
++  type IZCodeTaskService,
 +} from "@zcode/services";
-+import type { ZCodeTaskMeta, ZCodeWorkspaceEvent } from "@zcode/shared";
-+import {
-+  CONTROLLER_TASKS_INDEX_TOPIC,
-+  type SessionSummary,
-+  type ControllerResyncParams,
-+  type ControllerResyncResult,
-+  type ControllerSubscribeParams,
-+  type ControllerSubscribeResult,
-+  type WindowHostControllerTaskFrame,
-+  type WindowHostTaskAddress,
-+} from "@zcode/shared/zcode-protocol-v4";
-+import {
-+  createWindowHostSessionsIndexObserver,
-+  type WindowHostControllerSessionOverlay,
-+} from "@zcode/services/window-controller/sessionsIndexObserver.js";
++import { createWindowHostControllerRuntime } from "@zcode/services/window-controller/windowHostControllerService.js";
 +
-+type ShimSessionsIndexAgentService = Parameters<
-+  typeof createWindowHostSessionsIndexObserver
-+>[0]["agentService"];
-+
-+// 与 http.ts 的 formatLogPrefix 同款（server 包无 ServiceLogger 依赖）。
 +function shimLogWarn(message: string, meta?: Record<string, unknown>): void {
 +  console.log("[window-controller-shim][warn]", message, ...(meta ? [JSON.stringify(meta)] : []));
-+}
-+
-+// 与桌面端 windowHostControllerService.ts 的 liveStatusFromMeta 同规则
-+function liveStatusFromMeta(meta: ZCodeTaskMeta): WindowHostControllerTaskListItem["liveStatus"] {
-+  if (meta.status === "completed") return "completed";
-+  if (meta.status === "error") return "error";
-+  return "idle";
-+}
-+
-+// 与桌面端 windowHostControllerService.ts 的 sessionOverlay 同规则：
-+// sessions-index 摘要 → live 事实（运行态/等待交互/活动摘要）。
-+// SQLite meta 的 running/interaction 可能是上次进程退出的残影，
-+// 只有 sessions-index（existing-only，不启动 Agent）才是可证明的当前事实。
-+function sessionOverlay(
-+  summary: SessionSummary,
-+): WindowHostControllerSessionOverlay {
-+  const liveStatus: WindowHostControllerSessionOverlay["liveStatus"] =
-+    summary.pendingInteraction ||
-+    (summary.pendingInteractionSummary &&
-+      summary.pendingInteractionSummary.permissionCount +
-+        summary.pendingInteractionSummary.userInputCount >
-+        0)
-+      ? "waiting"
-+      : summary.phase === "prewarming" || summary.phase === "running"
-+        ? "running"
-+        : summary.phase === "error"
-+          ? "error"
-+          : summary.phase === "completedSuccess" || summary.phase === "completedInterrupted"
-+            ? "completed"
-+            : "idle";
-+  return {
-+    taskId: summary.sessionId,
-+    liveStatus,
-+    title: summary.title,
-+    ...(summary.titleSource ? { titleSource: summary.titleSource } : {}),
-+    updatedAt: summary.lastActivityAt,
-+    ...(summary.pendingInteraction
-+      ? {
-+          pendingInteraction: {
-+            interactionId: summary.pendingInteraction.interactionId,
-+            kind: summary.pendingInteraction.kind,
-+            ...(summary.pendingInteraction.toolName
-+              ? { toolName: summary.pendingInteraction.toolName }
-+              : {}),
-+            ...(summary.pendingInteraction.autoResolution
-+              ? { autoResolution: summary.pendingInteraction.autoResolution }
-+              : {}),
-+          },
-+        }
-+      : {}),
-+    activity: {
-+      phase: summary.phase,
-+      lastActivityAt: summary.lastActivityAt,
-+      hasBackgroundWork: summary.hasBackgroundWork,
-+      ...(summary.pendingInteractionSummary
-+        ? { pendingInteractions: summary.pendingInteractionSummary }
-+        : {}),
-+      ...(summary.workflowActivity ? { workflowActivity: summary.workflowActivity } : {}),
-+    },
-+  };
-+}
-+
-+function toListItem(
-+  meta: ZCodeTaskMeta,
-+  item: { searchSnippet?: string; searchSnippets?: string[] },
-+  overlay: WindowHostControllerSessionOverlay | undefined,
-+): WindowHostControllerTaskListItem {
-+  // overlay 缺席 = 没有可证明的 runtime，回退 SQLite meta（桌面同规则）。
-+  const liveStatus = overlay?.liveStatus ?? liveStatusFromMeta(meta);
-+  return {
-+    ...meta,
-+    // pendingInteraction 只信 live 事实（桌面 projection：meta 层不落地该字段）。
-+    pendingInteraction: overlay?.pendingInteraction,
-+    ...(item.searchSnippet ? { searchSnippet: item.searchSnippet } : {}),
-+    ...(item.searchSnippets ? { searchSnippets: item.searchSnippets } : {}),
-+    sourceAvailability: "online",
-+    liveStatus,
-+    ...(overlay?.activity ? { activity: overlay.activity } : {}),
-+  };
 +}
 +
 +export function createServerWindowControllerService(options: {
 +  taskService: IZCodeTaskService;
 +  // sessions-index 观察器的数据源（existing-only，不会启动 Agent runtime）。
 +  // 缺省时列表只有 SQLite meta 投影，运行态/等待交互不可见（桌面 host 均注入）。
-+  agentService?: ShimSessionsIndexAgentService;
++  agentService?: IZCodeAgentService;
 +}): IWindowControllerService {
-+  const { taskService } = options;
-+  const dynamicFrameEmitter = new Emitter<WindowHostControllerFrame>();
-+
-+  // 活跃的 controller 订阅：subscriptionId → 已发送 toSeq（单调递增，防止
-+  // 客户端 gap 检测误判触发 resync 风暴）。
-+  const subscriptions = new Map<string, { seq: number }>();
-+  // list() 到达过的 workspace scopes（workspacePath + identity 解析 key）→ 事件订阅。
-+  // 客户端列表查询先 subscribe 后 list，list 是 scopes 的唯一可靠来源。
-+  const watchedScopes = new Map<
-+    string,
-+    {
-+      workspacePath: string;
-+      workspaceIdentity?: string;
-+      disposable: { dispose(): void };
-+      disposables: Array<{ dispose(): void }>;
-+    }
-+  >();
-+  // 同一 scope 的 sessions-index 观察 → live overlays（桌面 host 同源能力）。
-+  const sessionOverlays = new Map<string, Map<string, WindowHostControllerSessionOverlay>>();
-+  let watchNotifyScheduled = false;
-+
-+  function notifyAllSubscriptions(): void {
-+    if (watchNotifyScheduled) return;
-+    // 同一调度周期内的多次事件合并为一帧，避免密集广播刷帧。
-+    watchNotifyScheduled = true;
-+    queueMicrotask(() => {
-+      watchNotifyScheduled = false;
-+      if (subscriptions.size === 0) return;
-+      for (const [subscriptionId, state] of subscriptions) {
-+        state.seq += 1;
-+        const frame: WindowHostControllerTaskFrame = {
-+          topic: CONTROLLER_TASKS_INDEX_TOPIC,
-+          subscriptionId,
-+          logEpoch: "server",
-+          fromSeq: state.seq - 1,
-+          toSeq: state.seq,
-+          sentAt: Date.now(),
-+          payload: { kind: "deltas", deltas: [] },
-+        };
-+        dynamicFrameEmitter.fire(frame);
-+      }
-+    });
-+  }
-+
-+  function ensureScopeWatched(scope: {
-+    workspacePath: string;
-+    workspaceIdentity?: string;
-+  }): void {
-+    const key = `${scope.workspacePath} ${scope.workspaceIdentity?.trim() || ""}`;
-+    if (watchedScopes.has(key)) return;
-+    const disposable = taskService
-+      .onDynamicWorkspaceEvent({
-+        workspacePath: scope.workspacePath,
-+        ...(scope.workspaceIdentity ? { workspaceIdentity: scope.workspaceIdentity } : {}),
-+      })((event: ZCodeWorkspaceEvent) => {
-+        if (event.type === "workspace_task_list_changed") {
-+          notifyAllSubscriptions();
-+        }
++  const runtime = createWindowHostControllerRuntime({
++    createId: randomUUID,
++    onSourceError: (_scope, operation, error) => {
++      shimLogWarn(`Controller source ${operation} failed`, {
++        error: error instanceof Error ? error.message : String(error),
 +      });
-+    watchedScopes.set(key, {
-+      workspacePath: scope.workspacePath,
-+      ...(scope.workspaceIdentity ? { workspaceIdentity: scope.workspaceIdentity } : {}),
-+      disposable,
-+      disposables: [],
-+    });
-+    // live 事实观察（existing-only：缺 runtime 时休眠，绝不拉起 Agent）。
-+    if (options.agentService && !sessionOverlays.has(key)) {
-+      const overlays = new Map<string, WindowHostControllerSessionOverlay>();
-+      sessionOverlays.set(key, overlays);
-+      const observer = createWindowHostSessionsIndexObserver({
-+        agentService: options.agentService,
-+        target: {
++    },
++    resolveSource: (scope) => {
++      // server 侧单源：同进程 taskService/agentService，恒 online。
++      return {
++        scope: {
++          kind: "local" as const,
 +          workspacePath: scope.workspacePath,
 +          ...(scope.workspaceIdentity ? { workspaceIdentity: scope.workspaceIdentity } : {}),
 +        },
-+        onSessionsChange: (sessions) => {
-+          overlays.clear();
-+          for (const summary of sessions) {
-+            overlays.set(summary.sessionId, sessionOverlay(summary));
-+          }
-+          // live 事实变化 → 让所有挂着的客户端列表重查（list 会带回 overlay 投影）。
-+          notifyAllSubscriptions();
-+        },
-+        onError: (error) => {
-+          shimLogWarn("sessions-index 观察出错（existing-only，不影响列表可用性）", {
-+            error: error instanceof Error ? error.message : String(error),
-+          });
-+        },
-+      });
-+      void observer.start().catch((error) => {
-+        shimLogWarn("sessions-index 观察启动失败（保留 meta 投影）", {
-+          error: error instanceof Error ? error.message : String(error),
-+        });
-+      });
-+      watchedScopes.get(key)!.disposables.push({ dispose: () => observer.dispose() });
-+    }
-+  }
-+
-+  function mutationParams(address: WindowHostTaskAddress) {
-+    return {
-+      taskId: address.taskId,
-+      workspacePath: address.workspacePath,
-+      ...(address.workspaceIdentity ? { workspaceIdentity: address.workspaceIdentity } : {}),
-+    };
-+  }
-+
-+  return {
-+    async listTaskList(query: ZCodeTaskListQuery): Promise<WindowHostControllerTaskListResult> {
-+      // list 是 scopes 的权威来源：每个被查询的 workspace 都开始监听变更，
-+      // 后续任何客户端对该 workspace 的任务写广播都会推给本服务的订阅方。
-+      for (const scope of query.workspaceScopes) {
-+        ensureScopeWatched(scope);
-+      }
-+      const result = await taskService.listTaskList(query);
-+      return {
-+        ...result,
-+        items: result.items.map((item) => {
-+          const scopeKey = `${item.workspacePath} ${item.workspaceIdentity?.trim() || ""}`;
-+          const overlay = sessionOverlays.get(scopeKey)?.get(item.taskId) ?? undefined;
-+          return toListItem(item, item, overlay);
-+        }),
++        taskService: options.taskService,
++        agentService: options.agentService,
++        sourceAvailability: "online" as const,
 +      };
 +    },
++  });
 +
-+    async mutateTask(params: {
-+      address: WindowHostTaskAddress;
-+      mutation: WindowHostControllerMutation;
-+    }): Promise<ZCodeTaskMeta | null> {
-+      const { address, mutation } = params;
-+      const p = mutationParams(address);
-+      switch (mutation.kind) {
-+        case "pin":
-+          return taskService.setTaskPinned({ ...p, pinned: mutation.pinned });
-+        case "archive":
-+          return mutation.archived
-+            ? taskService.archiveTask(p)
-+            : taskService.unarchiveTask(p);
-+        case "delete":
-+          await taskService.deleteTask(p);
-+          return null;
-+        case "delete-archived":
-+          await taskService.deleteArchivedTask(p);
-+          return null;
-+        case "mark-read":
-+          return taskService.setTaskUnread({ ...p, unread: false, ...(mutation.expectedUnreadAt !== undefined ? { expectedUnreadAt: mutation.expectedUnreadAt } : {}) });
-+        case "mark-unread":
-+          return taskService.setTaskUnread({ ...p, unread: true });
-+        case "open":
-+        case "resume":
-+          // 打开/恢复由 UI 经会话通道处理，不属于持久化变更。
-+          return null;
-+        default: {
-+          const exhaustive: never = mutation;
-+          throw new Error(`Unsupported window controller mutation: ${JSON.stringify(exhaustive)}`);
-+        }
-+      }
-+    },
-+
-+    async deleteArchivedTask(params: { address: WindowHostTaskAddress }): Promise<boolean> {
-+      return taskService.deleteArchivedTask(mutationParams(params.address));
-+    },
-+
-+    async deleteArchivedTasks(params: {
-+      address: WindowHostTaskAddress;
-+      taskIds: string[];
-+    }): Promise<ZCodeArchivedTaskDeletionResult> {
-+      return taskService.deleteArchivedTasks({
-+        workspacePath: params.address.workspacePath,
-+        ...(params.address.workspaceIdentity
-+          ? { workspaceIdentity: params.address.workspaceIdentity }
-+          : {}),
-+        taskIds: params.taskIds,
-+      });
-+    },
-+
-+    async subscribeControllerV4(
-+      _params: ControllerSubscribeParams,
-+    ): Promise<ControllerSubscribeResult> {
-+      // 订阅即进入增量流：首次列表由客户端 snapshot 语义自行拉取（mode 仍标 snapshot，
-+      // 客户端 registry 首查不依赖帧），此后 workspace 任务变更经空 deltas 帧通知重查。
-+      const subscriptionId = `srv-${randomUUID()}`;
-+      subscriptions.set(subscriptionId, { seq: 0 });
-+      return { ack: { subscriptionId, mode: "snapshot", logEpoch: "server" } };
-+    },
-+
-+    async resyncControllerV4(params: ControllerResyncParams): Promise<ControllerResyncResult> {
-+      // 客户端 gap resync：重置该订阅的 seq 基线，继续走空 deltas 通知。
-+      const existing = subscriptions.get(params.subscriptionId);
-+      if (existing) existing.seq = 0;
-+      return {
-+        ack: { subscriptionId: params.subscriptionId, mode: "snapshot", logEpoch: "server" },
-+      };
-+    },
-+
-+    async unsubscribeControllerV4(params: { subscriptionId: string }): Promise<void> {
-+      subscriptions.delete(params.subscriptionId);
-+    },
-+
-+    onDynamicControllerFrame(): Event<WindowHostControllerFrame> {
-+      return dynamicFrameEmitter.event;
-+    },
-+  };
++  return runtime.service;
 +}
 diff --git a/packages/services/package.json b/packages/services/package.json
-index ac8bcbb..7e570fa 100644
+index ac8bcbb..14bb9c1 100644
 --- a/packages/services/package.json
 +++ b/packages/services/package.json
-@@ -10,6 +10,8 @@
+@@ -10,6 +10,10 @@
      ".": "./src/index.ts",
      "./cua-permission-broker": "./src/cua-permission-broker/index.ts",
      "./process/processTreeTerminator": "./src/process/processTreeTerminator.ts",
 +    "./window-controller/sessionsIndexObserver": "./src/window-controller/sessionsIndexObserver.ts",
 +    "./window-controller/sessionsIndexObserver.js": "./src/window-controller/sessionsIndexObserver.ts",
++    "./window-controller/windowHostControllerService": "./src/window-controller/windowHostControllerService.ts",
++    "./window-controller/windowHostControllerService.js": "./src/window-controller/windowHostControllerService.ts",
      "./node": "./src/node.ts"
    },
    "scripts": {
@@ -3037,6 +2713,81 @@ index c4fcff1..dcd9f85 100644
  function isRuntimeUnavailableError(error: unknown): boolean {
    return (
      typeof error === "object" &&
+diff --git a/packages/desktop/src/host/windowHostControllerProjection.ts b/packages/services/src/window-controller/windowHostControllerProjection.ts
+similarity index 97%
+rename from packages/desktop/src/host/windowHostControllerProjection.ts
+rename to packages/services/src/window-controller/windowHostControllerProjection.ts
+index 9a1b30d..a378bc2 100644
+--- a/packages/desktop/src/host/windowHostControllerProjection.ts
++++ b/packages/services/src/window-controller/windowHostControllerProjection.ts
+@@ -15,6 +15,14 @@ import {
+   type WindowHostControllerWorkspaceFrame,
+   type WindowHostTaskAddress,
+ } from "@zcode/shared/zcode-protocol-v4";
++// overlay 类型已下沉到共享层：server 端 window controller shim 同样消费
++// （server 不能反向依赖 desktop），desktop 经这里 re-export 保持既有引用路径不变。
++export type {
++  WindowHostControllerSessionOverlay,
++} from "@zcode/services/window-controller/sessionsIndexObserver.js";
++import type {
++  WindowHostControllerSessionOverlay,
++} from "@zcode/services/window-controller/sessionsIndexObserver.js";
+ 
+ export type WindowHostControllerSourceScope =
+   | {
+@@ -39,16 +47,6 @@ interface WindowHostControllerTaskMembership {
+   searchSnippets?: string[];
+ }
+ 
+-export interface WindowHostControllerSessionOverlay {
+-  taskId: string;
+-  liveStatus: WindowHostControllerTaskRow["liveStatus"];
+-  title?: string;
+-  titleSource?: "default" | "generated" | "custom";
+-  updatedAt?: number;
+-  pendingInteraction?: ZCodeTaskMeta["pendingInteraction"];
+-  activity?: NonNullable<WindowHostControllerTaskRow["activity"]>;
+-}
+-
+ export type WindowHostControllerMutation =
+   | { kind: "pin"; pinned: boolean }
+   | { kind: "archive"; archived: boolean }
+diff --git a/packages/desktop/src/host/windowHostControllerService.ts b/packages/services/src/window-controller/windowHostControllerService.ts
+similarity index 99%
+rename from packages/desktop/src/host/windowHostControllerService.ts
+rename to packages/services/src/window-controller/windowHostControllerService.ts
+index 6c53060..24b073c 100644
+--- a/packages/desktop/src/host/windowHostControllerService.ts
++++ b/packages/services/src/window-controller/windowHostControllerService.ts
+@@ -9,14 +9,16 @@ import type {
+ import { matchesTaskListMembershipKind } from "@zcode/shared/zcode-protocol-v4";
+ import type {
+   IWindowControllerService,
+-  IZCodeAgentService,
+-  IZCodeTaskService,
+   WindowHostControllerFrame,
+   WindowHostControllerTaskListItem,
+   WindowHostControllerTaskListResult,
++} from "./windowController.js";
++import type { IZCodeAgentService } from "../zcode-agent/zcodeAgent.js";
++import type {
++  IZCodeTaskService,
+   ZCodeTaskListQuery,
+   ZCodeTaskListWorkspaceScope,
+-} from "@zcode/services";
++} from "#src/session/zcodeTaskService.js";
+ import {
+   createWindowHostControllerProjection,
+   type WindowHostControllerMutation,
+@@ -27,7 +29,7 @@ import {
+ import {
+   createWindowHostSessionsIndexObserver,
+   type WindowHostSessionsIndexObserver,
+-} from "./windowHostSessionsIndexObserver.js";
++} from "./sessionsIndexObserver.js";
+ 
+ interface ResolvedWindowHostControllerSource {
+   scope: WindowHostControllerSourceScope;
 diff --git a/packages/services/src/zcode-agent/zcodeAgent.ts b/packages/services/src/zcode-agent/zcodeAgent.ts
 index 719985a..325772d 100644
 --- a/packages/services/src/zcode-agent/zcodeAgent.ts
@@ -5777,6 +5528,90 @@ index 0000000..b13d167
 +  }
 +  event.respondWith(cacheFirst(request));
 +});
+diff --git a/packages/web/public/zcode-boot-probe.js b/packages/web/public/zcode-boot-probe.js
+new file mode 100644
+index 0000000..cd902d9
+--- /dev/null
++++ b/packages/web/public/zcode-boot-probe.js
+@@ -0,0 +1,78 @@
++/**
++ * ZCode 直连页 / 官方远控页 共用的页面探针（随 ZCode web dist 发布）。
++ *
++ * 历史教训：这三段逻辑（SW 注册 / 刷新+崩溃遥测 / dsh-mobile App 兼容标记）
++ * 曾寄存在 zusage 状态栏旁挂服务的注入脚本（/zusage/boot.js）里 —— 那是
++ * 「不重新编译就能改」的偷懒选择，代价是 ZCode 连接线与无关插件耦合：
++ * 状态栏一停用，SW 与诊断全灭，改补丁线的人也找不到这里。
++ * 现归位本文件：由 nginx sub_filter 与状态栏脚本并列注入，两条产品线互不依赖。
++ *
++ * 三段职责（全部幂等、失败静默）：
++ *  1. Service Worker（秒开恢复层）：后台页被浏览器回收后的重载无法阻止，
++ *     SW 让那次重载从本机缓存瞬间完成。scope=/，直连页与远控页共用。
++ *  2. 刷新 + 崩溃遥测（favicon 信标，nginx 日志可查）：
++ *     - type=reload/navigate + 会话内计数（区分代码刷新 / 用户刷新 / 浏览器丢弃重载）
++ *     - crash=1 遗嘱（beforeunload 清除；crash 来不及清 → 下次加载发现即上一次崩溃）
++ *  3. dsh-mobile App 兼容标记：App 的 WebView 恢复策略 probe
++ *     document.querySelector('.dshm-shell')，不存在即整页 reload。
++ *     挂一个隐藏标记让 probe 返回 true。仅影响 App 挂载判定，无样式/行为副作用。
++ */
++(function () {
++  'use strict';
++  if (window.__zcodeBootProbe) return;
++  window.__zcodeBootProbe = true;
++
++  /* ---------- 崩溃检测遗嘱 ---------- */
++  try {
++    var hadCrashWill = sessionStorage.getItem('zcode-crash-will') === '1';
++    sessionStorage.setItem('zcode-crash-will', '1');
++    window.addEventListener('beforeunload', function () {
++      try { sessionStorage.removeItem('zcode-crash-will'); } catch (e) {}
++    });
++    if (hadCrashWill) {
++      var crashImg = new Image();
++      crashImg.src = '/favicon.svg?crash=1&ts=' + Date.now() + '&page=' + encodeURIComponent(location.pathname);
++    }
++  } catch (e) {}
++
++  /* ---------- 刷新遥测 ---------- */
++  try {
++    var navEntry = (performance.getEntriesByType && performance.getEntriesByType('navigation')[0]) || null;
++    var navType = navEntry ? (navEntry.type || 'unknown') : 'unknown';
++    // document.wasDiscarded=true = 浏览器把后台页面丢弃后重载（Chrome 内存管理，
++    // 非任何代码调用 reload）。区分「代码刷新」与「浏览器丢弃重载」的决定性证据。
++    var discarded = document.wasDiscarded === true;
++    if (discarded) navType += '+discarded';
++
++    var cnt = 0;
++    try {
++      cnt = parseInt(sessionStorage.getItem('zcode-pv-cnt') || '0', 10) || 0;
++      cnt += 1;
++      sessionStorage.setItem('zcode-pv-cnt', String(cnt));
++    } catch (e) {}
++    var pvImg = new Image();
++    pvImg.src = '/favicon.svg?pv=' + Date.now() + '&type=' + navType + '&cnt=' + cnt
++      + '&page=' + encodeURIComponent(location.pathname);
++  } catch (e) {}
++
++  /* ---------- dsh-mobile App 兼容标记 ---------- */
++  try {
++    if (!document.querySelector('.dshm-shell')) {
++      var shellMark = document.createElement('div');
++      shellMark.className = 'dshm-shell';
++      shellMark.style.cssText = 'display:none!important;width:0;height:0;overflow:hidden;';
++      shellMark.setAttribute('aria-hidden', 'true');
++      (document.body || document.documentElement).appendChild(shellMark);
++    }
++  } catch (e) {}
++
++  /* ---------- Service Worker 注册 ----------
++   * 每次导航浏览器都会字节比对 sw.js 检查更新（server 对 /sw.js 返回 no-cache）。
++   * 版本参数随 SW 版本递增，保证旧注册被新字节替换。 */
++  if ('serviceWorker' in navigator) {
++    try {
++      navigator.serviceWorker.register('/sw.js?v=zcode-shell-v7', { scope: '/' })
++        .catch(function () {});
++    } catch (e) {}
++  }
++})();
 diff --git a/packages/web/src/main.tsx b/packages/web/src/main.tsx
 index e6289ed..211be8c 100644
 --- a/packages/web/src/main.tsx

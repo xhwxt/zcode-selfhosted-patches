@@ -1,7 +1,7 @@
 From de68d20b699ddcb30f64f6237153c96a13aab14f Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:13:39 +0800
-Subject: [PATCH 01/35] fix(rpc,client,server): websocket keepalive liveness
+Subject: [PATCH 01/36] fix(rpc,client,server): websocket keepalive liveness
  for half-open detection
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1061,7 +1061,7 @@ index 8a8a827..95cac80 100644
 From 114e9d43071f3a3c8ba7b813022c1bc848822734 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:38:20 +0800
-Subject: [PATCH 02/35] fix(client,web): heartbeat deadline fires
+Subject: [PATCH 02/36] fix(client,web): heartbeat deadline fires
  onHeartbeatDead before close
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1147,7 +1147,7 @@ index 305ea3f..7c36e7d 100644
 From 99fb8f4e201e5b5e0b1a1ca20237730f177483cf Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 08:34:01 +0800
-Subject: [PATCH 03/35] perf(web,client): seamless background returns, faster
+Subject: [PATCH 03/36] perf(web,client): seamless background returns, faster
  reconnect, lazy banner
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1423,7 +1423,7 @@ index 7c36e7d..ae5c3bb 100644
 From 368a50b1b68be87966fced31424aef5486bf39d0 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 09:24:05 +0800
-Subject: [PATCH 04/35] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
+Subject: [PATCH 04/36] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
  =?UTF-8?q?=E2=80=94=20no=20React=20remount=20on=20soft=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1847,7 +1847,7 @@ index ae5c3bb..dcdef96 100644
 From 07843f5a5f00afa71faea45282c31bf59150970a Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:16:18 +0800
-Subject: [PATCH 05/35] fix(ui): md preview text fences invisible on dark UI +
+Subject: [PATCH 05/36] fix(ui): md preview text fences invisible on dark UI +
  mobile settings row squeeze
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2010,7 +2010,7 @@ index 25cd56d..63e8439 100644
 From eb1e5605eeeb99b042ae219b009abd4e91451973 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:40:45 +0800
-Subject: [PATCH 06/35] fix(web): remove ALL page reloads from connection paths
+Subject: [PATCH 06/36] fix(web): remove ALL page reloads from connection paths
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -2294,7 +2294,7 @@ index dcdef96..4311a39 100644
 From 354f07061e285014e1004b93b91e60af98dc2c82 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:56:25 +0800
-Subject: [PATCH 07/35] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20navi?=
+Subject: [PATCH 07/36] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20navi?=
  =?UTF-8?q?gation=20=E2=80=94=20zero=20network=20on=20foreground=20return?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2435,7 +2435,7 @@ index 980b78e..4ab2def 100644
 From db282af6c0f949f2f3bfd4b6850b8475c4851c0e Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 11:34:06 +0800
-Subject: [PATCH 08/35] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transp?=
+Subject: [PATCH 08/36] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transp?=
  =?UTF-8?q?ort=20=E2=80=94=20zero=20visual=20change=20on=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2817,7 +2817,7 @@ index 4311a39..7790234 100644
 From 1575737a4f601d74e09dc19894da96d19ed797b6 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:04:53 +0800
-Subject: [PATCH 09/35] =?UTF-8?q?fix(ui,web):=20re-subscribe=20stores=20af?=
+Subject: [PATCH 09/36] =?UTF-8?q?fix(ui,web):=20re-subscribe=20stores=20af?=
  =?UTF-8?q?ter=20hot-swap=20=E2=80=94=20data=20flows=20again?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3170,7 +3170,7 @@ index 7790234..e5a91b0 100644
 From 1f43dc774e46a27205dfe0a0ea6d03b0eec51640 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:25:49 +0800
-Subject: [PATCH 10/35] =?UTF-8?q?fix(ui):=20model=20submenu=20squeeze=20on?=
+Subject: [PATCH 10/36] =?UTF-8?q?fix(ui):=20model=20submenu=20squeeze=20on?=
  =?UTF-8?q?=20mobile=20=E2=80=94=20wrap=20names,=20width=20follows=20viewp?=
  =?UTF-8?q?ort?=
 MIME-Version: 1.0
@@ -3236,7 +3236,7 @@ index c2387ed..61943f9 100644
 From 1b11d905c0e6eab7a26ae2240fa0f0ff405ac961 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:31:29 +0800
-Subject: [PATCH 11/35] =?UTF-8?q?fix(ui,web):=20re-handshake=20after=20hot?=
+Subject: [PATCH 11/36] =?UTF-8?q?fix(ui,web):=20re-handshake=20after=20hot?=
  =?UTF-8?q?-swap=20=E2=80=94=20fixes=20fault.connection.handshakeRequired?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3360,7 +3360,7 @@ index e5a91b0..ea4c885 100644
 From 02f5be69a51cf66104acb5a2d8fef4ab9b7e4a29 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 13:51:57 +0800
-Subject: [PATCH 12/35] fix(web): SW v3 cache bust + /sw-reset.html escape
+Subject: [PATCH 12/36] fix(web): SW v3 cache bust + /sw-reset.html escape
  hatch
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3464,7 +3464,7 @@ index 4ab2def..6338372 100644
 From 08dcd3f515dc280d359409e6b364daaa385fdd22 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:19:51 +0800
-Subject: [PATCH 13/35] =?UTF-8?q?fix(web):=20SW=20v4=20=E2=80=94=20drop=20?=
+Subject: [PATCH 13/36] =?UTF-8?q?fix(web):=20SW=20v4=20=E2=80=94=20drop=20?=
  =?UTF-8?q?dirty=20/assets/=20prefetch=20key=20from=20install?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3527,7 +3527,7 @@ index 6338372..3ea1938 100644
 From 201e0c331c779b39c463fd436c4ae22ea39497c7 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:35:37 +0800
-Subject: [PATCH 14/35] =?UTF-8?q?fix(web):=20ignore=20stale=20close=20even?=
+Subject: [PATCH 14/36] =?UTF-8?q?fix(web):=20ignore=20stale=20close=20even?=
  =?UTF-8?q?ts=20=E2=80=94=20stops=20reconnect=20loop=20after=20hot-swap?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3598,7 +3598,7 @@ index ea4c885..5b4f167 100644
 From c5306790dd763477ee4c1ed5b018f83cff5104b6 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:58:29 +0800
-Subject: [PATCH 15/35] =?UTF-8?q?fix(web):=20SW=20v5=20=E2=80=94=20backgro?=
+Subject: [PATCH 15/36] =?UTF-8?q?fix(web):=20SW=20v5=20=E2=80=94=20backgro?=
  =?UTF-8?q?und=20revalidate=20navigations=20(deploy=20path=20restored)?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3723,7 +3723,7 @@ index 3ea1938..e7d6769 100644
 From 4e768ffd1beacdd2b2bd299796e6845124ca84e6 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:13:29 +0800
-Subject: [PATCH 16/35] =?UTF-8?q?fix(ui):=20usage=20stats=20readability=20?=
+Subject: [PATCH 16/36] =?UTF-8?q?fix(ui):=20usage=20stats=20readability=20?=
  =?UTF-8?q?on=20mobile=20=E2=80=94=20short=20axis=20dates,=20scrollable=20?=
  =?UTF-8?q?heatmap?=
 MIME-Version: 1.0
@@ -3804,7 +3804,7 @@ index 74f4374..4d0119e 100644
 From d56f5f9faf78d9dda1d28ca9a76b5d08d8f316b4 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:20:00 +0800
-Subject: [PATCH 17/35] fix(web,client): close stale WebSocket on hot-swap +
+Subject: [PATCH 17/36] fix(web,client): close stale WebSocket on hot-swap +
  crash telemetry
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3896,7 +3896,7 @@ index 5b4f167..e767efb 100644
 From 923e3f1ffe8145d946e5a58b7c8afb9f985e215a Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:59:13 +0800
-Subject: [PATCH 18/35] =?UTF-8?q?fix(web):=20SW=20v7=20=E2=80=94=20network?=
+Subject: [PATCH 18/36] =?UTF-8?q?fix(web):=20SW=20v7=20=E2=80=94=20network?=
  =?UTF-8?q?-first=20for=20zusage=20injected=20scripts?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3957,7 +3957,7 @@ index 829e60f..b13d167 100644
 From 53f07053a90070fad64c8bdc06bf53ca0b21b7f2 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 16:32:20 +0800
-Subject: [PATCH 19/35] =?UTF-8?q?fix(rpc,client,web):=20replay=20buffered?=
+Subject: [PATCH 19/36] =?UTF-8?q?fix(rpc,client,web):=20replay=20buffered?=
  =?UTF-8?q?=20frames=20on=20hot-swap=20=E2=80=94=20fixes=20handshake=20dea?=
  =?UTF-8?q?dlock?=
 MIME-Version: 1.0
@@ -4110,7 +4110,7 @@ index e767efb..4576c8e 100644
 From 933328973d2f59fe0a025a66fdc7d84b2fdaae44 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 16:43:24 +0800
-Subject: [PATCH 20/35] chore(services): log handshake rejection details for
+Subject: [PATCH 20/36] chore(services): log handshake rejection details for
  intermittent fault diagnosis
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4151,7 +4151,7 @@ index 9fa3233..675de02 100644
 From d2324dd4a548205ae06b50d73f31fa8d68ba26e2 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 17:17:41 +0800
-Subject: [PATCH 21/35] fix(server,ui): stop killing live connections + silent
+Subject: [PATCH 21/36] fix(server,ui): stop killing live connections + silent
  bounded retry on subscribe failure
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4258,7 +4258,7 @@ index 95cac80..bc4ef5e 100644
 From 00414c17fc77aab796aa359b713121309e73041b Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 17:59:57 +0800
-Subject: [PATCH 22/35] chore(services): log hello/initialize arrival on
+Subject: [PATCH 22/36] chore(services): log hello/initialize arrival on
  connection scope
 
 ---
@@ -4314,7 +4314,7 @@ index 675de02..2bed75f 100644
 From e5b7c3f605b4f95c6d55315f05831707d5cc353b Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 18:10:02 +0800
-Subject: [PATCH 23/35] =?UTF-8?q?fix(ui):=20handshake=20cache=20invalidati?=
+Subject: [PATCH 23/36] =?UTF-8?q?fix(ui):=20handshake=20cache=20invalidati?=
  =?UTF-8?q?on=20actually=20works=20=E2=80=94=20epoch=20compared=20on=20loo?=
  =?UTF-8?q?kup?=
 MIME-Version: 1.0
@@ -4384,7 +4384,7 @@ index 467ed58..121d219 100644
 From 75d7ec9e1db5b7c0c572b0bc85904fc345344ec0 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 18:47:59 +0800
-Subject: [PATCH 24/35] =?UTF-8?q?fix(rpc):=20re-send=20active=20event=20su?=
+Subject: [PATCH 24/36] =?UTF-8?q?fix(rpc):=20re-send=20active=20event=20su?=
  =?UTF-8?q?bscriptions=20on=20resetTransport=20=E2=80=94=20restores=20UI?=
  =?UTF-8?q?=20data=20stream?=
 MIME-Version: 1.0
@@ -4567,7 +4567,7 @@ index 0000000..d5f9e5f
 From 99b33bd49325cfb5e65555c7623b03095cbacb40 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 19:03:31 +0800
-Subject: [PATCH 25/35] fix(ui): handshake RPC timeout + extended retry budget
+Subject: [PATCH 25/36] fix(ui): handshake RPC timeout + extended retry budget
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -4664,7 +4664,7 @@ index 5515fa1..adc61c2 100644
 From 006dc2d9e2c7067638cbe56e4aca0fa8c05e838f Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 19:16:52 +0800
-Subject: [PATCH 26/35] fix(ui): retry schedule tuned to handshake-timeout
+Subject: [PATCH 26/36] fix(ui): retry schedule tuned to handshake-timeout
  rhythm; sessions store budget aligned
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4723,7 +4723,7 @@ index 7e8a36f..a195807 100644
 From 7d09a5995b05adbce584d9bbdc1ee4f45e6f70bc Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 20:29:12 +0800
-Subject: [PATCH 27/35] chore(web): drop dead reconnect-storm counter +
+Subject: [PATCH 27/36] chore(web): drop dead reconnect-storm counter +
  orphaned root test
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4851,7 +4851,7 @@ index 4576c8e..211be8c 100644
 From 8653043f7caeb8490946be163a6cf9757bee7e8f Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 21:14:43 +0800
-Subject: [PATCH 28/35] test(e2e): add connection-recovery browser scripts
+Subject: [PATCH 28/36] test(e2e): add connection-recovery browser scripts
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -5296,7 +5296,7 @@ index 0000000..2f9c324
 From 44b8212b5e3627e235ed5abbc629fe4ae6ca63a8 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 21:18:14 +0800
-Subject: [PATCH 29/35] docs: point E2E reference at published e2e/ directory
+Subject: [PATCH 29/36] docs: point E2E reference at published e2e/ directory
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -5738,7 +5738,7 @@ index bd6247f..42db58b 100644
 From a3768012f671bc84aa85a2a671fb42c099c326da Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 09:25:50 +0800
-Subject: [PATCH 30/35] fix(ui): drawer mutual exclusion via state owner +
+Subject: [PATCH 30/36] fix(ui): drawer mutual exclusion via state owner +
  wide-web overlay title offset
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -5870,7 +5870,7 @@ index f751e82..6fd32bb 100644
 From df7190a61285de2c4e851a8aad17fd8351b502b7 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 09:40:15 +0800
-Subject: [PATCH 31/35] fix(ui): mutex scoped to drawer viewport + unified top
+Subject: [PATCH 31/36] fix(ui): mutex scoped to drawer viewport + unified top
  overlay alignment
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -6049,7 +6049,7 @@ index 6fd32bb..cbef6c5 100644
 From ff4a2a2660b0b20bb7abd91cb9a8a0b4b038926f Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 10:51:59 +0800
-Subject: [PATCH 32/35] feat(services,server): cross-client task list live
+Subject: [PATCH 32/36] feat(services,server): cross-client task list live
  refresh + cron icon cleanup
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -6492,7 +6492,7 @@ index 9b33c71..aca6f3a 100644
 From 6b7cd806ba3aa05a55dfd3e2481dbb108a7b6c3c Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 11:24:23 +0800
-Subject: [PATCH 33/35] diag(ui): record welcome-gate decision trace to
+Subject: [PATCH 33/36] diag(ui): record welcome-gate decision trace to
  localStorage
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -6550,7 +6550,7 @@ index 4633505..df9a88d 100644
 From eefce9213f230520730efe0ae680d8390c3e58a4 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 11:42:13 +0800
-Subject: [PATCH 34/35] fix(services): reconcile stale cron/off-peak markers on
+Subject: [PATCH 34/36] fix(services): reconcile stale cron/off-peak markers on
  startup
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -6923,7 +6923,7 @@ index e0c10cb..c1df1d8 100644
 From 914b14502b94ab303e99c052300e659c5f571b24 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 12:28:46 +0800
-Subject: [PATCH 35/35] feat(services,desktop,server): port live overlays to
+Subject: [PATCH 35/36] feat(services,desktop,server): port live overlays to
  server window controller
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -7290,6 +7290,580 @@ index c4fcff1..dcd9f85 100644
  function isRuntimeUnavailableError(error: unknown): boolean {
    return (
      typeof error === "object" &&
+-- 
+2.53.0
+
+
+From 7ff91e17911b5e1f8067c1a3d436f441ce62c2e8 Mon Sep 17 00:00:00 2001
+From: xhwxt <197754549+xhwxt@users.noreply.github.com>
+Date: Fri, 9 Oct 2026 13:03:49 +0800
+Subject: [PATCH 36/36] refactor(services,desktop,server): sink window
+ controller core, shim becomes thin wiring
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+侧面对话复核成立 + 实证：server shim 正在变成桌面 host 的第二份实现
+（148→344 行），sessionOverlay/toListItem/订阅/帧通道全是劣化副本。
+而桌面核心零 electron 依赖、环境输入全走 DI
+（createWindowHostControllerRuntime({createId, resolveSource, onSourceError})），
+desktop 专属的只有 host/index.ts 的 resolveSource 接线（local/remote 路由）。
+
+- windowHostControllerService.ts(801) 与 windowHostControllerProjection.ts(554)
+  下沉到 packages/services/src/window-controller/（与 sessionsIndexObserver 同层，
+  上一步已迁 observer）。services 自包引用改 #src/相对路径。
+- desktop/src/host/index.ts 的 resolveSource 接线改 import 共享层；projection
+  的 overlay 类型经 re-export 保持既有引用路径。desktop 行为零变化
+  （typecheck tsconfig.host.json + esbuild 冒烟通过）。
+- server shim 从 344 行退化为 54 行薄接线：单源（同进程 taskService/agentService）、
+  恒 online、无 remote 路由。桌面端能力（live overlays、gap resync、
+  membership 精确失效、真实 deltas、refresh flight 去重、断线源替换）
+  由共享 runtime 提供——本文件不再是第二份实现。
+
+lint 警告数与重构前持平（85→85，0 错误）；typecheck 全过；
+单包构建 12s；部署后 window-controller RPC 正常应答。
+---
+ packages/desktop/src/host/index.ts            |   2 +-
+ packages/server/src/windowControllerShim.ts   | 352 ++----------------
+ packages/services/package.json                |   2 +
+ .../windowHostControllerProjection.ts         |   0
+ .../windowHostControllerService.ts            |  10 +-
+ packages/web/public/zcode-boot-probe.js       |  78 ++++
+ 6 files changed, 118 insertions(+), 326 deletions(-)
+ rename packages/{desktop/src/host => services/src/window-controller}/windowHostControllerProjection.ts (100%)
+ rename packages/{desktop/src/host => services/src/window-controller}/windowHostControllerService.ts (99%)
+ create mode 100644 packages/web/public/zcode-boot-probe.js
+
+diff --git a/packages/desktop/src/host/index.ts b/packages/desktop/src/host/index.ts
+index 9de80f6..1e1d8c7 100644
+--- a/packages/desktop/src/host/index.ts
++++ b/packages/desktop/src/host/index.ts
+@@ -147,7 +147,7 @@ import {
+   type WindowRemoteConnectionCloseEvent,
+   type WindowRemoteConnectionHandle,
+ } from "./windowRemoteConnectionRegistry.js";
+-import { createWindowHostControllerRuntime } from "./windowHostControllerService.js";
++import { createWindowHostControllerRuntime } from "@zcode/services/window-controller/windowHostControllerService.js";
+ import { resolveAutomationSubmissionModelSelection } from "./automationModelSelection.js";
+ import { createRemoteConnectionProgressContext } from "@zcode/server/remote/remoteConnectionProgressContext.js";
+ import { startHostSelfResourceTelemetry } from "./hostSelfResourceTelemetry.js";
+diff --git a/packages/server/src/windowControllerShim.ts b/packages/server/src/windowControllerShim.ts
+index ac19be6..795c231 100644
+--- a/packages/server/src/windowControllerShim.ts
++++ b/packages/server/src/windowControllerShim.ts
+@@ -1,344 +1,54 @@
+-// 修复依据：直连页侧栏「任务」分组的数据源是 IWindowControllerService（channel
+-// "window-controller"，useGlobalTaskList → controllerRegistry.list）。该服务此前只在
+-// 桌面 Host（packages/desktop/src/host/index.ts）注册，web 直连页连接自托管 server 时
+-// 查询直接超时（Unknown channel: window-controller），任务列表恒空。
+-// 远控页不受影响（其列表来自 relay bootstrap 清单）。
++// Server 端 Window Controller：自托管 web（无桌面 Host）的 IWindowControllerService 实现。
+ //
+-// 本文件提供一个 server 端的最小 Window Controller 实现：把 Window Controller 的
+-// 任务列表/变更契约转发到同进程的 IZCodeTaskService（tasks-index.sqlite 同一数据源，
+-// 与桌面端 listTaskList 的 local source 投影一致），使自托管 web 直连页获得与桌面端
+-// 一致的侧栏任务列表。
+-//
+-// 实时性（2026-10-09 用户实测：电脑 web 新建对话，手机侧栏不出现、整页刷新才出现）：
+-// 此前订阅语义是纯快照（subscribe 返回 snapshot ack、onDynamicControllerFrame 永不
+-// fire）——客户端列表只在挂载/版本签名变化时重查，其它客户端新建的对话对本端完全
+-// 不可见。现补最小实时通道：list() 到达时记住查询的 workspace scopes 并订阅
+-// taskService 的 workspace 事件；任何 workspace_task_list_changed 向所有活跃订阅
+-// fire 一个空 deltas 帧（seq 单调递增，不触发客户端 gap resync）。客户端 registry
+-// 收到帧即 bump revision → 各列表 hook 重查 listTaskList → 新会话实时出现。
+-// 空 deltas 是有意为之：本服务不维护 row 级增量投影，重查以 listTaskList 为准。
++// 重构说明（2026-10-09）：此前本文件是桌面 host 的「第二份实现」——订阅/帧通道/
++// overlay 投影/membership 各自为政，几天内从 148 行涨到 344 行，仍缺桌面端的
++// 真实 deltas、gap resync、membership 精确失效、live overlays。
++// 根因是桌面核心本就可移植：windowHostControllerService + windowHostControllerProjection
++// 零 electron 依赖、环境输入全走 DI（createId/resolveSource/onSourceError）。
++// 两者已下沉到 packages/services/src/window-controller/（与 sessionsIndexObserver 同层），
++// desktop 与 server 各自只保留 resolveSource 接线；本文件随之退化为薄接线层：
++// server 侧单源（同进程 taskService/agentService）、恒 online、无 remote 路由。
++// 桌面端能力（live overlays、gap resync、membership 精确失效、真实 deltas、
++// refresh flight 去重）由共享 runtime 提供，不再是本文件里的第二份实现。
+ import { randomUUID } from "node:crypto";
+-import { Emitter, type Event } from "@zcode/rpc";
+ import {
+   IWindowControllerService,
+-  IZCodeTaskService,
+-  type WindowHostControllerFrame,
+-  type WindowHostControllerMutation,
+-  type WindowHostControllerTaskListItem,
+-  type WindowHostControllerTaskListResult,
+-  type ZCodeTaskListQuery,
+-  type ZCodeArchivedTaskDeletionResult,
++  type IZCodeAgentService,
++  type IZCodeTaskService,
+ } from "@zcode/services";
+-import type { ZCodeTaskMeta, ZCodeWorkspaceEvent } from "@zcode/shared";
+-import {
+-  CONTROLLER_TASKS_INDEX_TOPIC,
+-  type SessionSummary,
+-  type ControllerResyncParams,
+-  type ControllerResyncResult,
+-  type ControllerSubscribeParams,
+-  type ControllerSubscribeResult,
+-  type WindowHostControllerTaskFrame,
+-  type WindowHostTaskAddress,
+-} from "@zcode/shared/zcode-protocol-v4";
+-import {
+-  createWindowHostSessionsIndexObserver,
+-  type WindowHostControllerSessionOverlay,
+-} from "@zcode/services/window-controller/sessionsIndexObserver.js";
++import { createWindowHostControllerRuntime } from "@zcode/services/window-controller/windowHostControllerService.js";
+ 
+-type ShimSessionsIndexAgentService = Parameters<
+-  typeof createWindowHostSessionsIndexObserver
+->[0]["agentService"];
+-
+-// 与 http.ts 的 formatLogPrefix 同款（server 包无 ServiceLogger 依赖）。
+ function shimLogWarn(message: string, meta?: Record<string, unknown>): void {
+   console.log("[window-controller-shim][warn]", message, ...(meta ? [JSON.stringify(meta)] : []));
+ }
+ 
+-// 与桌面端 windowHostControllerService.ts 的 liveStatusFromMeta 同规则
+-function liveStatusFromMeta(meta: ZCodeTaskMeta): WindowHostControllerTaskListItem["liveStatus"] {
+-  if (meta.status === "completed") return "completed";
+-  if (meta.status === "error") return "error";
+-  return "idle";
+-}
+-
+-// 与桌面端 windowHostControllerService.ts 的 sessionOverlay 同规则：
+-// sessions-index 摘要 → live 事实（运行态/等待交互/活动摘要）。
+-// SQLite meta 的 running/interaction 可能是上次进程退出的残影，
+-// 只有 sessions-index（existing-only，不启动 Agent）才是可证明的当前事实。
+-function sessionOverlay(
+-  summary: SessionSummary,
+-): WindowHostControllerSessionOverlay {
+-  const liveStatus: WindowHostControllerSessionOverlay["liveStatus"] =
+-    summary.pendingInteraction ||
+-    (summary.pendingInteractionSummary &&
+-      summary.pendingInteractionSummary.permissionCount +
+-        summary.pendingInteractionSummary.userInputCount >
+-        0)
+-      ? "waiting"
+-      : summary.phase === "prewarming" || summary.phase === "running"
+-        ? "running"
+-        : summary.phase === "error"
+-          ? "error"
+-          : summary.phase === "completedSuccess" || summary.phase === "completedInterrupted"
+-            ? "completed"
+-            : "idle";
+-  return {
+-    taskId: summary.sessionId,
+-    liveStatus,
+-    title: summary.title,
+-    ...(summary.titleSource ? { titleSource: summary.titleSource } : {}),
+-    updatedAt: summary.lastActivityAt,
+-    ...(summary.pendingInteraction
+-      ? {
+-          pendingInteraction: {
+-            interactionId: summary.pendingInteraction.interactionId,
+-            kind: summary.pendingInteraction.kind,
+-            ...(summary.pendingInteraction.toolName
+-              ? { toolName: summary.pendingInteraction.toolName }
+-              : {}),
+-            ...(summary.pendingInteraction.autoResolution
+-              ? { autoResolution: summary.pendingInteraction.autoResolution }
+-              : {}),
+-          },
+-        }
+-      : {}),
+-    activity: {
+-      phase: summary.phase,
+-      lastActivityAt: summary.lastActivityAt,
+-      hasBackgroundWork: summary.hasBackgroundWork,
+-      ...(summary.pendingInteractionSummary
+-        ? { pendingInteractions: summary.pendingInteractionSummary }
+-        : {}),
+-      ...(summary.workflowActivity ? { workflowActivity: summary.workflowActivity } : {}),
+-    },
+-  };
+-}
+-
+-function toListItem(
+-  meta: ZCodeTaskMeta,
+-  item: { searchSnippet?: string; searchSnippets?: string[] },
+-  overlay: WindowHostControllerSessionOverlay | undefined,
+-): WindowHostControllerTaskListItem {
+-  // overlay 缺席 = 没有可证明的 runtime，回退 SQLite meta（桌面同规则）。
+-  const liveStatus = overlay?.liveStatus ?? liveStatusFromMeta(meta);
+-  return {
+-    ...meta,
+-    // pendingInteraction 只信 live 事实（桌面 projection：meta 层不落地该字段）。
+-    pendingInteraction: overlay?.pendingInteraction,
+-    ...(item.searchSnippet ? { searchSnippet: item.searchSnippet } : {}),
+-    ...(item.searchSnippets ? { searchSnippets: item.searchSnippets } : {}),
+-    sourceAvailability: "online",
+-    liveStatus,
+-    ...(overlay?.activity ? { activity: overlay.activity } : {}),
+-  };
+-}
+-
+ export function createServerWindowControllerService(options: {
+   taskService: IZCodeTaskService;
+   // sessions-index 观察器的数据源（existing-only，不会启动 Agent runtime）。
+   // 缺省时列表只有 SQLite meta 投影，运行态/等待交互不可见（桌面 host 均注入）。
+-  agentService?: ShimSessionsIndexAgentService;
++  agentService?: IZCodeAgentService;
+ }): IWindowControllerService {
+-  const { taskService } = options;
+-  const dynamicFrameEmitter = new Emitter<WindowHostControllerFrame>();
+-
+-  // 活跃的 controller 订阅：subscriptionId → 已发送 toSeq（单调递增，防止
+-  // 客户端 gap 检测误判触发 resync 风暴）。
+-  const subscriptions = new Map<string, { seq: number }>();
+-  // list() 到达过的 workspace scopes（workspacePath + identity 解析 key）→ 事件订阅。
+-  // 客户端列表查询先 subscribe 后 list，list 是 scopes 的唯一可靠来源。
+-  const watchedScopes = new Map<
+-    string,
+-    {
+-      workspacePath: string;
+-      workspaceIdentity?: string;
+-      disposable: { dispose(): void };
+-      disposables: Array<{ dispose(): void }>;
+-    }
+-  >();
+-  // 同一 scope 的 sessions-index 观察 → live overlays（桌面 host 同源能力）。
+-  const sessionOverlays = new Map<string, Map<string, WindowHostControllerSessionOverlay>>();
+-  let watchNotifyScheduled = false;
+-
+-  function notifyAllSubscriptions(): void {
+-    if (watchNotifyScheduled) return;
+-    // 同一调度周期内的多次事件合并为一帧，避免密集广播刷帧。
+-    watchNotifyScheduled = true;
+-    queueMicrotask(() => {
+-      watchNotifyScheduled = false;
+-      if (subscriptions.size === 0) return;
+-      for (const [subscriptionId, state] of subscriptions) {
+-        state.seq += 1;
+-        const frame: WindowHostControllerTaskFrame = {
+-          topic: CONTROLLER_TASKS_INDEX_TOPIC,
+-          subscriptionId,
+-          logEpoch: "server",
+-          fromSeq: state.seq - 1,
+-          toSeq: state.seq,
+-          sentAt: Date.now(),
+-          payload: { kind: "deltas", deltas: [] },
+-        };
+-        dynamicFrameEmitter.fire(frame);
+-      }
+-    });
+-  }
+-
+-  function ensureScopeWatched(scope: {
+-    workspacePath: string;
+-    workspaceIdentity?: string;
+-  }): void {
+-    const key = `${scope.workspacePath} ${scope.workspaceIdentity?.trim() || ""}`;
+-    if (watchedScopes.has(key)) return;
+-    const disposable = taskService
+-      .onDynamicWorkspaceEvent({
+-        workspacePath: scope.workspacePath,
+-        ...(scope.workspaceIdentity ? { workspaceIdentity: scope.workspaceIdentity } : {}),
+-      })((event: ZCodeWorkspaceEvent) => {
+-        if (event.type === "workspace_task_list_changed") {
+-          notifyAllSubscriptions();
+-        }
++  const runtime = createWindowHostControllerRuntime({
++    createId: randomUUID,
++    onSourceError: (_scope, operation, error) => {
++      shimLogWarn(`Controller source ${operation} failed`, {
++        error: error instanceof Error ? error.message : String(error),
+       });
+-    watchedScopes.set(key, {
+-      workspacePath: scope.workspacePath,
+-      ...(scope.workspaceIdentity ? { workspaceIdentity: scope.workspaceIdentity } : {}),
+-      disposable,
+-      disposables: [],
+-    });
+-    // live 事实观察（existing-only：缺 runtime 时休眠，绝不拉起 Agent）。
+-    if (options.agentService && !sessionOverlays.has(key)) {
+-      const overlays = new Map<string, WindowHostControllerSessionOverlay>();
+-      sessionOverlays.set(key, overlays);
+-      const observer = createWindowHostSessionsIndexObserver({
+-        agentService: options.agentService,
+-        target: {
++    },
++    resolveSource: (scope) => {
++      // server 侧单源：同进程 taskService/agentService，恒 online。
++      return {
++        scope: {
++          kind: "local" as const,
+           workspacePath: scope.workspacePath,
+           ...(scope.workspaceIdentity ? { workspaceIdentity: scope.workspaceIdentity } : {}),
+         },
+-        onSessionsChange: (sessions) => {
+-          overlays.clear();
+-          for (const summary of sessions) {
+-            overlays.set(summary.sessionId, sessionOverlay(summary));
+-          }
+-          // live 事实变化 → 让所有挂着的客户端列表重查（list 会带回 overlay 投影）。
+-          notifyAllSubscriptions();
+-        },
+-        onError: (error) => {
+-          shimLogWarn("sessions-index 观察出错（existing-only，不影响列表可用性）", {
+-            error: error instanceof Error ? error.message : String(error),
+-          });
+-        },
+-      });
+-      void observer.start().catch((error) => {
+-        shimLogWarn("sessions-index 观察启动失败（保留 meta 投影）", {
+-          error: error instanceof Error ? error.message : String(error),
+-        });
+-      });
+-      watchedScopes.get(key)!.disposables.push({ dispose: () => observer.dispose() });
+-    }
+-  }
+-
+-  function mutationParams(address: WindowHostTaskAddress) {
+-    return {
+-      taskId: address.taskId,
+-      workspacePath: address.workspacePath,
+-      ...(address.workspaceIdentity ? { workspaceIdentity: address.workspaceIdentity } : {}),
+-    };
+-  }
+-
+-  return {
+-    async listTaskList(query: ZCodeTaskListQuery): Promise<WindowHostControllerTaskListResult> {
+-      // list 是 scopes 的权威来源：每个被查询的 workspace 都开始监听变更，
+-      // 后续任何客户端对该 workspace 的任务写广播都会推给本服务的订阅方。
+-      for (const scope of query.workspaceScopes) {
+-        ensureScopeWatched(scope);
+-      }
+-      const result = await taskService.listTaskList(query);
+-      return {
+-        ...result,
+-        items: result.items.map((item) => {
+-          const scopeKey = `${item.workspacePath} ${item.workspaceIdentity?.trim() || ""}`;
+-          const overlay = sessionOverlays.get(scopeKey)?.get(item.taskId) ?? undefined;
+-          return toListItem(item, item, overlay);
+-        }),
+-      };
+-    },
+-
+-    async mutateTask(params: {
+-      address: WindowHostTaskAddress;
+-      mutation: WindowHostControllerMutation;
+-    }): Promise<ZCodeTaskMeta | null> {
+-      const { address, mutation } = params;
+-      const p = mutationParams(address);
+-      switch (mutation.kind) {
+-        case "pin":
+-          return taskService.setTaskPinned({ ...p, pinned: mutation.pinned });
+-        case "archive":
+-          return mutation.archived
+-            ? taskService.archiveTask(p)
+-            : taskService.unarchiveTask(p);
+-        case "delete":
+-          await taskService.deleteTask(p);
+-          return null;
+-        case "delete-archived":
+-          await taskService.deleteArchivedTask(p);
+-          return null;
+-        case "mark-read":
+-          return taskService.setTaskUnread({ ...p, unread: false, ...(mutation.expectedUnreadAt !== undefined ? { expectedUnreadAt: mutation.expectedUnreadAt } : {}) });
+-        case "mark-unread":
+-          return taskService.setTaskUnread({ ...p, unread: true });
+-        case "open":
+-        case "resume":
+-          // 打开/恢复由 UI 经会话通道处理，不属于持久化变更。
+-          return null;
+-        default: {
+-          const exhaustive: never = mutation;
+-          throw new Error(`Unsupported window controller mutation: ${JSON.stringify(exhaustive)}`);
+-        }
+-      }
+-    },
+-
+-    async deleteArchivedTask(params: { address: WindowHostTaskAddress }): Promise<boolean> {
+-      return taskService.deleteArchivedTask(mutationParams(params.address));
+-    },
+-
+-    async deleteArchivedTasks(params: {
+-      address: WindowHostTaskAddress;
+-      taskIds: string[];
+-    }): Promise<ZCodeArchivedTaskDeletionResult> {
+-      return taskService.deleteArchivedTasks({
+-        workspacePath: params.address.workspacePath,
+-        ...(params.address.workspaceIdentity
+-          ? { workspaceIdentity: params.address.workspaceIdentity }
+-          : {}),
+-        taskIds: params.taskIds,
+-      });
+-    },
+-
+-    async subscribeControllerV4(
+-      _params: ControllerSubscribeParams,
+-    ): Promise<ControllerSubscribeResult> {
+-      // 订阅即进入增量流：首次列表由客户端 snapshot 语义自行拉取（mode 仍标 snapshot，
+-      // 客户端 registry 首查不依赖帧），此后 workspace 任务变更经空 deltas 帧通知重查。
+-      const subscriptionId = `srv-${randomUUID()}`;
+-      subscriptions.set(subscriptionId, { seq: 0 });
+-      return { ack: { subscriptionId, mode: "snapshot", logEpoch: "server" } };
+-    },
+-
+-    async resyncControllerV4(params: ControllerResyncParams): Promise<ControllerResyncResult> {
+-      // 客户端 gap resync：重置该订阅的 seq 基线，继续走空 deltas 通知。
+-      const existing = subscriptions.get(params.subscriptionId);
+-      if (existing) existing.seq = 0;
+-      return {
+-        ack: { subscriptionId: params.subscriptionId, mode: "snapshot", logEpoch: "server" },
++        taskService: options.taskService,
++        agentService: options.agentService,
++        sourceAvailability: "online" as const,
+       };
+     },
++  });
+ 
+-    async unsubscribeControllerV4(params: { subscriptionId: string }): Promise<void> {
+-      subscriptions.delete(params.subscriptionId);
+-    },
+-
+-    onDynamicControllerFrame(): Event<WindowHostControllerFrame> {
+-      return dynamicFrameEmitter.event;
+-    },
+-  };
++  return runtime.service;
+ }
+diff --git a/packages/services/package.json b/packages/services/package.json
+index 7e570fa..14bb9c1 100644
+--- a/packages/services/package.json
++++ b/packages/services/package.json
+@@ -12,6 +12,8 @@
+     "./process/processTreeTerminator": "./src/process/processTreeTerminator.ts",
+     "./window-controller/sessionsIndexObserver": "./src/window-controller/sessionsIndexObserver.ts",
+     "./window-controller/sessionsIndexObserver.js": "./src/window-controller/sessionsIndexObserver.ts",
++    "./window-controller/windowHostControllerService": "./src/window-controller/windowHostControllerService.ts",
++    "./window-controller/windowHostControllerService.js": "./src/window-controller/windowHostControllerService.ts",
+     "./node": "./src/node.ts"
+   },
+   "scripts": {
+diff --git a/packages/desktop/src/host/windowHostControllerProjection.ts b/packages/services/src/window-controller/windowHostControllerProjection.ts
+similarity index 100%
+rename from packages/desktop/src/host/windowHostControllerProjection.ts
+rename to packages/services/src/window-controller/windowHostControllerProjection.ts
+diff --git a/packages/desktop/src/host/windowHostControllerService.ts b/packages/services/src/window-controller/windowHostControllerService.ts
+similarity index 99%
+rename from packages/desktop/src/host/windowHostControllerService.ts
+rename to packages/services/src/window-controller/windowHostControllerService.ts
+index a49d625..24b073c 100644
+--- a/packages/desktop/src/host/windowHostControllerService.ts
++++ b/packages/services/src/window-controller/windowHostControllerService.ts
+@@ -9,14 +9,16 @@ import type {
+ import { matchesTaskListMembershipKind } from "@zcode/shared/zcode-protocol-v4";
+ import type {
+   IWindowControllerService,
+-  IZCodeAgentService,
+-  IZCodeTaskService,
+   WindowHostControllerFrame,
+   WindowHostControllerTaskListItem,
+   WindowHostControllerTaskListResult,
++} from "./windowController.js";
++import type { IZCodeAgentService } from "../zcode-agent/zcodeAgent.js";
++import type {
++  IZCodeTaskService,
+   ZCodeTaskListQuery,
+   ZCodeTaskListWorkspaceScope,
+-} from "@zcode/services";
++} from "#src/session/zcodeTaskService.js";
+ import {
+   createWindowHostControllerProjection,
+   type WindowHostControllerMutation,
+@@ -27,7 +29,7 @@ import {
+ import {
+   createWindowHostSessionsIndexObserver,
+   type WindowHostSessionsIndexObserver,
+-} from "@zcode/services/window-controller/sessionsIndexObserver.js";
++} from "./sessionsIndexObserver.js";
+ 
+ interface ResolvedWindowHostControllerSource {
+   scope: WindowHostControllerSourceScope;
+diff --git a/packages/web/public/zcode-boot-probe.js b/packages/web/public/zcode-boot-probe.js
+new file mode 100644
+index 0000000..cd902d9
+--- /dev/null
++++ b/packages/web/public/zcode-boot-probe.js
+@@ -0,0 +1,78 @@
++/**
++ * ZCode 直连页 / 官方远控页 共用的页面探针（随 ZCode web dist 发布）。
++ *
++ * 历史教训：这三段逻辑（SW 注册 / 刷新+崩溃遥测 / dsh-mobile App 兼容标记）
++ * 曾寄存在 zusage 状态栏旁挂服务的注入脚本（/zusage/boot.js）里 —— 那是
++ * 「不重新编译就能改」的偷懒选择，代价是 ZCode 连接线与无关插件耦合：
++ * 状态栏一停用，SW 与诊断全灭，改补丁线的人也找不到这里。
++ * 现归位本文件：由 nginx sub_filter 与状态栏脚本并列注入，两条产品线互不依赖。
++ *
++ * 三段职责（全部幂等、失败静默）：
++ *  1. Service Worker（秒开恢复层）：后台页被浏览器回收后的重载无法阻止，
++ *     SW 让那次重载从本机缓存瞬间完成。scope=/，直连页与远控页共用。
++ *  2. 刷新 + 崩溃遥测（favicon 信标，nginx 日志可查）：
++ *     - type=reload/navigate + 会话内计数（区分代码刷新 / 用户刷新 / 浏览器丢弃重载）
++ *     - crash=1 遗嘱（beforeunload 清除；crash 来不及清 → 下次加载发现即上一次崩溃）
++ *  3. dsh-mobile App 兼容标记：App 的 WebView 恢复策略 probe
++ *     document.querySelector('.dshm-shell')，不存在即整页 reload。
++ *     挂一个隐藏标记让 probe 返回 true。仅影响 App 挂载判定，无样式/行为副作用。
++ */
++(function () {
++  'use strict';
++  if (window.__zcodeBootProbe) return;
++  window.__zcodeBootProbe = true;
++
++  /* ---------- 崩溃检测遗嘱 ---------- */
++  try {
++    var hadCrashWill = sessionStorage.getItem('zcode-crash-will') === '1';
++    sessionStorage.setItem('zcode-crash-will', '1');
++    window.addEventListener('beforeunload', function () {
++      try { sessionStorage.removeItem('zcode-crash-will'); } catch (e) {}
++    });
++    if (hadCrashWill) {
++      var crashImg = new Image();
++      crashImg.src = '/favicon.svg?crash=1&ts=' + Date.now() + '&page=' + encodeURIComponent(location.pathname);
++    }
++  } catch (e) {}
++
++  /* ---------- 刷新遥测 ---------- */
++  try {
++    var navEntry = (performance.getEntriesByType && performance.getEntriesByType('navigation')[0]) || null;
++    var navType = navEntry ? (navEntry.type || 'unknown') : 'unknown';
++    // document.wasDiscarded=true = 浏览器把后台页面丢弃后重载（Chrome 内存管理，
++    // 非任何代码调用 reload）。区分「代码刷新」与「浏览器丢弃重载」的决定性证据。
++    var discarded = document.wasDiscarded === true;
++    if (discarded) navType += '+discarded';
++
++    var cnt = 0;
++    try {
++      cnt = parseInt(sessionStorage.getItem('zcode-pv-cnt') || '0', 10) || 0;
++      cnt += 1;
++      sessionStorage.setItem('zcode-pv-cnt', String(cnt));
++    } catch (e) {}
++    var pvImg = new Image();
++    pvImg.src = '/favicon.svg?pv=' + Date.now() + '&type=' + navType + '&cnt=' + cnt
++      + '&page=' + encodeURIComponent(location.pathname);
++  } catch (e) {}
++
++  /* ---------- dsh-mobile App 兼容标记 ---------- */
++  try {
++    if (!document.querySelector('.dshm-shell')) {
++      var shellMark = document.createElement('div');
++      shellMark.className = 'dshm-shell';
++      shellMark.style.cssText = 'display:none!important;width:0;height:0;overflow:hidden;';
++      shellMark.setAttribute('aria-hidden', 'true');
++      (document.body || document.documentElement).appendChild(shellMark);
++    }
++  } catch (e) {}
++
++  /* ---------- Service Worker 注册 ----------
++   * 每次导航浏览器都会字节比对 sw.js 检查更新（server 对 /sw.js 返回 no-cache）。
++   * 版本参数随 SW 版本递增，保证旧注册被新字节替换。 */
++  if ('serviceWorker' in navigator) {
++    try {
++      navigator.serviceWorker.register('/sw.js?v=zcode-shell-v7', { scope: '/' })
++        .catch(function () {});
++    } catch (e) {}
++  }
++})();
 -- 
 2.53.0
 
