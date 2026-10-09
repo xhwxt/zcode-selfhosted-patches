@@ -1,7 +1,7 @@
 From de68d20b699ddcb30f64f6237153c96a13aab14f Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:13:39 +0800
-Subject: [PATCH 01/33] fix(rpc,client,server): websocket keepalive liveness
+Subject: [PATCH 01/34] fix(rpc,client,server): websocket keepalive liveness
  for half-open detection
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1061,7 +1061,7 @@ index 8a8a827..95cac80 100644
 From 114e9d43071f3a3c8ba7b813022c1bc848822734 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:38:20 +0800
-Subject: [PATCH 02/33] fix(client,web): heartbeat deadline fires
+Subject: [PATCH 02/34] fix(client,web): heartbeat deadline fires
  onHeartbeatDead before close
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1147,7 +1147,7 @@ index 305ea3f..7c36e7d 100644
 From 99fb8f4e201e5b5e0b1a1ca20237730f177483cf Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 08:34:01 +0800
-Subject: [PATCH 03/33] perf(web,client): seamless background returns, faster
+Subject: [PATCH 03/34] perf(web,client): seamless background returns, faster
  reconnect, lazy banner
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1423,7 +1423,7 @@ index 7c36e7d..ae5c3bb 100644
 From 368a50b1b68be87966fced31424aef5486bf39d0 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 09:24:05 +0800
-Subject: [PATCH 04/33] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
+Subject: [PATCH 04/34] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
  =?UTF-8?q?=E2=80=94=20no=20React=20remount=20on=20soft=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1847,7 +1847,7 @@ index ae5c3bb..dcdef96 100644
 From 07843f5a5f00afa71faea45282c31bf59150970a Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:16:18 +0800
-Subject: [PATCH 05/33] fix(ui): md preview text fences invisible on dark UI +
+Subject: [PATCH 05/34] fix(ui): md preview text fences invisible on dark UI +
  mobile settings row squeeze
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2010,7 +2010,7 @@ index 25cd56d..63e8439 100644
 From eb1e5605eeeb99b042ae219b009abd4e91451973 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:40:45 +0800
-Subject: [PATCH 06/33] fix(web): remove ALL page reloads from connection paths
+Subject: [PATCH 06/34] fix(web): remove ALL page reloads from connection paths
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -2294,7 +2294,7 @@ index dcdef96..4311a39 100644
 From 354f07061e285014e1004b93b91e60af98dc2c82 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:56:25 +0800
-Subject: [PATCH 07/33] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20navi?=
+Subject: [PATCH 07/34] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20navi?=
  =?UTF-8?q?gation=20=E2=80=94=20zero=20network=20on=20foreground=20return?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2435,7 +2435,7 @@ index 980b78e..4ab2def 100644
 From db282af6c0f949f2f3bfd4b6850b8475c4851c0e Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 11:34:06 +0800
-Subject: [PATCH 08/33] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transp?=
+Subject: [PATCH 08/34] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transp?=
  =?UTF-8?q?ort=20=E2=80=94=20zero=20visual=20change=20on=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2817,7 +2817,7 @@ index 4311a39..7790234 100644
 From 1575737a4f601d74e09dc19894da96d19ed797b6 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:04:53 +0800
-Subject: [PATCH 09/33] =?UTF-8?q?fix(ui,web):=20re-subscribe=20stores=20af?=
+Subject: [PATCH 09/34] =?UTF-8?q?fix(ui,web):=20re-subscribe=20stores=20af?=
  =?UTF-8?q?ter=20hot-swap=20=E2=80=94=20data=20flows=20again?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3170,7 +3170,7 @@ index 7790234..e5a91b0 100644
 From 1f43dc774e46a27205dfe0a0ea6d03b0eec51640 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:25:49 +0800
-Subject: [PATCH 10/33] =?UTF-8?q?fix(ui):=20model=20submenu=20squeeze=20on?=
+Subject: [PATCH 10/34] =?UTF-8?q?fix(ui):=20model=20submenu=20squeeze=20on?=
  =?UTF-8?q?=20mobile=20=E2=80=94=20wrap=20names,=20width=20follows=20viewp?=
  =?UTF-8?q?ort?=
 MIME-Version: 1.0
@@ -3236,7 +3236,7 @@ index c2387ed..61943f9 100644
 From 1b11d905c0e6eab7a26ae2240fa0f0ff405ac961 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:31:29 +0800
-Subject: [PATCH 11/33] =?UTF-8?q?fix(ui,web):=20re-handshake=20after=20hot?=
+Subject: [PATCH 11/34] =?UTF-8?q?fix(ui,web):=20re-handshake=20after=20hot?=
  =?UTF-8?q?-swap=20=E2=80=94=20fixes=20fault.connection.handshakeRequired?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3360,7 +3360,7 @@ index e5a91b0..ea4c885 100644
 From 02f5be69a51cf66104acb5a2d8fef4ab9b7e4a29 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 13:51:57 +0800
-Subject: [PATCH 12/33] fix(web): SW v3 cache bust + /sw-reset.html escape
+Subject: [PATCH 12/34] fix(web): SW v3 cache bust + /sw-reset.html escape
  hatch
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3464,7 +3464,7 @@ index 4ab2def..6338372 100644
 From 08dcd3f515dc280d359409e6b364daaa385fdd22 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:19:51 +0800
-Subject: [PATCH 13/33] =?UTF-8?q?fix(web):=20SW=20v4=20=E2=80=94=20drop=20?=
+Subject: [PATCH 13/34] =?UTF-8?q?fix(web):=20SW=20v4=20=E2=80=94=20drop=20?=
  =?UTF-8?q?dirty=20/assets/=20prefetch=20key=20from=20install?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3527,7 +3527,7 @@ index 6338372..3ea1938 100644
 From 201e0c331c779b39c463fd436c4ae22ea39497c7 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:35:37 +0800
-Subject: [PATCH 14/33] =?UTF-8?q?fix(web):=20ignore=20stale=20close=20even?=
+Subject: [PATCH 14/34] =?UTF-8?q?fix(web):=20ignore=20stale=20close=20even?=
  =?UTF-8?q?ts=20=E2=80=94=20stops=20reconnect=20loop=20after=20hot-swap?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3598,7 +3598,7 @@ index ea4c885..5b4f167 100644
 From c5306790dd763477ee4c1ed5b018f83cff5104b6 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:58:29 +0800
-Subject: [PATCH 15/33] =?UTF-8?q?fix(web):=20SW=20v5=20=E2=80=94=20backgro?=
+Subject: [PATCH 15/34] =?UTF-8?q?fix(web):=20SW=20v5=20=E2=80=94=20backgro?=
  =?UTF-8?q?und=20revalidate=20navigations=20(deploy=20path=20restored)?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3723,7 +3723,7 @@ index 3ea1938..e7d6769 100644
 From 4e768ffd1beacdd2b2bd299796e6845124ca84e6 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:13:29 +0800
-Subject: [PATCH 16/33] =?UTF-8?q?fix(ui):=20usage=20stats=20readability=20?=
+Subject: [PATCH 16/34] =?UTF-8?q?fix(ui):=20usage=20stats=20readability=20?=
  =?UTF-8?q?on=20mobile=20=E2=80=94=20short=20axis=20dates,=20scrollable=20?=
  =?UTF-8?q?heatmap?=
 MIME-Version: 1.0
@@ -3804,7 +3804,7 @@ index 74f4374..4d0119e 100644
 From d56f5f9faf78d9dda1d28ca9a76b5d08d8f316b4 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:20:00 +0800
-Subject: [PATCH 17/33] fix(web,client): close stale WebSocket on hot-swap +
+Subject: [PATCH 17/34] fix(web,client): close stale WebSocket on hot-swap +
  crash telemetry
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3896,7 +3896,7 @@ index 5b4f167..e767efb 100644
 From 923e3f1ffe8145d946e5a58b7c8afb9f985e215a Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:59:13 +0800
-Subject: [PATCH 18/33] =?UTF-8?q?fix(web):=20SW=20v7=20=E2=80=94=20network?=
+Subject: [PATCH 18/34] =?UTF-8?q?fix(web):=20SW=20v7=20=E2=80=94=20network?=
  =?UTF-8?q?-first=20for=20zusage=20injected=20scripts?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3957,7 +3957,7 @@ index 829e60f..b13d167 100644
 From 53f07053a90070fad64c8bdc06bf53ca0b21b7f2 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 16:32:20 +0800
-Subject: [PATCH 19/33] =?UTF-8?q?fix(rpc,client,web):=20replay=20buffered?=
+Subject: [PATCH 19/34] =?UTF-8?q?fix(rpc,client,web):=20replay=20buffered?=
  =?UTF-8?q?=20frames=20on=20hot-swap=20=E2=80=94=20fixes=20handshake=20dea?=
  =?UTF-8?q?dlock?=
 MIME-Version: 1.0
@@ -4110,7 +4110,7 @@ index e767efb..4576c8e 100644
 From 933328973d2f59fe0a025a66fdc7d84b2fdaae44 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 16:43:24 +0800
-Subject: [PATCH 20/33] chore(services): log handshake rejection details for
+Subject: [PATCH 20/34] chore(services): log handshake rejection details for
  intermittent fault diagnosis
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4151,7 +4151,7 @@ index 9fa3233..675de02 100644
 From d2324dd4a548205ae06b50d73f31fa8d68ba26e2 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 17:17:41 +0800
-Subject: [PATCH 21/33] fix(server,ui): stop killing live connections + silent
+Subject: [PATCH 21/34] fix(server,ui): stop killing live connections + silent
  bounded retry on subscribe failure
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4258,7 +4258,7 @@ index 95cac80..bc4ef5e 100644
 From 00414c17fc77aab796aa359b713121309e73041b Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 17:59:57 +0800
-Subject: [PATCH 22/33] chore(services): log hello/initialize arrival on
+Subject: [PATCH 22/34] chore(services): log hello/initialize arrival on
  connection scope
 
 ---
@@ -4314,7 +4314,7 @@ index 675de02..2bed75f 100644
 From e5b7c3f605b4f95c6d55315f05831707d5cc353b Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 18:10:02 +0800
-Subject: [PATCH 23/33] =?UTF-8?q?fix(ui):=20handshake=20cache=20invalidati?=
+Subject: [PATCH 23/34] =?UTF-8?q?fix(ui):=20handshake=20cache=20invalidati?=
  =?UTF-8?q?on=20actually=20works=20=E2=80=94=20epoch=20compared=20on=20loo?=
  =?UTF-8?q?kup?=
 MIME-Version: 1.0
@@ -4384,7 +4384,7 @@ index 467ed58..121d219 100644
 From 75d7ec9e1db5b7c0c572b0bc85904fc345344ec0 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 18:47:59 +0800
-Subject: [PATCH 24/33] =?UTF-8?q?fix(rpc):=20re-send=20active=20event=20su?=
+Subject: [PATCH 24/34] =?UTF-8?q?fix(rpc):=20re-send=20active=20event=20su?=
  =?UTF-8?q?bscriptions=20on=20resetTransport=20=E2=80=94=20restores=20UI?=
  =?UTF-8?q?=20data=20stream?=
 MIME-Version: 1.0
@@ -4567,7 +4567,7 @@ index 0000000..d5f9e5f
 From 99b33bd49325cfb5e65555c7623b03095cbacb40 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 19:03:31 +0800
-Subject: [PATCH 25/33] fix(ui): handshake RPC timeout + extended retry budget
+Subject: [PATCH 25/34] fix(ui): handshake RPC timeout + extended retry budget
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -4664,7 +4664,7 @@ index 5515fa1..adc61c2 100644
 From 006dc2d9e2c7067638cbe56e4aca0fa8c05e838f Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 19:16:52 +0800
-Subject: [PATCH 26/33] fix(ui): retry schedule tuned to handshake-timeout
+Subject: [PATCH 26/34] fix(ui): retry schedule tuned to handshake-timeout
  rhythm; sessions store budget aligned
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4723,7 +4723,7 @@ index 7e8a36f..a195807 100644
 From 7d09a5995b05adbce584d9bbdc1ee4f45e6f70bc Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 20:29:12 +0800
-Subject: [PATCH 27/33] chore(web): drop dead reconnect-storm counter +
+Subject: [PATCH 27/34] chore(web): drop dead reconnect-storm counter +
  orphaned root test
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4851,7 +4851,7 @@ index 4576c8e..211be8c 100644
 From 8653043f7caeb8490946be163a6cf9757bee7e8f Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 21:14:43 +0800
-Subject: [PATCH 28/33] test(e2e): add connection-recovery browser scripts
+Subject: [PATCH 28/34] test(e2e): add connection-recovery browser scripts
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -5296,7 +5296,7 @@ index 0000000..2f9c324
 From 44b8212b5e3627e235ed5abbc629fe4ae6ca63a8 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 21:18:14 +0800
-Subject: [PATCH 29/33] docs: point E2E reference at published e2e/ directory
+Subject: [PATCH 29/34] docs: point E2E reference at published e2e/ directory
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -5738,7 +5738,7 @@ index bd6247f..42db58b 100644
 From a3768012f671bc84aa85a2a671fb42c099c326da Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 09:25:50 +0800
-Subject: [PATCH 30/33] fix(ui): drawer mutual exclusion via state owner +
+Subject: [PATCH 30/34] fix(ui): drawer mutual exclusion via state owner +
  wide-web overlay title offset
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -5870,7 +5870,7 @@ index f751e82..6fd32bb 100644
 From df7190a61285de2c4e851a8aad17fd8351b502b7 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 09:40:15 +0800
-Subject: [PATCH 31/33] fix(ui): mutex scoped to drawer viewport + unified top
+Subject: [PATCH 31/34] fix(ui): mutex scoped to drawer viewport + unified top
  overlay alignment
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -6049,7 +6049,7 @@ index 6fd32bb..cbef6c5 100644
 From ff4a2a2660b0b20bb7abd91cb9a8a0b4b038926f Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 10:51:59 +0800
-Subject: [PATCH 32/33] feat(services,server): cross-client task list live
+Subject: [PATCH 32/34] feat(services,server): cross-client task list live
  refresh + cron icon cleanup
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -6492,7 +6492,7 @@ index 9b33c71..aca6f3a 100644
 From 6b7cd806ba3aa05a55dfd3e2481dbb108a7b6c3c Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 11:24:23 +0800
-Subject: [PATCH 33/33] diag(ui): record welcome-gate decision trace to
+Subject: [PATCH 33/34] diag(ui): record welcome-gate decision trace to
  localStorage
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -6543,6 +6543,379 @@ index 4633505..df9a88d 100644
        // 未登录且没有可用模型配置时必须引导用户连接账号或填写 API Key。
        // 启动检查、API Key 设置回流等入口统一走这里，避免各处复制判断后语义分叉。
        logger.info("[Root] provider 可用性登录入口守卫完成检查", {
+-- 
+2.53.0
+
+
+From eefce9213f230520730efe0ae680d8390c3e58a4 Mon Sep 17 00:00:00 2001
+From: xhwxt <197754549+xhwxt@users.noreply.github.com>
+Date: Fri, 9 Oct 2026 11:42:13 +0800
+Subject: [PATCH 34/34] fix(services): reconcile stale cron/off-peak markers on
+ startup
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+用户实测：定时任务删除后，历史对话仍挂定时图标、仍留在 cron 分组。
+生产库实测 automations 表 0 行，而 tasks 里有 1 行仍带
+cron_automation_id=automation-9330d4f0-… 且仍是 cron 组成员。
+
+上一版修法两处不成立：
+1) 只做事件驱动清理（AutomationService 删除/暂停事件）——只能覆盖清理
+   代码上线之后发生的删除，对历史遗留行、删除中途崩溃、库迁移残留无效；
+2) 兜底挂在 TaskIndexRepo.initialize 的修复段，而该段前面有
+   isTasksStoragePrepared(path) 早退（Worker 已准备过则跳过整表修复），
+   生产路径永不执行——部署重启后复查生产库零变化，实锤。
+   （副本测试曾通过，但那是新路径不触发早退，通过的理由是错的。）
+
+现在：TaskIndexRepo.reconcileStaleSystemMarkers 改为公开方法，由
+createLocalServices 启动装配显式调用一次，返回受影响对话供广播刷新。
+语义：只有记录不存在才算失效（删除）；暂停保留标记，与桌面端一致，
+恢复后不丢历史归属。分组清理只动系统组，不碰用户自建组。
+列与 meta_json 双读双清（rowToMeta 以 meta_json 优先，只清列会被兜底写回）。
+
+生产验证：重启后 /opt/zcode-data/.zcode/v2/tasks-index.sqlite
+残留标记 0（原 1）、cron 分组清空、15 个对话一个不少。
+---
+ packages/services/src/node.ts                 |  39 ++-
+ .../services/src/session/taskIndexRepo.ts     | 222 +++++++++++++++++-
+ 2 files changed, 247 insertions(+), 14 deletions(-)
+
+diff --git a/packages/services/src/node.ts b/packages/services/src/node.ts
+index 98d1a2a..4c0ae45 100644
+--- a/packages/services/src/node.ts
++++ b/packages/services/src/node.ts
+@@ -2281,13 +2281,17 @@ export function createLocalServices(options: {
+     agentService: zcodeAgentService,
+     taskIndexRepo,
+   });
+-  // 定时任务删除/暂停后清除对话 meta 上残留的 cronAutomationId（对话行定时图标），
+-  // 并广播列表刷新（用户实测 2026-10-09：关闭定时任务后图标永挂）。
+-  // 注意 syncTaskMeta 写路径对 cronAutomationId 有 existingMeta 兜底，
++  // 定时任务**删除**后清除对话 meta 上残留的 cronAutomationId（对话行定时图标）
++  // 并撤销 cron 系统分组归属，再广播列表刷新（用户实测 2026-10-09：关闭定时任务后
++  // 图标永挂）。注意 syncTaskMeta 写路径对 cronAutomationId 有 existingMeta 兜底，
+   // 必须用 clearCronAutomationId 直接清，否则下一次快照同步会把标记写回。
++  // 暂停（enabled=false）不清：与桌面端一致，继续后可保留历史归属；
++  // 历史遗留（删除发生在清理逻辑上线之前）由 bootstrap 的
++  // reconcileStaleSystemMarkers 兜底，不依赖本事件。
+   const automationLifecycleLog = createServiceLogger("automation-lifecycle");
+   const automationLifecycleDisposable = zcodeAgentService.onAutomationLifecycleChanged(
+     (change) => {
++      if (change.kind !== "deleted") return;
+       void taskIndexRepo
+         .clearCronAutomationId({ automationId: change.automationId })
+         .then((touched) => {
+@@ -2312,6 +2316,35 @@ export function createLocalServices(options: {
+         });
+     },
+   );
++  // 历史遗留的失效系统标记自愈（定时任务/闲时任务记录已消失，对话行仍挂图标并留在
++  // 系统分组）。必须显式调用：initialize 的修复段有 isTasksStoragePrepared 早退，
++  // 挂在里面生产路径永不执行（第一版如此，部署后实测零变化）。
++  void taskIndexRepo
++    .reconcileStaleSystemMarkers()
++    .then((touched) => {
++      if (touched.length === 0) return;
++      automationLifecycleLog.info(
++        undefined,
++        `[automation-lifecycle] 清理失效系统标记 tasks=${touched.length}`,
++        { kinds: [...new Set(touched.map((t) => t.kind))] },
++      );
++      for (const task of touched) {
++        zcodeTaskIndexSyncer.emitWorkspaceTaskListChanged(
++          {
++            workspacePath: task.workspacePath,
++            ...(task.workspaceIdentity ? { workspaceIdentity: task.workspaceIdentity } : {}),
++            taskId: task.taskId,
++          },
++          undefined,
++          "task_meta_changed",
++        );
++      }
++    })
++    .catch((error) => {
++      automationLifecycleLog.warn(undefined, "[automation-lifecycle] 失效系统标记自愈失败", {
++        error: error instanceof Error ? error.message : String(error),
++      });
++    });
+   // The plugin can be toggled at runtime. Do not let a previously created resolver continue
+   // health-checking/restarting Helper after disable, and create it lazily after enable.
+   // 动态 resolver：isPluginEnabled 与 helper 创建用同一个 isCuaEnabledForContext 门控（dev mode 一致），
+diff --git a/packages/services/src/session/taskIndexRepo.ts b/packages/services/src/session/taskIndexRepo.ts
+index e0c10cb..c1df1d8 100644
+--- a/packages/services/src/session/taskIndexRepo.ts
++++ b/packages/services/src/session/taskIndexRepo.ts
+@@ -537,6 +537,192 @@ export class TaskIndexRepo {
+     this.cleanupDeletedTaskGroupingReferences();
+   }
+ 
++  /**
++   * 失效标记自愈（幂等）：automation / off-peak 记录已从各自表消失时，对话行上的标记
++   * 与系统分组归属必须一并清掉。
++   *
++   * 为什么必须显式调用、不能挂在 initialize 的修复段里：该段前面有
++   * `isTasksStoragePrepared(path)` 早退（Worker 已完成原始准备，业务连接跳过整表修复），
++   * 生产路径永远命中早退——第一版把它放在那里，部署后生产库零变化（实测确认）。
++   * 现在由 createLocalServices 启动装配显式调用一次，返回受影响的对话供调用方广播刷新。
++   *
++   * 为什么需要它：事件驱动的清理（AutomationService 生命周期事件）只能覆盖
++   * 「清理代码上线之后发生的删除」，对历史遗留行、删除中途崩溃、库迁移残留无效。
++   * 用户实测 2026-10-09：automations 表已 0 行，对话行仍带 cron_automation_id、
++   * 仍留在 cron 分组、列表上一直挂着定时任务图标。
++   *
++   * 语义边界（与桌面端一致）：只有记录**不存在**才算失效；暂停（automation.enabled=0）
++   * 保留标记，恢复后可继续，不丢历史归属。分组清理只动系统组，绝不碰用户自建组。
++   */
++  async reconcileStaleSystemMarkers(): Promise<
++    Array<{ kind: "cron" | "off-peak"; workspacePath: string; workspaceIdentity?: string; taskId: string }>
++  > {
++    await this.ensureReady();
++    const database = this.getDatabase();
++    const now = Date.now();
++    const touched: Array<{
++      kind: "cron" | "off-peak";
++      workspacePath: string;
++      workspaceIdentity?: string;
++      taskId: string;
++    }> = [];
++    const hasTable = (name: string) =>
++      Boolean(
++        database
++          .prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?`)
++          .get(name),
++      );
++
++    if (hasTable("automations")) {
++      const stale = database
++        .prepare(
++          `SELECT workspace_path, workspace_identity, task_id FROM tasks
++           WHERE deleted = 0
++             AND (cron_automation_id IS NOT NULL
++                  OR json_extract(meta_json, '$.cronAutomationId') IS NOT NULL)
++             AND NOT EXISTS (
++               SELECT 1 FROM automations a
++               WHERE a.automation_id = COALESCE(
++                 tasks.cron_automation_id,
++                 json_extract(tasks.meta_json, '$.cronAutomationId')
++               )
++             )`,
++        )
++        .all() as Array<{
++        workspace_path: string;
++        workspace_identity: string | null;
++        task_id: string;
++      }>;
++      if (stale.length > 0) {
++        database.exec("BEGIN IMMEDIATE");
++        try {
++          database
++            .prepare(
++              `UPDATE tasks
++               SET cron_automation_id = NULL,
++                   meta_json = CASE
++                     WHEN meta_json IS NULL THEN NULL
++                     ELSE json_remove(meta_json, '$.cronAutomationId')
++                   END,
++                   updated_at = @now
++               WHERE deleted = 0
++                 AND (cron_automation_id IS NOT NULL
++                      OR json_extract(meta_json, '$.cronAutomationId') IS NOT NULL)
++                 AND NOT EXISTS (
++                   SELECT 1 FROM automations a
++                   WHERE a.automation_id = COALESCE(
++                     tasks.cron_automation_id,
++                     json_extract(tasks.meta_json, '$.cronAutomationId')
++                   )
++                 )`,
++            )
++            .run({ now });
++          // 标记清掉后，自动加入的 cron 系统分组归属一并撤销（只动系统组）。
++          database
++            .prepare(
++              `DELETE FROM task_group_members
++               WHERE group_id = @groupId
++                 AND EXISTS (
++                   SELECT 1 FROM tasks t
++                   WHERE t.workspace_key = task_group_members.workspace_key
++                     AND t.task_id = task_group_members.task_id
++                     AND t.cron_automation_id IS NULL
++                     AND json_extract(t.meta_json, '$.cronAutomationId') IS NULL
++                 )`,
++            )
++            .run({ groupId: CRON_DEFAULT_GROUP_ID });
++          database.exec("COMMIT");
++        } catch (error) {
++          database.exec("ROLLBACK");
++          throw error;
++        }
++        for (const row of stale) {
++          touched.push({
++            kind: "cron",
++            workspacePath: row.workspace_path,
++            ...(row.workspace_identity ? { workspaceIdentity: row.workspace_identity } : {}),
++            taskId: row.task_id,
++          });
++        }
++      }
++    }
++
++    if (hasTable("off_peak_tasks")) {
++      const stale = database
++        .prepare(
++          `SELECT workspace_path, workspace_identity, task_id FROM tasks
++           WHERE deleted = 0
++             AND (off_peak_task_id IS NOT NULL
++                  OR json_extract(meta_json, '$.offPeakTaskId') IS NOT NULL)
++             AND NOT EXISTS (
++               SELECT 1 FROM off_peak_tasks o
++               WHERE o.off_peak_task_id = COALESCE(
++                 tasks.off_peak_task_id,
++                 json_extract(tasks.meta_json, '$.offPeakTaskId')
++               )
++             )`,
++        )
++        .all() as Array<{
++        workspace_path: string;
++        workspace_identity: string | null;
++        task_id: string;
++      }>;
++      if (stale.length > 0) {
++        database.exec("BEGIN IMMEDIATE");
++        try {
++          database
++            .prepare(
++              `UPDATE tasks
++               SET off_peak_task_id = NULL,
++                   meta_json = CASE
++                     WHEN meta_json IS NULL THEN NULL
++                     ELSE json_remove(meta_json, '$.offPeakTaskId')
++                   END,
++                   updated_at = @now
++               WHERE deleted = 0
++                 AND (off_peak_task_id IS NOT NULL
++                      OR json_extract(meta_json, '$.offPeakTaskId') IS NOT NULL)
++                 AND NOT EXISTS (
++                   SELECT 1 FROM off_peak_tasks o
++                   WHERE o.off_peak_task_id = COALESCE(
++                     tasks.off_peak_task_id,
++                     json_extract(tasks.meta_json, '$.offPeakTaskId')
++                   )
++                 )`,
++            )
++            .run({ now });
++          database
++            .prepare(
++              `DELETE FROM task_group_members
++               WHERE group_id = @groupId
++                 AND EXISTS (
++                   SELECT 1 FROM tasks t
++                   WHERE t.workspace_key = task_group_members.workspace_key
++                     AND t.task_id = task_group_members.task_id
++                     AND t.off_peak_task_id IS NULL
++                     AND json_extract(t.meta_json, '$.offPeakTaskId') IS NULL
++                 )`,
++            )
++            .run({ groupId: OFF_PEAK_DEFAULT_GROUP_ID });
++          database.exec("COMMIT");
++        } catch (error) {
++          database.exec("ROLLBACK");
++          throw error;
++        }
++        for (const row of stale) {
++          touched.push({
++            kind: "off-peak",
++            workspacePath: row.workspace_path,
++            ...(row.workspace_identity ? { workspaceIdentity: row.workspace_identity } : {}),
++            taskId: row.task_id,
++          });
++        }
++      }
++    }
++
++    return touched;
++  }
++
+   /**
+    * 存量回填（幂等，每次 bootstrap 自愈）：打点上线前产生的 off-peak 会话行没有
+    * offPeakTaskId。off_peak_tasks 与 tasks 同库（tasks-index.sqlite），按 session 绑定
+@@ -1799,39 +1985,49 @@ export class TaskIndexRepo {
+   }
+ 
+   /**
+-   * 清除引用指定 automation 的所有对话 meta 上的 cronAutomationId 标记。
+-   * 用途：定时任务被删除/暂停后，对话行不应再挂定时图标（用户实测 2026-10-09：
+-   * cronAutomationId 只在会话内创建 automation 时写入，禁用/删除后无人回写清除）。
+-   * cron 身份在 syncTaskMeta 写路径有 `existingMeta 兜底`（protocol snapshot 不带
+-   * cron 标记），所以直接 UPDATE meta_json + 索引列是安全且必要的——否则兜底会把
+-   * 清除动作又写回去。返回受影响 task 的定位（供调用方广播刷新）。
++   * 清除引用指定 automation 的所有对话 meta 上的 cronAutomationId 标记，
++   * 并撤销其自动加入的 cron 系统分组归属。
++   * 用途：定时任务被删除后，对话行不应再挂定时图标 / 留在定时分组（用户实测
++   * 2026-10-09）。cron 身份在 syncTaskMeta 写路径有 `existingMeta 兜底`
++   * （protocol snapshot 不带 cron 标记），所以直接 UPDATE meta_json + 索引列是
++   * 安全且必要的——否则兜底会把清除动作又写回去。
++   * 注意：删除之外的历史遗留由 bootstrap 的 reconcileStaleSystemMarkers 兜底。
+    */
+   async clearCronAutomationId(params: {
+     automationId: string;
+   }): Promise<Array<{ workspacePath: string; workspaceIdentity?: string; taskId: string }>> {
+     await this.ensureReady();
+     const database = this.getDatabase();
++    // 列与 meta_json 双读：历史行可能只有其一（rowToMeta 以 meta_json 优先）。
+     const rows = database
+       .prepare(
+-        `SELECT workspace_key, workspace_path, workspace_identity, task_id, meta_json
++        `SELECT workspace_key, workspace_path, workspace_identity, task_id
+         FROM tasks
+-        WHERE cron_automation_id = @automation_id AND deleted = 0`,
++        WHERE deleted = 0
++          AND (cron_automation_id = @automation_id
++               OR json_extract(meta_json, '$.cronAutomationId') = @automation_id)`,
+       )
+       .all({ automation_id: params.automationId }) as Array<{
+       workspace_key: string;
+       workspace_path: string;
+       workspace_identity: string | null;
+       task_id: string;
+-      meta_json: string | null;
+     }>;
+     if (rows.length === 0) return [];
+     const clear = database.prepare(
+       `UPDATE tasks
+       SET cron_automation_id = NULL,
+-          meta_json = json_remove(meta_json, '$.cronAutomationId'),
++          meta_json = CASE
++            WHEN meta_json IS NULL THEN NULL
++            ELSE json_remove(meta_json, '$.cronAutomationId')
++          END,
+           updated_at = @now
+       WHERE workspace_key = @workspace_key AND task_id = @task_id`,
+     );
++    const detachCronGroup = database.prepare(
++      `DELETE FROM task_group_members
++      WHERE group_id = @group_id AND workspace_key = @workspace_key AND task_id = @task_id`,
++    );
+     database.exec("BEGIN IMMEDIATE");
+     try {
+       const now = Date.now();
+@@ -1842,11 +2038,15 @@ export class TaskIndexRepo {
+       }> = [];
+       for (const row of rows) {
+         clear.run({
+-          automation_id: params.automationId,
+           now,
+           workspace_key: row.workspace_key,
+           task_id: row.task_id,
+         });
++        detachCronGroup.run({
++          group_id: CRON_DEFAULT_GROUP_ID,
++          workspace_key: row.workspace_key,
++          task_id: row.task_id,
++        });
+         touched.push({
+           workspacePath: row.workspace_path,
+           ...(row.workspace_identity ? { workspaceIdentity: row.workspace_identity } : {}),
 -- 
 2.53.0
 

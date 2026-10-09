@@ -2365,20 +2365,24 @@ index 167a9d0..3ad9ff5 100644
        rootPath: string;
        offset: number;
 diff --git a/packages/services/src/node.ts b/packages/services/src/node.ts
-index a6b5f98..98d1a2a 100644
+index a6b5f98..4c0ae45 100644
 --- a/packages/services/src/node.ts
 +++ b/packages/services/src/node.ts
-@@ -2281,6 +2281,37 @@ export function createLocalServices(options: {
+@@ -2281,6 +2281,70 @@ export function createLocalServices(options: {
      agentService: zcodeAgentService,
      taskIndexRepo,
    });
-+  // 定时任务删除/暂停后清除对话 meta 上残留的 cronAutomationId（对话行定时图标），
-+  // 并广播列表刷新（用户实测 2026-10-09：关闭定时任务后图标永挂）。
-+  // 注意 syncTaskMeta 写路径对 cronAutomationId 有 existingMeta 兜底，
++  // 定时任务**删除**后清除对话 meta 上残留的 cronAutomationId（对话行定时图标）
++  // 并撤销 cron 系统分组归属，再广播列表刷新（用户实测 2026-10-09：关闭定时任务后
++  // 图标永挂）。注意 syncTaskMeta 写路径对 cronAutomationId 有 existingMeta 兜底，
 +  // 必须用 clearCronAutomationId 直接清，否则下一次快照同步会把标记写回。
++  // 暂停（enabled=false）不清：与桌面端一致，继续后可保留历史归属；
++  // 历史遗留（删除发生在清理逻辑上线之前）由 bootstrap 的
++  // reconcileStaleSystemMarkers 兜底，不依赖本事件。
 +  const automationLifecycleLog = createServiceLogger("automation-lifecycle");
 +  const automationLifecycleDisposable = zcodeAgentService.onAutomationLifecycleChanged(
 +    (change) => {
++      if (change.kind !== "deleted") return;
 +      void taskIndexRepo
 +        .clearCronAutomationId({ automationId: change.automationId })
 +        .then((touched) => {
@@ -2403,6 +2407,35 @@ index a6b5f98..98d1a2a 100644
 +        });
 +    },
 +  );
++  // 历史遗留的失效系统标记自愈（定时任务/闲时任务记录已消失，对话行仍挂图标并留在
++  // 系统分组）。必须显式调用：initialize 的修复段有 isTasksStoragePrepared 早退，
++  // 挂在里面生产路径永不执行（第一版如此，部署后实测零变化）。
++  void taskIndexRepo
++    .reconcileStaleSystemMarkers()
++    .then((touched) => {
++      if (touched.length === 0) return;
++      automationLifecycleLog.info(
++        undefined,
++        `[automation-lifecycle] 清理失效系统标记 tasks=${touched.length}`,
++        { kinds: [...new Set(touched.map((t) => t.kind))] },
++      );
++      for (const task of touched) {
++        zcodeTaskIndexSyncer.emitWorkspaceTaskListChanged(
++          {
++            workspacePath: task.workspacePath,
++            ...(task.workspaceIdentity ? { workspaceIdentity: task.workspaceIdentity } : {}),
++            taskId: task.taskId,
++          },
++          undefined,
++          "task_meta_changed",
++        );
++      }
++    })
++    .catch((error) => {
++      automationLifecycleLog.warn(undefined, "[automation-lifecycle] 失效系统标记自愈失败", {
++        error: error instanceof Error ? error.message : String(error),
++      });
++    });
    // The plugin can be toggled at runtime. Do not let a previously created resolver continue
    // health-checking/restarting Helper after disable, and create it lazily after enable.
    // 动态 resolver：isPluginEnabled 与 helper 创建用同一个 isCuaEnabledForContext 门控（dev mode 一致），
@@ -2488,46 +2521,249 @@ index 4b4d28e..c68024a 100644
  
    /** 失败任务手动重跑：回 active、清计数，按 cron 重算下次时间。 */
 diff --git a/packages/services/src/session/taskIndexRepo.ts b/packages/services/src/session/taskIndexRepo.ts
-index 4bfc84e..e0c10cb 100644
+index 4bfc84e..c1df1d8 100644
 --- a/packages/services/src/session/taskIndexRepo.ts
 +++ b/packages/services/src/session/taskIndexRepo.ts
-@@ -1798,6 +1798,69 @@ export class TaskIndexRepo {
+@@ -537,6 +537,192 @@ export class TaskIndexRepo {
+     this.cleanupDeletedTaskGroupingReferences();
+   }
+ 
++  /**
++   * 失效标记自愈（幂等）：automation / off-peak 记录已从各自表消失时，对话行上的标记
++   * 与系统分组归属必须一并清掉。
++   *
++   * 为什么必须显式调用、不能挂在 initialize 的修复段里：该段前面有
++   * `isTasksStoragePrepared(path)` 早退（Worker 已完成原始准备，业务连接跳过整表修复），
++   * 生产路径永远命中早退——第一版把它放在那里，部署后生产库零变化（实测确认）。
++   * 现在由 createLocalServices 启动装配显式调用一次，返回受影响的对话供调用方广播刷新。
++   *
++   * 为什么需要它：事件驱动的清理（AutomationService 生命周期事件）只能覆盖
++   * 「清理代码上线之后发生的删除」，对历史遗留行、删除中途崩溃、库迁移残留无效。
++   * 用户实测 2026-10-09：automations 表已 0 行，对话行仍带 cron_automation_id、
++   * 仍留在 cron 分组、列表上一直挂着定时任务图标。
++   *
++   * 语义边界（与桌面端一致）：只有记录**不存在**才算失效；暂停（automation.enabled=0）
++   * 保留标记，恢复后可继续，不丢历史归属。分组清理只动系统组，绝不碰用户自建组。
++   */
++  async reconcileStaleSystemMarkers(): Promise<
++    Array<{ kind: "cron" | "off-peak"; workspacePath: string; workspaceIdentity?: string; taskId: string }>
++  > {
++    await this.ensureReady();
++    const database = this.getDatabase();
++    const now = Date.now();
++    const touched: Array<{
++      kind: "cron" | "off-peak";
++      workspacePath: string;
++      workspaceIdentity?: string;
++      taskId: string;
++    }> = [];
++    const hasTable = (name: string) =>
++      Boolean(
++        database
++          .prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?`)
++          .get(name),
++      );
++
++    if (hasTable("automations")) {
++      const stale = database
++        .prepare(
++          `SELECT workspace_path, workspace_identity, task_id FROM tasks
++           WHERE deleted = 0
++             AND (cron_automation_id IS NOT NULL
++                  OR json_extract(meta_json, '$.cronAutomationId') IS NOT NULL)
++             AND NOT EXISTS (
++               SELECT 1 FROM automations a
++               WHERE a.automation_id = COALESCE(
++                 tasks.cron_automation_id,
++                 json_extract(tasks.meta_json, '$.cronAutomationId')
++               )
++             )`,
++        )
++        .all() as Array<{
++        workspace_path: string;
++        workspace_identity: string | null;
++        task_id: string;
++      }>;
++      if (stale.length > 0) {
++        database.exec("BEGIN IMMEDIATE");
++        try {
++          database
++            .prepare(
++              `UPDATE tasks
++               SET cron_automation_id = NULL,
++                   meta_json = CASE
++                     WHEN meta_json IS NULL THEN NULL
++                     ELSE json_remove(meta_json, '$.cronAutomationId')
++                   END,
++                   updated_at = @now
++               WHERE deleted = 0
++                 AND (cron_automation_id IS NOT NULL
++                      OR json_extract(meta_json, '$.cronAutomationId') IS NOT NULL)
++                 AND NOT EXISTS (
++                   SELECT 1 FROM automations a
++                   WHERE a.automation_id = COALESCE(
++                     tasks.cron_automation_id,
++                     json_extract(tasks.meta_json, '$.cronAutomationId')
++                   )
++                 )`,
++            )
++            .run({ now });
++          // 标记清掉后，自动加入的 cron 系统分组归属一并撤销（只动系统组）。
++          database
++            .prepare(
++              `DELETE FROM task_group_members
++               WHERE group_id = @groupId
++                 AND EXISTS (
++                   SELECT 1 FROM tasks t
++                   WHERE t.workspace_key = task_group_members.workspace_key
++                     AND t.task_id = task_group_members.task_id
++                     AND t.cron_automation_id IS NULL
++                     AND json_extract(t.meta_json, '$.cronAutomationId') IS NULL
++                 )`,
++            )
++            .run({ groupId: CRON_DEFAULT_GROUP_ID });
++          database.exec("COMMIT");
++        } catch (error) {
++          database.exec("ROLLBACK");
++          throw error;
++        }
++        for (const row of stale) {
++          touched.push({
++            kind: "cron",
++            workspacePath: row.workspace_path,
++            ...(row.workspace_identity ? { workspaceIdentity: row.workspace_identity } : {}),
++            taskId: row.task_id,
++          });
++        }
++      }
++    }
++
++    if (hasTable("off_peak_tasks")) {
++      const stale = database
++        .prepare(
++          `SELECT workspace_path, workspace_identity, task_id FROM tasks
++           WHERE deleted = 0
++             AND (off_peak_task_id IS NOT NULL
++                  OR json_extract(meta_json, '$.offPeakTaskId') IS NOT NULL)
++             AND NOT EXISTS (
++               SELECT 1 FROM off_peak_tasks o
++               WHERE o.off_peak_task_id = COALESCE(
++                 tasks.off_peak_task_id,
++                 json_extract(tasks.meta_json, '$.offPeakTaskId')
++               )
++             )`,
++        )
++        .all() as Array<{
++        workspace_path: string;
++        workspace_identity: string | null;
++        task_id: string;
++      }>;
++      if (stale.length > 0) {
++        database.exec("BEGIN IMMEDIATE");
++        try {
++          database
++            .prepare(
++              `UPDATE tasks
++               SET off_peak_task_id = NULL,
++                   meta_json = CASE
++                     WHEN meta_json IS NULL THEN NULL
++                     ELSE json_remove(meta_json, '$.offPeakTaskId')
++                   END,
++                   updated_at = @now
++               WHERE deleted = 0
++                 AND (off_peak_task_id IS NOT NULL
++                      OR json_extract(meta_json, '$.offPeakTaskId') IS NOT NULL)
++                 AND NOT EXISTS (
++                   SELECT 1 FROM off_peak_tasks o
++                   WHERE o.off_peak_task_id = COALESCE(
++                     tasks.off_peak_task_id,
++                     json_extract(tasks.meta_json, '$.offPeakTaskId')
++                   )
++                 )`,
++            )
++            .run({ now });
++          database
++            .prepare(
++              `DELETE FROM task_group_members
++               WHERE group_id = @groupId
++                 AND EXISTS (
++                   SELECT 1 FROM tasks t
++                   WHERE t.workspace_key = task_group_members.workspace_key
++                     AND t.task_id = task_group_members.task_id
++                     AND t.off_peak_task_id IS NULL
++                     AND json_extract(t.meta_json, '$.offPeakTaskId') IS NULL
++                 )`,
++            )
++            .run({ groupId: OFF_PEAK_DEFAULT_GROUP_ID });
++          database.exec("COMMIT");
++        } catch (error) {
++          database.exec("ROLLBACK");
++          throw error;
++        }
++        for (const row of stale) {
++          touched.push({
++            kind: "off-peak",
++            workspacePath: row.workspace_path,
++            ...(row.workspace_identity ? { workspaceIdentity: row.workspace_identity } : {}),
++            taskId: row.task_id,
++          });
++        }
++      }
++    }
++
++    return touched;
++  }
++
+   /**
+    * 存量回填（幂等，每次 bootstrap 自愈）：打点上线前产生的 off-peak 会话行没有
+    * offPeakTaskId。off_peak_tasks 与 tasks 同库（tasks-index.sqlite），按 session 绑定
+@@ -1798,6 +1984,83 @@ export class TaskIndexRepo {
      return rows.map(rowToMeta);
    }
  
 +  /**
-+   * 清除引用指定 automation 的所有对话 meta 上的 cronAutomationId 标记。
-+   * 用途：定时任务被删除/暂停后，对话行不应再挂定时图标（用户实测 2026-10-09：
-+   * cronAutomationId 只在会话内创建 automation 时写入，禁用/删除后无人回写清除）。
-+   * cron 身份在 syncTaskMeta 写路径有 `existingMeta 兜底`（protocol snapshot 不带
-+   * cron 标记），所以直接 UPDATE meta_json + 索引列是安全且必要的——否则兜底会把
-+   * 清除动作又写回去。返回受影响 task 的定位（供调用方广播刷新）。
++   * 清除引用指定 automation 的所有对话 meta 上的 cronAutomationId 标记，
++   * 并撤销其自动加入的 cron 系统分组归属。
++   * 用途：定时任务被删除后，对话行不应再挂定时图标 / 留在定时分组（用户实测
++   * 2026-10-09）。cron 身份在 syncTaskMeta 写路径有 `existingMeta 兜底`
++   * （protocol snapshot 不带 cron 标记），所以直接 UPDATE meta_json + 索引列是
++   * 安全且必要的——否则兜底会把清除动作又写回去。
++   * 注意：删除之外的历史遗留由 bootstrap 的 reconcileStaleSystemMarkers 兜底。
 +   */
 +  async clearCronAutomationId(params: {
 +    automationId: string;
 +  }): Promise<Array<{ workspacePath: string; workspaceIdentity?: string; taskId: string }>> {
 +    await this.ensureReady();
 +    const database = this.getDatabase();
++    // 列与 meta_json 双读：历史行可能只有其一（rowToMeta 以 meta_json 优先）。
 +    const rows = database
 +      .prepare(
-+        `SELECT workspace_key, workspace_path, workspace_identity, task_id, meta_json
++        `SELECT workspace_key, workspace_path, workspace_identity, task_id
 +        FROM tasks
-+        WHERE cron_automation_id = @automation_id AND deleted = 0`,
++        WHERE deleted = 0
++          AND (cron_automation_id = @automation_id
++               OR json_extract(meta_json, '$.cronAutomationId') = @automation_id)`,
 +      )
 +      .all({ automation_id: params.automationId }) as Array<{
 +      workspace_key: string;
 +      workspace_path: string;
 +      workspace_identity: string | null;
 +      task_id: string;
-+      meta_json: string | null;
 +    }>;
 +    if (rows.length === 0) return [];
 +    const clear = database.prepare(
 +      `UPDATE tasks
 +      SET cron_automation_id = NULL,
-+          meta_json = json_remove(meta_json, '$.cronAutomationId'),
++          meta_json = CASE
++            WHEN meta_json IS NULL THEN NULL
++            ELSE json_remove(meta_json, '$.cronAutomationId')
++          END,
 +          updated_at = @now
 +      WHERE workspace_key = @workspace_key AND task_id = @task_id`,
++    );
++    const detachCronGroup = database.prepare(
++      `DELETE FROM task_group_members
++      WHERE group_id = @group_id AND workspace_key = @workspace_key AND task_id = @task_id`,
 +    );
 +    database.exec("BEGIN IMMEDIATE");
 +    try {
@@ -2539,8 +2775,12 @@ index 4bfc84e..e0c10cb 100644
 +      }> = [];
 +      for (const row of rows) {
 +        clear.run({
-+          automation_id: params.automationId,
 +          now,
++          workspace_key: row.workspace_key,
++          task_id: row.task_id,
++        });
++        detachCronGroup.run({
++          group_id: CRON_DEFAULT_GROUP_ID,
 +          workspace_key: row.workspace_key,
 +          task_id: row.task_id,
 +        });
