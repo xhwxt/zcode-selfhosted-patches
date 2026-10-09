@@ -6547,7 +6547,7 @@ index 4633505..df9a88d 100644
 2.53.0
 
 
-From eefce9213f230520730efe0ae680d8390c3e58a4 Mon Sep 17 00:00:00 2001
+From 9f40e356fafddfa85bce725c9a1e3bd4c2a76737 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 11:42:13 +0800
 Subject: [PATCH 34/37] fix(services): reconcile stale cron/off-peak markers on
@@ -6574,7 +6574,7 @@ createLocalServices 启动装配显式调用一次，返回受影响对话供广
 恢复后不丢历史归属。分组清理只动系统组，不碰用户自建组。
 列与 meta_json 双读双清（rowToMeta 以 meta_json 优先，只清列会被兜底写回）。
 
-生产验证：重启后 /opt/zcode-data/.zcode/v2/tasks-index.sqlite
+生产验证：重启后残留标记 0（原 1）、cron 分组清空、15 个对话不变
 残留标记 0（原 1）、cron 分组清空、15 个对话一个不少。
 ---
  packages/services/src/node.ts                 |  39 ++-
@@ -6920,7 +6920,7 @@ index e0c10cb..c1df1d8 100644
 2.53.0
 
 
-From 914b14502b94ab303e99c052300e659c5f571b24 Mon Sep 17 00:00:00 2001
+From c5d110b78166875be2069da7779708b65253ee5a Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 12:28:46 +0800
 Subject: [PATCH 35/37] feat(services,desktop,server): port live overlays to
@@ -7294,7 +7294,7 @@ index c4fcff1..dcd9f85 100644
 2.53.0
 
 
-From 7ff91e17911b5e1f8067c1a3d436f441ce62c2e8 Mon Sep 17 00:00:00 2001
+From 1b38d154f1d99c84bd1d058b1b1642f41176bbe1 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 13:03:49 +0800
 Subject: [PATCH 36/37] refactor(services,desktop,server): sink window
@@ -7868,7 +7868,7 @@ index 0000000..cd902d9
 2.53.0
 
 
-From 9bb975965d1dba3f3410d7450840c79cad7741d5 Mon Sep 17 00:00:00 2001
+From c43b0f2ac83c0b74c96be9811abdc97b3f9fca6c Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 13:55:12 +0800
 Subject: [PATCH 37/37] chore(server): fix stale shim comment after refactor
