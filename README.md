@@ -122,9 +122,12 @@ self-hosted install is complete:
 - `0005-fix-ui-web-round2-mobile-fixes.patch` — item i
 - `0006-fix-ui-web-mobile-header-window-controls-padding-per.patch` — item j
 - `0007-fix-rpc-client-server-websocket-keepalive-liveness.patch` — item k
-  (the full keepalive → hot-swap → SW v7 evolution, 29 commits in one file —
+  (the full keepalive → hot-swap → SW v8 evolution, 39 commits in one file —
   the intermediate commits are debugging iterations of the same feature line,
-  not individually usable states)
+  not individually usable states. This file is a multi-commit mbox: apply it
+  with the bundled script, or `git am`; a single `git apply` on the whole
+  file cannot work, because later hunks for the same file expect the
+  intermediate state that earlier commits in the same file produce.)
 - `0003-0004-selfhosted-web-patches-mobile.patch` — items g+h combined (legacy convenience file)
 
 **Pick one route:** either `0000` alone, or 0001 → 0007 in order. Never mix
@@ -179,10 +182,17 @@ iteration. Current recovery architecture (all inside patch 0007):
 3. **Server-side connection hygiene** — RFC 6455 ping loop with a relaxed
    pong tolerance (4 misses ≈ 2.5 min): mobile Chrome stops answering pings
    for backgrounded pages (power saving) while the connection is still alive.
-4. **Service Worker shell cache** (v7) — navigation and assets replay from
+4. **Service Worker shell cache** (v8) — navigation and assets replay from
    local cache on page discard (instant recovery), background revalidation
-   keeps deployments reaching clients; injected scripts (`/zusage/boot.js`)
-   are network-first so they always update.
+   keeps deployments reaching clients; injected scripts (`/zusage/boot.js`,
+   `/zcode-boot-probe.js`) are network-first so they always update. The
+   probe was added to the network-first set in v8: the static handler serves
+   everything else with `immutable`, so a cache-first probe would freeze
+   shell fixes out of cached clients permanently.
+5. **Stable tab title** — the bundle rewrites `document.title` at runtime
+   (`ZCode - Web`, `ZCode - Sign In`, …). The injected probe pins it to
+   `Zcode` (set once + `MutationObserver`, idempotent, silent on failure), so
+   the title no longer varies with the entry mode.
 
 Known behavioral notes:
 - `document.wasDiscarded` reloads (Android Chrome memory management) still

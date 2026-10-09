@@ -8,11 +8,40 @@
 #   0004 抽屉打磨 + 目录浏览器新建文件夹（IFileService.createDirectory）
 #   0005 二轮实测修复（高度对齐/抽屉互斥/守卫误判/触屏操作栏/问答解析）
 #   0006 三轮恢复体验（header 空垫/滚动记忆持久化+收敛/软重连/恢复锚定）
-#   0007 WS KeepAlive 半开判死（协议探针回显/客户端心跳监视器/服务端 ping 清理）
+#   0007 WS 连接存活与恢复系列（多提交 mbox，39 个提交）：半开判死 →
+#        心跳/热换底/原地恢复 → SW v8（探针 scripts 走 network-first）→ 标题收敛
 # 用法：在 ZCode 仓库根目录执行  bash apply-selfhosted-web-patches.sh
 set -euo pipefail
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# 展开补丁为「可直接 git apply 的单元」。
+# 为什么需要：0007 是 `git format-patch` 产物（多个提交的 mbox）。单次 `git apply`
+# 把整份 mbox 当一个补丁应用时，同一文件被多个提交改到的后续 hunk 会因上下文
+# 不匹配而失败（git apply 不按提交推进快照）——实测 38 提交的 mbox 必失败。
+# 这里按提交拆分后逐个应用；单提交补丁（0000–0006）原样返回。
+SPLIT_DIRS=()
+cleanup_split_dirs() {
+  local d
+  for d in "${SPLIT_DIRS[@]:-}"; do
+    [[ -n "$d" ]] && rm -rf "$d"
+  done
+  return 0
+}
+trap cleanup_split_dirs EXIT
+
+expand_patch() {
+  local p="$1" n d
+  n="$(grep -c '^From [0-9a-f]\{40\} ' "$p" 2>/dev/null || true)"
+  if [[ "${n:-0}" -gt 1 ]]; then
+    d="$(mktemp -d)"; SPLIT_DIRS+=("$d")
+    git mailsplit -o"$d" "$p" >/dev/null
+    find "$d" -type f | sort
+  else
+    printf '%s\n' "$p"
+  fi
+}
+
 # 默认走拆分序列 0001→0007；ALL_IN_ONE=1 时改用单文件 0000（二者等价，二选一）。
 if [[ "${ALL_IN_ONE:-0}" == "1" ]]; then
   PATCHES=(
@@ -58,14 +87,18 @@ for p in "${PATCHES[@]}"; do
     PRECHECK_OK=0
     break
   fi
-  # --cached 在临时 index 上累积应用：与真实应用的工作区状态完全同构
-  if ! git apply --cached --check "$p" 2>/dev/null; then
-    echo "错误: 预检失败 $p（与前面补丁叠加后冲突或基线不符）" >&2
-    echo "      未应用任何改动，工作区保持干净。" >&2
-    PRECHECK_OK=0
-    break
-  fi
-  git apply --cached "$p" 2>/dev/null
+  # --cached 在临时 index 上累积应用：与真实应用的工作区状态完全同构。
+  # 逐「提交单元」应用（多提交补丁已由 expand_patch 拆开）。
+  while IFS= read -r part; do
+    if ! git apply --cached --check "$part" 2>/dev/null; then
+      echo "错误: 预检失败 $p（与前面补丁叠加后冲突或基线不符）" >&2
+      echo "      未应用任何改动，工作区保持干净。" >&2
+      PRECHECK_OK=0
+      break
+    fi
+    git apply --cached "$part" 2>/dev/null
+  done < <(expand_patch "$p")
+  [[ "$PRECHECK_OK" != "1" ]] && break
   echo "    预检通过 $(basename "$p")"
 done
 rm -f "$TMPINDEX"
@@ -79,7 +112,9 @@ echo "    预检通过：全部 ${#PATCHES[@]} 个补丁可依次应用"
 echo "==> 应用补丁"
 for p in "${PATCHES[@]}"; do
   name="$(basename "$p")"
-  git apply "$p"
+  while IFS= read -r part; do
+    git apply "$part"
+  done < <(expand_patch "$p")
   echo "    已应用 $name"
 done
 
