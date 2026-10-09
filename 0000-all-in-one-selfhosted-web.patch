@@ -4193,6 +4193,42 @@ index 7e7144a..1a40702 100644
      };
    }, []);
    return ref;
+diff --git a/packages/ui/src/root/useProviderAvailabilityLoginEntryGuard.ts b/packages/ui/src/root/useProviderAvailabilityLoginEntryGuard.ts
+index 4633505..df9a88d 100644
+--- a/packages/ui/src/root/useProviderAvailabilityLoginEntryGuard.ts
++++ b/packages/ui/src/root/useProviderAvailabilityLoginEntryGuard.ts
+@@ -56,6 +56,31 @@ export function useProviderAvailabilityLoginEntryGuard({
+       const { hasUsableProvider, providerCount } = availability;
+       const shouldOpenLoginEntry = !providerFamilyDomain || (!user && !hasUsableProvider);
+ 
++      // 自托管 web 诊断（用户实测 2026-10-09：欢迎页"动不动"出现，点掉后仍复发）：
++      // UI logger 不落盘，欢迎页触发时把决定性字段写入 localStorage 尾部环形区，
++      // 用户复现后导出即可对表 server.log 定位是哪条路径开了门。
++      if (shouldOpenLoginEntry) {
++        try {
++          const traceKey = "zcode:welcome-gate-trace";
++          const trace = JSON.parse(localStorage.getItem(traceKey) ?? "[]") as unknown[];
++          trace.push({
++            at: new Date().toISOString(),
++            reason: options.reason,
++            providerCount,
++            hasUsableProvider,
++            hasUser: Boolean(user),
++            providerFamilyDomain: providerFamilyDomain ?? null,
++            viewProviders: (refreshedView?.providers ?? []).map((p) => ({
++              id: p.providerId,
++              modelCount: p.models.length,
++            })),
++          });
++          localStorage.setItem(traceKey, JSON.stringify(trace.slice(-10)));
++        } catch {
++          // 诊断写入失败不影响守卫语义。
++        }
++      }
++
+       // 未登录且没有可用模型配置时必须引导用户连接账号或填写 API Key。
+       // 启动检查、API Key 设置回流等入口统一走这里，避免各处复制判断后语义分叉。
+       logger.info("[Root] provider 可用性登录入口守卫完成检查", {
 diff --git a/packages/ui/src/settings/AutomationsMainBreadcrumbFrame.tsx b/packages/ui/src/settings/AutomationsMainBreadcrumbFrame.tsx
 index 88e606e..a29ae56 100644
 --- a/packages/ui/src/settings/AutomationsMainBreadcrumbFrame.tsx
