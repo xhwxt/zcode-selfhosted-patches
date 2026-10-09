@@ -112,6 +112,9 @@ self-hosted install is complete:
 
 ## Patches
 
+- `0000-all-in-one-selfhosted-web.patch` — **all items (a–k) as one cumulative
+  patch** against a clean `29628c9`; the convenience choice when you want
+  everything
 - `0001-self-hosted-web-parity.patch` — items a–e (single commit)
 - `0002-web-connection-guard.patch` — item f (single commit)
 - `0003-feat-ui-mobile-drawer-layout-for-sidebar-and-side-pa.patch` — item g
@@ -119,14 +122,18 @@ self-hosted install is complete:
 - `0005-fix-ui-web-round2-mobile-fixes.patch` — item i
 - `0006-fix-ui-web-mobile-header-window-controls-padding-per.patch` — item j
 - `0007-fix-rpc-client-server-websocket-keepalive-liveness.patch` — item k
+  (the full keepalive → hot-swap → SW v7 evolution, 29 commits in one file —
+  the intermediate commits are debugging iterations of the same feature line,
+  not individually usable states)
 - `0003-0004-selfhosted-web-patches-mobile.patch` — items g+h combined (legacy convenience file)
 
-Apply against upstream `v3.14.3` (commit `29628c9`) in order 0001 → 0007
-(0001+0002 may also be applied as one combined file historically named
-`0001-0002-selfhosted-web-patches.patch`; do not apply the combined file together
-with 0001/0002). All variants are verified with `git apply --check`, and applying
-0001 → 0007 to a clean `29628c9` checkout reproduces the maintainer tree
-byte-for-byte. `apply-selfhosted-web-patches.sh` runs the full sequence.
+**Pick one route:** either `0000` alone, or 0001 → 0007 in order. Never mix
+the two routes, and do not apply the legacy combined files
+(`0003-0004-…`, or the historical `0001-0002-selfhosted-web-patches.patch`)
+together with their split counterparts. All variants are verified with
+`git apply --check`, and each route applied to a clean `29628c9` checkout
+reproduces the maintainer tree byte-for-byte. `apply-selfhosted-web-patches.sh`
+runs the 0001 → 0007 sequence.
 
 ### Item k — WebSocket keepalive liveness (half-open detection)
 

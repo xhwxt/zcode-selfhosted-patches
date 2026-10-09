@@ -13,15 +13,22 @@
 set -euo pipefail
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
-PATCHES=(
-  "$DIR/0001-self-hosted-web-parity.patch"
-  "$DIR/0002-web-connection-guard.patch"
-  "$DIR/0003-feat-ui-mobile-drawer-layout-for-sidebar-and-side-pa.patch"
-  "$DIR/0004-fix-ui-mobile-drawer-polish-directory-browser-create.patch"
-  "$DIR/0005-fix-ui-web-round2-mobile-fixes.patch"
-  "$DIR/0006-fix-ui-web-mobile-header-window-controls-padding-per.patch"
-  "$DIR/0007-fix-rpc-client-server-websocket-keepalive-liveness.patch"
-)
+# 默认走拆分序列 0001→0007；ALL_IN_ONE=1 时改用单文件 0000（二者等价，二选一）。
+if [[ "${ALL_IN_ONE:-0}" == "1" ]]; then
+  PATCHES=(
+    "$DIR/0000-all-in-one-selfhosted-web.patch"
+  )
+else
+  PATCHES=(
+    "$DIR/0001-self-hosted-web-parity.patch"
+    "$DIR/0002-web-connection-guard.patch"
+    "$DIR/0003-feat-ui-mobile-drawer-layout-for-sidebar-and-side-pa.patch"
+    "$DIR/0004-fix-ui-mobile-drawer-polish-directory-browser-create.patch"
+    "$DIR/0005-fix-ui-web-round2-mobile-fixes.patch"
+    "$DIR/0006-fix-ui-web-mobile-header-window-controls-padding-per.patch"
+    "$DIR/0007-fix-rpc-client-server-websocket-keepalive-liveness.patch"
+  )
+fi
 
 echo "==> 检查基线（严格模式：基线不符即退出）"
 current="$(git rev-parse --short HEAD)"
