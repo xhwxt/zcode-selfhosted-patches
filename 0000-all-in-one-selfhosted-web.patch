@@ -1926,7 +1926,7 @@ index 0000000..3eaa17a
 +  void b;
 +});
 diff --git a/packages/server/src/entry-http.ts b/packages/server/src/entry-http.ts
-index fa44e29..04fa0f6 100644
+index fa44e29..a0b5087 100644
 --- a/packages/server/src/entry-http.ts
 +++ b/packages/server/src/entry-http.ts
 @@ -1,9 +1,15 @@
@@ -1951,7 +1951,7 @@ index fa44e29..04fa0f6 100644
  
 +  // 修复依据：直连页侧栏「任务」分组查询 IWindowControllerService（channel
 +  // "window-controller"），该服务此前仅桌面 Host 注册，自托管 web 直连页任务列表恒空。
-+  // 这里以同进程 IZCodeTaskService 为数据源注册 server 端实现（见 windowControllerShim.ts）。
++  // 这里注册 server 端 Window Controller（薄接线层，见 windowControllerShim.ts）。
 +  // agentService 供 sessions-index 观察器产出 live 事实（运行态/等待交互）——
 +  // existing-only，列表读取不会启动 Agent runtime。
 +  services.register(
