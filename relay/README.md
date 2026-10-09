@@ -39,11 +39,16 @@ with `ZCODE_REMOTE_TOKEN` (constant-time compare; mismatch → 403 / socket dest
 ## Requirements
 
 - Node 24+ (uses `node:sqlite`)
-- the `ws` package — resolved from `ZCODE_WS_MODULE`, then `ws` from `node_modules`,
-  then a copy shipped next to an installed ZCode
+- the `ws` package — resolved from `ZCODE_WS_MODULE`, else `ws` from `node_modules`
 - a running ZCode web server (`zcode-web`), reachable at `ZCODE_HOST_ORIGIN`
 
 ## Configuration
+
+All install/data paths come from the environment — nothing is hardcoded in the
+source. `ZCODE_DATA_BASE_DIR` is the same variable the ZCode server uses for its
+data directory; set it and the two paths below are derived, or set each one
+explicitly. Anything left unset degrades gracefully (empty task list, official
+page fetched from upstream) and is listed on startup.
 
 | Env | Default | Meaning |
 |---|---|---|
@@ -52,9 +57,10 @@ with `ZCODE_REMOTE_TOKEN` (constant-time compare; mismatch → 403 / socket dest
 | `ZCODE_SERVER_TOKEN` | — (required) | Token of your ZCode server (`--token`); passed to the page inside `wsUrl` |
 | `ZCODE_HOST_ORIGIN` | `http://127.0.0.1:3030` | Your ZCode server |
 | `ZCODE_BRIDGE_PUBLIC_WS` | derived from the request `Host` | WS URL handed to the page; set it explicitly when nginx terminates TLS (e.g. `wss://your.host/ws`) |
-| `ZCODE_TASKS_DB` | `<install>/…/tasks-index.sqlite` | Task index read for the task list |
+| `ZCODE_DATA_BASE_DIR` | — | Your ZCode data directory (`<dataBaseDir>`); derives the next two |
+| `ZCODE_TASKS_DB` | `<dataBaseDir>/.zcode/v2/tasks-index.sqlite` | Task index read for the task list |
 | `ZCODE_CONVERSATION_WORKSPACE` | `<dataBaseDir>/.zcode/workspace/default` | The shared "not in a project" workspace |
-| `ZCODE_REMOTE_MIRROR` | `/opt/zcode-remote-mirror` | Local page mirror (optional; see below) |
+| `ZCODE_REMOTE_MIRROR` | — (disabled → upstream) | Local page mirror directory (optional; see below) |
 
 `ZCODE_BRIDGE_PUBLIC_WS` is derived as `wss://<host>/ws` (or `ws://` for plain HTTP),
 honouring `X-Forwarded-Proto` / `X-Forwarded-Host`, so a proxy setup usually needs no
@@ -81,12 +87,12 @@ PartOf=zcode-web.service
 
 [Service]
 Type=simple
-WorkingDirectory=/opt/zcode-relay
+WorkingDirectory=/path/to/zcode-relay
 Environment=ZCODE_RELAY_PORT=3032
 Environment=ZCODE_REMOTE_TOKEN=change-me
 Environment=ZCODE_SERVER_TOKEN=change-me
 Environment=ZCODE_BRIDGE_PUBLIC_WS=wss://your.host/ws
-ExecStart=/usr/bin/node /opt/zcode-relay/relay-v28.mjs
+ExecStart=/usr/bin/node /path/to/zcode-relay/relay-v28.mjs
 Restart=on-failure
 
 [Install]

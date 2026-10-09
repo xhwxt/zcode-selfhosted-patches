@@ -23,10 +23,9 @@ import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { createReadStream, existsSync, readFileSync, statSync } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
-// ws 依赖解析：ZCODE_WS_MODULE → 常规包解析 → 安装目录自带副本。
+// ws 依赖解析：ZCODE_WS_MODULE → 常规包解析（relay 目录 `npm i ws`，或自建安装的 node_modules）。
 async function loadWsModule() {
-  const candidates = [process.env.ZCODE_WS_MODULE, 'ws', '/opt/zcode/node_modules/ws/wrapper.mjs']
-    .filter(Boolean);
+  const candidates = [process.env.ZCODE_WS_MODULE, 'ws'].filter(Boolean);
   for (const spec of candidates) {
     try {
       return await import(spec);
@@ -50,12 +49,22 @@ const PAGE_VERSION = '3.14.3';
 const PUBLIC_WS = (process.env.ZCODE_BRIDGE_PUBLIC_WS || '').trim().replace(/\/+$/, '');
 const REMOTE_TOKEN = process.env.ZCODE_REMOTE_TOKEN || '';
 const LITE_TOKEN = process.env.ZCODE_SERVER_TOKEN || '';
-const TASKS_DB = process.env.ZCODE_TASKS_DB || '/opt/zcode-data/.zcode/v2/tasks-index.sqlite';
+// 安装/数据路径一律取自环境变量——源码内不写死任何具体安装位置。
+// ZCODE_DATA_BASE_DIR 与 ZCode server 自己的数据目录变量同名：设了它，
+// 下面三项按约定自动派生；不设则**优雅降级**（任务列表为空、官方页面直接回源），
+// 启动日志会明确列出缺哪项。
+const DATA_BASE = (process.env.ZCODE_DATA_BASE_DIR || process.env.ZCODE_DATA_DIR || '').trim();
+const TASKS_DB = (
+  process.env.ZCODE_TASKS_DB ||
+  (DATA_BASE ? join(DATA_BASE, '.zcode/v2/tasks-index.sqlite') : '')
+).trim();
 // 「不在项目中工作」的共享对话目录（语义同桌面端 {dataBaseDir}/.zcode/workspace/default）。
-const CONVERSATION_WORKSPACE =
-  process.env.ZCODE_CONVERSATION_WORKSPACE || '/opt/zcode-data/.zcode/workspace/default';
+const CONVERSATION_WORKSPACE = (
+  process.env.ZCODE_CONVERSATION_WORKSPACE ||
+  (DATA_BASE ? join(DATA_BASE, '.zcode/workspace/default') : '')
+).trim();
 // 官方远控页镜像根目录（可选离线化；缺失时按 UPSTREAM 回源）。
-const REMOTE_MIRROR_ROOT = process.env.ZCODE_REMOTE_MIRROR || '/opt/zcode-remote-mirror';
+const REMOTE_MIRROR_ROOT = (process.env.ZCODE_REMOTE_MIRROR || '').trim();
 
 function publicWsFor(req) {
   if (PUBLIC_WS) return PUBLIC_WS;
@@ -469,4 +478,7 @@ server.on('upgrade', (req, socket, head) => {
 server.listen(PORT, '127.0.0.1', () => {
   log('桥监听 127.0.0.1:' + PORT);
   log('入口: /web-remote?remoteControlToken=<ZCODE_REMOTE_TOKEN>');
+  log('任务库:', TASKS_DB || '(未配置 ZCODE_TASKS_DB / ZCODE_DATA_BASE_DIR → 任务列表降级为空)');
+  log('对话工作区:', CONVERSATION_WORKSPACE || '(未配置 → 不做「不在项目中工作」归属判定)');
+  log('远控页镜像:', REMOTE_MIRROR_ROOT || '(未配置 → 官方页面直接回源)');
 });
