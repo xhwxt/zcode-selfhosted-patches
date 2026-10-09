@@ -1108,6 +1108,55 @@ index 2eded6a..ba48f97 100644
 +      client.resetTransport(next, bufferedFrames as VSBuffer[]),
 +  };
 +}
+diff --git a/packages/desktop/src/host/windowHostControllerProjection.ts b/packages/desktop/src/host/windowHostControllerProjection.ts
+index 9a1b30d..a378bc2 100644
+--- a/packages/desktop/src/host/windowHostControllerProjection.ts
++++ b/packages/desktop/src/host/windowHostControllerProjection.ts
+@@ -15,6 +15,14 @@ import {
+   type WindowHostControllerWorkspaceFrame,
+   type WindowHostTaskAddress,
+ } from "@zcode/shared/zcode-protocol-v4";
++// overlay 类型已下沉到共享层：server 端 window controller shim 同样消费
++// （server 不能反向依赖 desktop），desktop 经这里 re-export 保持既有引用路径不变。
++export type {
++  WindowHostControllerSessionOverlay,
++} from "@zcode/services/window-controller/sessionsIndexObserver.js";
++import type {
++  WindowHostControllerSessionOverlay,
++} from "@zcode/services/window-controller/sessionsIndexObserver.js";
+ 
+ export type WindowHostControllerSourceScope =
+   | {
+@@ -39,16 +47,6 @@ interface WindowHostControllerTaskMembership {
+   searchSnippets?: string[];
+ }
+ 
+-export interface WindowHostControllerSessionOverlay {
+-  taskId: string;
+-  liveStatus: WindowHostControllerTaskRow["liveStatus"];
+-  title?: string;
+-  titleSource?: "default" | "generated" | "custom";
+-  updatedAt?: number;
+-  pendingInteraction?: ZCodeTaskMeta["pendingInteraction"];
+-  activity?: NonNullable<WindowHostControllerTaskRow["activity"]>;
+-}
+-
+ export type WindowHostControllerMutation =
+   | { kind: "pin"; pinned: boolean }
+   | { kind: "archive"; archived: boolean }
+diff --git a/packages/desktop/src/host/windowHostControllerService.ts b/packages/desktop/src/host/windowHostControllerService.ts
+index 6c53060..a49d625 100644
+--- a/packages/desktop/src/host/windowHostControllerService.ts
++++ b/packages/desktop/src/host/windowHostControllerService.ts
+@@ -27,7 +27,7 @@ import {
+ import {
+   createWindowHostSessionsIndexObserver,
+   type WindowHostSessionsIndexObserver,
+-} from "./windowHostSessionsIndexObserver.js";
++} from "@zcode/services/window-controller/sessionsIndexObserver.js";
+ 
+ interface ResolvedWindowHostControllerSource {
+   scope: WindowHostControllerSourceScope;
 diff --git a/packages/rpc/specs/socket-keepalive.md b/packages/rpc/specs/socket-keepalive.md
 new file mode 100644
 index 0000000..037b4e3
@@ -1913,12 +1962,16 @@ index 0000000..3eaa17a
 +  void b;
 +});
 diff --git a/packages/server/src/entry-http.ts b/packages/server/src/entry-http.ts
-index fa44e29..403ed2d 100644
+index fa44e29..04fa0f6 100644
 --- a/packages/server/src/entry-http.ts
 +++ b/packages/server/src/entry-http.ts
-@@ -1,9 +1,11 @@
+@@ -1,9 +1,15 @@
  import { createLocalServices, getAppConfigDir } from "@zcode/services/node";
-+import { IWindowControllerService, IZCodeTaskService } from "@zcode/services";
++import {
++  IWindowControllerService,
++  IZCodeAgentService,
++  IZCodeTaskService,
++} from "@zcode/services";
  import {
    materializeBundledZCodeBuiltinProviderConfig,
    readBundledZCodeBuiltinProviderConfig,
@@ -1928,17 +1981,20 @@ index fa44e29..403ed2d 100644
  
  async function main(): Promise<void> {
    const zcodeBuiltinProviderConfigFilePath = await materializeBundledZCodeBuiltinProviderConfig({
-@@ -19,6 +21,16 @@ async function main(): Promise<void> {
+@@ -19,6 +25,19 @@ async function main(): Promise<void> {
      providerProvisioningTargetEnabled: Boolean(authToken),
    });
  
 +  // 修复依据：直连页侧栏「任务」分组查询 IWindowControllerService（channel
 +  // "window-controller"），该服务此前仅桌面 Host 注册，自托管 web 直连页任务列表恒空。
-+  // 这里以同进程 IZCodeTaskService 为数据源注册 server 端最小实现（见 windowControllerShim.ts）。
++  // 这里以同进程 IZCodeTaskService 为数据源注册 server 端实现（见 windowControllerShim.ts）。
++  // agentService 供 sessions-index 观察器产出 live 事实（运行态/等待交互）——
++  // existing-only，列表读取不会启动 Agent runtime。
 +  services.register(
 +    IWindowControllerService,
 +    createServerWindowControllerService({
 +      taskService: services.get(IZCodeTaskService),
++      agentService: services.get(IZCodeAgentService),
 +    }),
 +  );
 +
@@ -2063,10 +2119,10 @@ index 9af1bb1..f76f257 100644
      });
 diff --git a/packages/server/src/windowControllerShim.ts b/packages/server/src/windowControllerShim.ts
 new file mode 100644
-index 0000000..88538dc
+index 0000000..ac19be6
 --- /dev/null
 +++ b/packages/server/src/windowControllerShim.ts
-@@ -0,0 +1,225 @@
+@@ -0,0 +1,344 @@
 +// 修复依据：直连页侧栏「任务」分组的数据源是 IWindowControllerService（channel
 +// "window-controller"，useGlobalTaskList → controllerRegistry.list）。该服务此前只在
 +// 桌面 Host（packages/desktop/src/host/index.ts）注册，web 直连页连接自托管 server 时
@@ -2101,6 +2157,7 @@ index 0000000..88538dc
 +import type { ZCodeTaskMeta, ZCodeWorkspaceEvent } from "@zcode/shared";
 +import {
 +  CONTROLLER_TASKS_INDEX_TOPIC,
++  type SessionSummary,
 +  type ControllerResyncParams,
 +  type ControllerResyncResult,
 +  type ControllerSubscribeParams,
@@ -2108,6 +2165,19 @@ index 0000000..88538dc
 +  type WindowHostControllerTaskFrame,
 +  type WindowHostTaskAddress,
 +} from "@zcode/shared/zcode-protocol-v4";
++import {
++  createWindowHostSessionsIndexObserver,
++  type WindowHostControllerSessionOverlay,
++} from "@zcode/services/window-controller/sessionsIndexObserver.js";
++
++type ShimSessionsIndexAgentService = Parameters<
++  typeof createWindowHostSessionsIndexObserver
++>[0]["agentService"];
++
++// 与 http.ts 的 formatLogPrefix 同款（server 包无 ServiceLogger 依赖）。
++function shimLogWarn(message: string, meta?: Record<string, unknown>): void {
++  console.log("[window-controller-shim][warn]", message, ...(meta ? [JSON.stringify(meta)] : []));
++}
 +
 +// 与桌面端 windowHostControllerService.ts 的 liveStatusFromMeta 同规则
 +function liveStatusFromMeta(meta: ZCodeTaskMeta): WindowHostControllerTaskListItem["liveStatus"] {
@@ -2116,21 +2186,83 @@ index 0000000..88538dc
 +  return "idle";
 +}
 +
++// 与桌面端 windowHostControllerService.ts 的 sessionOverlay 同规则：
++// sessions-index 摘要 → live 事实（运行态/等待交互/活动摘要）。
++// SQLite meta 的 running/interaction 可能是上次进程退出的残影，
++// 只有 sessions-index（existing-only，不启动 Agent）才是可证明的当前事实。
++function sessionOverlay(
++  summary: SessionSummary,
++): WindowHostControllerSessionOverlay {
++  const liveStatus: WindowHostControllerSessionOverlay["liveStatus"] =
++    summary.pendingInteraction ||
++    (summary.pendingInteractionSummary &&
++      summary.pendingInteractionSummary.permissionCount +
++        summary.pendingInteractionSummary.userInputCount >
++        0)
++      ? "waiting"
++      : summary.phase === "prewarming" || summary.phase === "running"
++        ? "running"
++        : summary.phase === "error"
++          ? "error"
++          : summary.phase === "completedSuccess" || summary.phase === "completedInterrupted"
++            ? "completed"
++            : "idle";
++  return {
++    taskId: summary.sessionId,
++    liveStatus,
++    title: summary.title,
++    ...(summary.titleSource ? { titleSource: summary.titleSource } : {}),
++    updatedAt: summary.lastActivityAt,
++    ...(summary.pendingInteraction
++      ? {
++          pendingInteraction: {
++            interactionId: summary.pendingInteraction.interactionId,
++            kind: summary.pendingInteraction.kind,
++            ...(summary.pendingInteraction.toolName
++              ? { toolName: summary.pendingInteraction.toolName }
++              : {}),
++            ...(summary.pendingInteraction.autoResolution
++              ? { autoResolution: summary.pendingInteraction.autoResolution }
++              : {}),
++          },
++        }
++      : {}),
++    activity: {
++      phase: summary.phase,
++      lastActivityAt: summary.lastActivityAt,
++      hasBackgroundWork: summary.hasBackgroundWork,
++      ...(summary.pendingInteractionSummary
++        ? { pendingInteractions: summary.pendingInteractionSummary }
++        : {}),
++      ...(summary.workflowActivity ? { workflowActivity: summary.workflowActivity } : {}),
++    },
++  };
++}
++
 +function toListItem(
 +  meta: ZCodeTaskMeta,
 +  item: { searchSnippet?: string; searchSnippets?: string[] },
++  overlay: WindowHostControllerSessionOverlay | undefined,
 +): WindowHostControllerTaskListItem {
++  // overlay 缺席 = 没有可证明的 runtime，回退 SQLite meta（桌面同规则）。
++  const liveStatus = overlay?.liveStatus ?? liveStatusFromMeta(meta);
 +  return {
 +    ...meta,
++    // pendingInteraction 只信 live 事实（桌面 projection：meta 层不落地该字段）。
++    pendingInteraction: overlay?.pendingInteraction,
 +    ...(item.searchSnippet ? { searchSnippet: item.searchSnippet } : {}),
 +    ...(item.searchSnippets ? { searchSnippets: item.searchSnippets } : {}),
 +    sourceAvailability: "online",
-+    liveStatus: liveStatusFromMeta(meta),
++    liveStatus,
++    ...(overlay?.activity ? { activity: overlay.activity } : {}),
 +  };
 +}
 +
 +export function createServerWindowControllerService(options: {
 +  taskService: IZCodeTaskService;
++  // sessions-index 观察器的数据源（existing-only，不会启动 Agent runtime）。
++  // 缺省时列表只有 SQLite meta 投影，运行态/等待交互不可见（桌面 host 均注入）。
++  agentService?: ShimSessionsIndexAgentService;
 +}): IWindowControllerService {
 +  const { taskService } = options;
 +  const dynamicFrameEmitter = new Emitter<WindowHostControllerFrame>();
@@ -2142,8 +2274,15 @@ index 0000000..88538dc
 +  // 客户端列表查询先 subscribe 后 list，list 是 scopes 的唯一可靠来源。
 +  const watchedScopes = new Map<
 +    string,
-+    { workspacePath: string; workspaceIdentity?: string; disposable: { dispose(): void } }
++    {
++      workspacePath: string;
++      workspaceIdentity?: string;
++      disposable: { dispose(): void };
++      disposables: Array<{ dispose(): void }>;
++    }
 +  >();
++  // 同一 scope 的 sessions-index 观察 → live overlays（桌面 host 同源能力）。
++  const sessionOverlays = new Map<string, Map<string, WindowHostControllerSessionOverlay>>();
 +  let watchNotifyScheduled = false;
 +
 +  function notifyAllSubscriptions(): void {
@@ -2188,7 +2327,39 @@ index 0000000..88538dc
 +      workspacePath: scope.workspacePath,
 +      ...(scope.workspaceIdentity ? { workspaceIdentity: scope.workspaceIdentity } : {}),
 +      disposable,
++      disposables: [],
 +    });
++    // live 事实观察（existing-only：缺 runtime 时休眠，绝不拉起 Agent）。
++    if (options.agentService && !sessionOverlays.has(key)) {
++      const overlays = new Map<string, WindowHostControllerSessionOverlay>();
++      sessionOverlays.set(key, overlays);
++      const observer = createWindowHostSessionsIndexObserver({
++        agentService: options.agentService,
++        target: {
++          workspacePath: scope.workspacePath,
++          ...(scope.workspaceIdentity ? { workspaceIdentity: scope.workspaceIdentity } : {}),
++        },
++        onSessionsChange: (sessions) => {
++          overlays.clear();
++          for (const summary of sessions) {
++            overlays.set(summary.sessionId, sessionOverlay(summary));
++          }
++          // live 事实变化 → 让所有挂着的客户端列表重查（list 会带回 overlay 投影）。
++          notifyAllSubscriptions();
++        },
++        onError: (error) => {
++          shimLogWarn("sessions-index 观察出错（existing-only，不影响列表可用性）", {
++            error: error instanceof Error ? error.message : String(error),
++          });
++        },
++      });
++      void observer.start().catch((error) => {
++        shimLogWarn("sessions-index 观察启动失败（保留 meta 投影）", {
++          error: error instanceof Error ? error.message : String(error),
++        });
++      });
++      watchedScopes.get(key)!.disposables.push({ dispose: () => observer.dispose() });
++    }
 +  }
 +
 +  function mutationParams(address: WindowHostTaskAddress) {
@@ -2209,7 +2380,11 @@ index 0000000..88538dc
 +      const result = await taskService.listTaskList(query);
 +      return {
 +        ...result,
-+        items: result.items.map((item) => toListItem(item, item)),
++        items: result.items.map((item) => {
++          const scopeKey = `${item.workspacePath} ${item.workspaceIdentity?.trim() || ""}`;
++          const overlay = sessionOverlays.get(scopeKey)?.get(item.taskId) ?? undefined;
++          return toListItem(item, item, overlay);
++        }),
 +      };
 +    },
 +
@@ -2292,6 +2467,19 @@ index 0000000..88538dc
 +    },
 +  };
 +}
+diff --git a/packages/services/package.json b/packages/services/package.json
+index ac8bcbb..7e570fa 100644
+--- a/packages/services/package.json
++++ b/packages/services/package.json
+@@ -10,6 +10,8 @@
+     ".": "./src/index.ts",
+     "./cua-permission-broker": "./src/cua-permission-broker/index.ts",
+     "./process/processTreeTerminator": "./src/process/processTreeTerminator.ts",
++    "./window-controller/sessionsIndexObserver": "./src/window-controller/sessionsIndexObserver.ts",
++    "./window-controller/sessionsIndexObserver.js": "./src/window-controller/sessionsIndexObserver.ts",
+     "./node": "./src/node.ts"
+   },
+   "scripts": {
 diff --git a/packages/services/src/file/file.ts b/packages/services/src/file/file.ts
 index ea5f6c6..7196cee 100644
 --- a/packages/services/src/file/file.ts
@@ -2801,6 +2989,54 @@ index 4bfc84e..c1df1d8 100644
    async queryTaskList(
      params: ZCodeTaskListQuery & { provider?: ZCodeProvider },
    ): Promise<ZCodeTaskListResult> {
+diff --git a/packages/desktop/src/host/windowHostSessionsIndexObserver.ts b/packages/services/src/window-controller/sessionsIndexObserver.ts
+similarity index 92%
+rename from packages/desktop/src/host/windowHostSessionsIndexObserver.ts
+rename to packages/services/src/window-controller/sessionsIndexObserver.ts
+index c4fcff1..dcd9f85 100644
+--- a/packages/desktop/src/host/windowHostSessionsIndexObserver.ts
++++ b/packages/services/src/window-controller/sessionsIndexObserver.ts
+@@ -1,5 +1,6 @@
+ import type { IDisposable } from "@zcode/rpc";
+-import { ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE, type IZCodeAgentService } from "@zcode/services";
++import { ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE } from "../zcode-agent/zcodeAgent.js";
++import type { IZCodeAgentService } from "../zcode-agent/zcodeAgent.js";
+ import {
+   PROTOCOL_V4_LIMITS,
+   sessionsIndexTopic,
+@@ -8,7 +9,9 @@ import {
+   type SessionsIndexTopicFrame,
+   type SessionsIndexTopicWireCandidate,
+   type SessionSummary,
++  type WindowHostControllerTaskRow,
+ } from "@zcode/shared/zcode-protocol-v4";
++import type { ZCodeTaskMeta } from "@zcode/shared";
+ 
+ const SUBSCRIBER_SCOPE = "window-controller";
+ const MAX_STAGED_WIRES = 1_024;
+@@ -29,6 +32,22 @@ export interface WindowHostSessionsIndexObserver {
+   dispose(): void;
+ }
+ 
++/**
++ * live 会话事实（运行态/等待交互/活动摘要），由 sessions-index 观察产出、
++ * Window Controller 投影消费。原属 desktop projection（类型只依赖 shared 协议）；
++ * server 端 window controller shim 同样需要 —— 与观察器一起下沉到共享层，
++ * 避免 server 反向依赖 desktop。
++ */
++export interface WindowHostControllerSessionOverlay {
++  taskId: string;
++  liveStatus: WindowHostControllerTaskRow["liveStatus"];
++  title?: string;
++  titleSource?: "default" | "generated" | "custom";
++  updatedAt?: number;
++  pendingInteraction?: ZCodeTaskMeta["pendingInteraction"];
++  activity?: NonNullable<WindowHostControllerTaskRow["activity"]>;
++}
++
+ function isRuntimeUnavailableError(error: unknown): boolean {
+   return (
+     typeof error === "object" &&
 diff --git a/packages/services/src/zcode-agent/zcodeAgent.ts b/packages/services/src/zcode-agent/zcodeAgent.ts
 index 719985a..325772d 100644
 --- a/packages/services/src/zcode-agent/zcodeAgent.ts
