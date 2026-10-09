@@ -2357,10 +2357,10 @@ index 7b149f6..c65f224 100644
      "lint": "oxlint",
 diff --git a/packages/ui/specs/app-shell-drawer.md b/packages/ui/specs/app-shell-drawer.md
 new file mode 100644
-index 0000000..cd17dd9
+index 0000000..3a6ba96
 --- /dev/null
 +++ b/packages/ui/specs/app-shell-drawer.md
-@@ -0,0 +1,31 @@
+@@ -0,0 +1,45 @@
 +# app-shell 手机端抽屉化（左侧栏 + 右侧面板）
 +
 +## 背景
@@ -2384,12 +2384,26 @@ index 0000000..cd17dd9
 +   交互与右上角 WorkspaceSidePaneToggleButton 对称。
 +6. 状态所有者不变：isSidebarVisible / isSidePaneOpen 仍由 useAppPanels
 +   拥有；抽屉化只改渲染形态，不新增可见性状态、不复制开关命令。
++   互斥收敛在状态所有者内部，双向对称，且**只在抽屉视口生效**
++   （事件回调内实时读 NARROW_VIEWPORT_QUERY，非 hook）：
++   - 抽屉视口下展开右侧面板（handleToggleSidePaneCollapse → !collapsed）
++     时收起左栏；
++   - 抽屉视口下打开左栏（handleToggleSidebar → visible=true）时收起
++     右侧面板（setIsSidePaneCollapsed(true) + owner 偏好持久化，
++     与顶部收起语义一致）。
++   关闭方向（收起任一浮层）不做联动；宽视口（桌面/平板）左右可同开，
++   与桌面分栏语义一致。理由：DesktopTopOverlay（z-40）悬在抽屉（z-30）
++   之上，浮层按钮在任一抽屉打开时都可点击，互斥若只挂在部分入口上，
++   按钮路径会重新造出双浮层叠加；而宽视口下不存在浮层抽屉，
++   强制互斥反而破坏桌面「侧栏 + 面板同开」的原有行为。
 +7. 自动收起逻辑（CONVERSATION_AUTO_COLLAPSE_*）在抽屉模式下天然不触发
 +   （会话区恒全宽），保留原实现不动。
 +8. 桌面（isNarrowViewport=false）渲染路径与现状逐字节等价。
 +
 +## 验收
 +- 390×844 视口：左右抽屉互斥不挤压会话区；点遮罩/按钮均可收起。
++  任一抽屉打开时，左上角侧栏按钮/新建对话按钮点击后不产生双浮层叠加
++  （开左栏 = 右抽屉收起；开右抽屉 = 左栏收起）。
 +- 桌面 1280×800：布局与改动前一致（截图对比）。
 +- typecheck / lint / architecture:check 通过。
 diff --git a/packages/ui/specs/base-service-replace.md b/packages/ui/specs/base-service-replace.md
@@ -2656,7 +2670,7 @@ index 4aabfb2..795be2f 100644
          handleToggleBrowser={handleToggleBrowser}
          handleOpenBrowserTab={handleOpenBrowserTab}
 diff --git a/packages/ui/src/DesktopTopOverlay.tsx b/packages/ui/src/DesktopTopOverlay.tsx
-index a1860fa..6e5f356 100644
+index a1860fa..9702c93 100644
 --- a/packages/ui/src/DesktopTopOverlay.tsx
 +++ b/packages/ui/src/DesktopTopOverlay.tsx
 @@ -1,5 +1,6 @@
@@ -2698,22 +2712,25 @@ index a1860fa..6e5f356 100644
 -        "@container/topoverlayer pointer-events-none absolute h-14 flex left-0 top-0 z-20 w-fit",
 +        // z-40：手机抽屉视口里抽屉浮层是 z-30，左上角按钮必须悬在其上才能
 +        // 在抽屉展开时仍可点击（也充当第二个关闭入口）。
-+        // 手机 web：顶带 h-14 → h-12 + top-px，与 WorkspaceHeader（h-12，会话框
-+        // 1px 边框内 y=1..49，中心线 25）完全对齐；此前 h-14 中心线 28 错位 3px。
-+        "@container/topoverlayer pointer-events-none absolute h-14 flex left-0 top-0 z-40 w-fit",
-+        isWebDrawerViewport && "h-12 top-px",
++        // 与 WorkspaceHeader（h-12，会话框 1px 边框内 y=1..49，按钮中心线 25）
++        // 对齐：所有非 caption 平台统一 h-12 + top-px（此前 h-14 top-0 中心线 28，
++        // 错位 3px——用户实测 2026-10-09：桌面版左上角按钮与右上角不齐）。
++        "@container/topoverlayer pointer-events-none absolute h-12 left-0 top-px z-40 w-fit flex",
          // Windows/Linux 主面板新增 4px 留白及 1px 边框，左侧工具组需同步偏移才能对齐 Header 中心线。
          usesCustomCaptionArea && "top-1 mt-px",
        )}
-@@ -117,6 +130,7 @@ export function DesktopTopOverlay({
-           "flex items-center",
-           isMacDesktop && "h-14",
-           usesCustomCaptionArea && "h-12",
-+          isWebDrawerViewport && "h-12",
+@@ -114,9 +127,7 @@ export function DesktopTopOverlay({
+           ...windowsTopOverlayPaddingStyle,
+         }}
+         className={cn(
+-          "flex items-center",
+-          isMacDesktop && "h-14",
+-          usesCustomCaptionArea && "h-12",
++          "flex h-12 items-center",
            // Windows/Linux 工具组计入 4px 外沿留白和 1px 边框，较 8px 左边距右移 5px。
            usesCustomCaptionArea && "pl-3 ml-px",
            isMacDesktop &&
-@@ -160,8 +174,23 @@ export function DesktopTopOverlay({
+@@ -160,8 +171,23 @@ export function DesktopTopOverlay({
              </DesktopTopOverlayActionButton>
            )}
  
@@ -2902,7 +2919,7 @@ index d907d77..61943f9 100644
                          {renderModelItems(group.items)}
                        </DropdownMenuSubContent>
 diff --git a/packages/ui/src/WorkspaceHeader.tsx b/packages/ui/src/WorkspaceHeader.tsx
-index 328733d..ccdfd85 100644
+index 328733d..dd33248 100644
 --- a/packages/ui/src/WorkspaceHeader.tsx
 +++ b/packages/ui/src/WorkspaceHeader.tsx
 @@ -9,6 +9,7 @@ import type {
@@ -2929,7 +2946,7 @@ index 328733d..ccdfd85 100644
    onRefreshGit: () => void;
    onToggleTerminal: () => void;
    onToggleBrowser: () => void;
-@@ -115,12 +118,24 @@ export function WorkspaceHeader({
+@@ -115,12 +118,32 @@ export function WorkspaceHeader({
    allowOpenWorkspace?: boolean;
  }) {
    const [selectedEditor, setSelectedEditor] = useState<EditorInfo | null>(null);
@@ -2942,21 +2959,29 @@ index 328733d..ccdfd85 100644
 +  // web 宽屏无窗控也无浮层，不加空垫。
 +  // 注意：web 入口不传 isDesktop（undefined ≠ false），判定必须用真值判断而非
 +  // isDesktop === false，否则手机分支永不命中。
++  //
++  // 追加（用户实测 2026-10-09：宽屏 web 侧栏收起时左上角浮层按钮压住会话标题）：
++  // 侧栏收起后 DesktopTopOverlay（z-40，w-fit）悬在标题上方——桌面端由
++  // shouldOffsetHeaderForWindowControls 命中 pl-38+ 留白；web 此前只有窄视口
++  // 分支（pl-20），宽视口 + 侧栏收起时无任何留白。web 收起态与桌面对称：
++  // 非窄视口也命中 pl-20（浮层按钮组 = 侧栏开关+新建+更新，80px 覆盖其宽）。
 +  const isDesktopPlatform = isDesktop === true;
-+  const shouldOffsetHeaderForWindowControls = !isSidebarVisible && isDesktopPlatform;
 +  const isWebDrawerHeaderViewport = !isDesktopPlatform && Boolean(useIsNarrowViewport());
++  const shouldOffsetHeaderForWindowControls = !isSidebarVisible && isDesktopPlatform;
++  const shouldOffsetHeaderForTopOverlay =
++    !isDesktopPlatform && !isSidebarVisible && !isWebDrawerHeaderViewport;
    // Linux 与 Windows 共用内联窗控，不再预留旧悬浮窗控的标题栏区域。
    const usesInlineWindowControls = Boolean(isWindowsDesktop || (isDesktop && !isMacDesktop));
  
    let headerWindowControlsPaddingClass: string | false = false;
 -  if (shouldOffsetHeaderForWindowControls) {
-+  if (isWebDrawerHeaderViewport) {
++  if (isWebDrawerHeaderViewport || shouldOffsetHeaderForTopOverlay) {
 +    headerWindowControlsPaddingClass = "pl-20";
 +  } else if (shouldOffsetHeaderForWindowControls) {
      if (isMacDesktop) {
        if (hasUpdateReady) {
          headerWindowControlsPaddingClass = isMacFullscreen ? "pl-48" : "pl-66";
-@@ -187,6 +202,7 @@ export function WorkspaceHeader({
+@@ -187,6 +210,7 @@ export function WorkspaceHeader({
              isMacDesktop={isMacDesktop}
              isMacFullscreen={isMacFullscreen}
              isWindowsDesktop={isWindowsDesktop}
@@ -2964,7 +2989,7 @@ index 328733d..ccdfd85 100644
              simplifyForNarrowRemote={simplifyForNarrowRemote}
              selectedEditor={selectedEditor}
              onReloadSession={onReloadSession}
-@@ -209,6 +225,7 @@ export function WorkspaceHeader({
+@@ -209,6 +233,7 @@ export function WorkspaceHeader({
            isDesktop={isDesktop}
            isTerminalOpen={isTerminalOpen}
            isSidePaneOpen={isSidePaneOpen}
@@ -3313,10 +3338,18 @@ index 22e1929..a329ef8 100644
    handleToggleBrowser: () => void;
    handleOpenBrowserTab: () => void;
 diff --git a/packages/ui/src/hooks/useAppPanels.ts b/packages/ui/src/hooks/useAppPanels.ts
-index dbc8df4..f751e82 100644
+index dbc8df4..cbef6c5 100644
 --- a/packages/ui/src/hooks/useAppPanels.ts
 +++ b/packages/ui/src/hooks/useAppPanels.ts
-@@ -202,7 +202,15 @@ export function useAppPanels(options: {
+@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+ import { createUuid } from "@zcode/shared";
+ import type { EmbeddedBrowserOpenUrlRequest, IPlatformService } from "@zcode/shared";
+ import type { CodeViewerSource } from "@/lib/codeViewer.js";
++import { NARROW_VIEWPORT_QUERY } from "@/hooks/useIsNarrowViewport.js";
+ // 保活：side pane terminal 跨 workspace 会话上移到模块级 registry。
+ // 关闭 terminal tab 时必须显式 release，杀掉 PTY，避免常驻 registry 造成孤儿进程。
+ import { sidePaneTerminalSessionRegistry } from "@/terminal/sidePaneTerminalSessionRegistry.js";
+@@ -202,7 +203,15 @@ export function useAppPanels(options: {
    // 交互说明：侧栏显隐按钮放在 App 外层，而不是 Sidebar 内部。
    // 这样即使侧栏被隐藏，入口也仍然留在左上角，不会出现"收起后没有地方再展开"的问题；
    // 同时这里统一处理 macOS 红绿灯安全区，避免按钮和系统窗口控件重叠。
@@ -3333,31 +3366,67 @@ index dbc8df4..f751e82 100644
    const [browserNavigationRequest, setBrowserNavigationRequest] =
      useState<BrowserNavigationRequest | null>(null);
    const [allRecentClosedSidePaneTabs, setAllRecentClosedSidePaneTabs] = useState<
-@@ -1241,6 +1249,12 @@ export function useAppPanels(options: {
-     setIsSidebarVisible((visible) => !visible);
-   }, []);
+@@ -1238,7 +1247,45 @@ export function useAppPanels(options: {
+   }, [isOfficeMode, workspaceAbsPath]);
  
+   const handleToggleSidebar = useCallback(() => {
+-    setIsSidebarVisible((visible) => !visible);
++    // 互斥只在抽屉视口生效（spec: packages/ui/specs/app-shell-drawer.md 规则 6）：
++    // 事件回调内实时读 matchMedia（非 hook，合法）。宽视口（桌面/平板）侧栏与
++    // 右侧面板本可同开（桌面分栏语义），强制互斥会破坏原行为——用户实测反馈
++    // 「先开左再开右 / 先开右再开左」行为不一致的根源即此前互斥无条件命中。
++    const isDrawerViewport =
++      typeof window !== "undefined" &&
++      typeof window.matchMedia === "function" &&
++      window.matchMedia(NARROW_VIEWPORT_QUERY).matches;
++    setIsSidebarVisible((visible) => {
++      const next = !visible;
++      // 抽屉互斥：DesktopTopOverlay（z-40）悬在抽屉（z-30）之上，右抽屉开着时
++      // 左上角侧栏按钮仍可点击——若这里只翻自己的开关，会重新叠出双浮层
++      //（用户实机截图 2026-10-09：右抽屉上再开左抽屉，左抽屉被盖住）。
++      // 与 handleToggleSidePaneCollapse 展开时收左栏对称：打开左栏时收起右侧面板；
++      // 收起左栏（next=false）不联动。侧栏打开属用户对当前布局的明确选择，
++      // 与顶部收起共用 owner 偏好语义，避免切对话后被可见 tab 自动展开覆盖。
++      if (isDrawerViewport && next) {
++        setIsSidePaneCollapsed((collapsed) => {
++          if (collapsed) return collapsed;
++          saveTaskSidePaneCollapsedPreference(
++            activeSidePaneMemoryKeyRef.current,
++            sidePaneOwnerIdRef.current,
++            true,
++          );
++          latestSidePaneMemoryRef.current = {
++            ...latestSidePaneMemoryRef.current,
++            isSidePaneCollapsed: true,
++          };
++          return true;
++        });
++      }
++      return next;
++    });
++  }, []);
++
 +  // 手机抽屉互斥（spec: packages/ui/specs/app-shell-drawer.md）：一屏只承载一个浮层。
 +  // 打开左抽屉时顺带收起右侧面板；打开右抽屉时由调用方传 closeSidebar 收起左侧。
 +  const closeSidebar = useCallback(() => {
 +    setIsSidebarVisible(false);
-+  }, []);
-+
+   }, []);
+ 
    const handleToggleSidePaneCollapse = useCallback(() => {
-     setIsSidePaneCollapsed((collapsed) => {
-       const nextCollapsed = !collapsed;
-@@ -1255,6 +1269,10 @@ export function useAppPanels(options: {
+@@ -1255,6 +1302,12 @@ export function useAppPanels(options: {
          ...latestSidePaneMemoryRef.current,
          isSidePaneCollapsed: nextCollapsed,
        };
 +      // 手机抽屉互斥：展开右抽屉时收起左抽屉，避免两个浮层互相覆盖。
-+      if (!nextCollapsed) {
++      // 只在抽屉视口生效（与 handleToggleSidebar 对称，见其注释）；
++      // 宽视口下侧栏与面板可同开，不联动。
++      if (!nextCollapsed && typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia(NARROW_VIEWPORT_QUERY).matches) {
 +        setIsSidebarVisible(false);
 +      }
        logger.info(
          `[App] ${nextCollapsed ? "收起" : "展开"}右侧面板 workspace=${workspaceAbsPath} tabs=${sidePaneState?.tabs.length ?? 0}`,
        );
-@@ -1602,6 +1620,7 @@ export function useAppPanels(options: {
+@@ -1602,6 +1655,7 @@ export function useAppPanels(options: {
      handleOpenWorkflowArtifact,
      handleToggleTerminal,
      handleToggleSidebar,

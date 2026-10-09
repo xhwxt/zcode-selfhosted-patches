@@ -1,7 +1,7 @@
 From de68d20b699ddcb30f64f6237153c96a13aab14f Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:13:39 +0800
-Subject: [PATCH 01/29] fix(rpc,client,server): websocket keepalive liveness
+Subject: [PATCH 01/31] fix(rpc,client,server): websocket keepalive liveness
  for half-open detection
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1061,7 +1061,7 @@ index 8a8a827..95cac80 100644
 From 114e9d43071f3a3c8ba7b813022c1bc848822734 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:38:20 +0800
-Subject: [PATCH 02/29] fix(client,web): heartbeat deadline fires
+Subject: [PATCH 02/31] fix(client,web): heartbeat deadline fires
  onHeartbeatDead before close
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1147,7 +1147,7 @@ index 305ea3f..7c36e7d 100644
 From 99fb8f4e201e5b5e0b1a1ca20237730f177483cf Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 08:34:01 +0800
-Subject: [PATCH 03/29] perf(web,client): seamless background returns, faster
+Subject: [PATCH 03/31] perf(web,client): seamless background returns, faster
  reconnect, lazy banner
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1423,7 +1423,7 @@ index 7c36e7d..ae5c3bb 100644
 From 368a50b1b68be87966fced31424aef5486bf39d0 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 09:24:05 +0800
-Subject: [PATCH 04/29] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
+Subject: [PATCH 04/31] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
  =?UTF-8?q?=E2=80=94=20no=20React=20remount=20on=20soft=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1847,7 +1847,7 @@ index ae5c3bb..dcdef96 100644
 From 07843f5a5f00afa71faea45282c31bf59150970a Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:16:18 +0800
-Subject: [PATCH 05/29] fix(ui): md preview text fences invisible on dark UI +
+Subject: [PATCH 05/31] fix(ui): md preview text fences invisible on dark UI +
  mobile settings row squeeze
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2010,7 +2010,7 @@ index 25cd56d..63e8439 100644
 From eb1e5605eeeb99b042ae219b009abd4e91451973 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:40:45 +0800
-Subject: [PATCH 06/29] fix(web): remove ALL page reloads from connection paths
+Subject: [PATCH 06/31] fix(web): remove ALL page reloads from connection paths
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -2294,7 +2294,7 @@ index dcdef96..4311a39 100644
 From 354f07061e285014e1004b93b91e60af98dc2c82 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:56:25 +0800
-Subject: [PATCH 07/29] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20navi?=
+Subject: [PATCH 07/31] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20navi?=
  =?UTF-8?q?gation=20=E2=80=94=20zero=20network=20on=20foreground=20return?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2435,7 +2435,7 @@ index 980b78e..4ab2def 100644
 From db282af6c0f949f2f3bfd4b6850b8475c4851c0e Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 11:34:06 +0800
-Subject: [PATCH 08/29] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transp?=
+Subject: [PATCH 08/31] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transp?=
  =?UTF-8?q?ort=20=E2=80=94=20zero=20visual=20change=20on=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2817,7 +2817,7 @@ index 4311a39..7790234 100644
 From 1575737a4f601d74e09dc19894da96d19ed797b6 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:04:53 +0800
-Subject: [PATCH 09/29] =?UTF-8?q?fix(ui,web):=20re-subscribe=20stores=20af?=
+Subject: [PATCH 09/31] =?UTF-8?q?fix(ui,web):=20re-subscribe=20stores=20af?=
  =?UTF-8?q?ter=20hot-swap=20=E2=80=94=20data=20flows=20again?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3170,7 +3170,7 @@ index 7790234..e5a91b0 100644
 From 1f43dc774e46a27205dfe0a0ea6d03b0eec51640 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:25:49 +0800
-Subject: [PATCH 10/29] =?UTF-8?q?fix(ui):=20model=20submenu=20squeeze=20on?=
+Subject: [PATCH 10/31] =?UTF-8?q?fix(ui):=20model=20submenu=20squeeze=20on?=
  =?UTF-8?q?=20mobile=20=E2=80=94=20wrap=20names,=20width=20follows=20viewp?=
  =?UTF-8?q?ort?=
 MIME-Version: 1.0
@@ -3236,7 +3236,7 @@ index c2387ed..61943f9 100644
 From 1b11d905c0e6eab7a26ae2240fa0f0ff405ac961 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:31:29 +0800
-Subject: [PATCH 11/29] =?UTF-8?q?fix(ui,web):=20re-handshake=20after=20hot?=
+Subject: [PATCH 11/31] =?UTF-8?q?fix(ui,web):=20re-handshake=20after=20hot?=
  =?UTF-8?q?-swap=20=E2=80=94=20fixes=20fault.connection.handshakeRequired?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3360,7 +3360,7 @@ index e5a91b0..ea4c885 100644
 From 02f5be69a51cf66104acb5a2d8fef4ab9b7e4a29 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 13:51:57 +0800
-Subject: [PATCH 12/29] fix(web): SW v3 cache bust + /sw-reset.html escape
+Subject: [PATCH 12/31] fix(web): SW v3 cache bust + /sw-reset.html escape
  hatch
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3464,7 +3464,7 @@ index 4ab2def..6338372 100644
 From 08dcd3f515dc280d359409e6b364daaa385fdd22 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:19:51 +0800
-Subject: [PATCH 13/29] =?UTF-8?q?fix(web):=20SW=20v4=20=E2=80=94=20drop=20?=
+Subject: [PATCH 13/31] =?UTF-8?q?fix(web):=20SW=20v4=20=E2=80=94=20drop=20?=
  =?UTF-8?q?dirty=20/assets/=20prefetch=20key=20from=20install?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3527,7 +3527,7 @@ index 6338372..3ea1938 100644
 From 201e0c331c779b39c463fd436c4ae22ea39497c7 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:35:37 +0800
-Subject: [PATCH 14/29] =?UTF-8?q?fix(web):=20ignore=20stale=20close=20even?=
+Subject: [PATCH 14/31] =?UTF-8?q?fix(web):=20ignore=20stale=20close=20even?=
  =?UTF-8?q?ts=20=E2=80=94=20stops=20reconnect=20loop=20after=20hot-swap?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3598,7 +3598,7 @@ index ea4c885..5b4f167 100644
 From c5306790dd763477ee4c1ed5b018f83cff5104b6 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:58:29 +0800
-Subject: [PATCH 15/29] =?UTF-8?q?fix(web):=20SW=20v5=20=E2=80=94=20backgro?=
+Subject: [PATCH 15/31] =?UTF-8?q?fix(web):=20SW=20v5=20=E2=80=94=20backgro?=
  =?UTF-8?q?und=20revalidate=20navigations=20(deploy=20path=20restored)?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3723,7 +3723,7 @@ index 3ea1938..e7d6769 100644
 From 4e768ffd1beacdd2b2bd299796e6845124ca84e6 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:13:29 +0800
-Subject: [PATCH 16/29] =?UTF-8?q?fix(ui):=20usage=20stats=20readability=20?=
+Subject: [PATCH 16/31] =?UTF-8?q?fix(ui):=20usage=20stats=20readability=20?=
  =?UTF-8?q?on=20mobile=20=E2=80=94=20short=20axis=20dates,=20scrollable=20?=
  =?UTF-8?q?heatmap?=
 MIME-Version: 1.0
@@ -3804,7 +3804,7 @@ index 74f4374..4d0119e 100644
 From d56f5f9faf78d9dda1d28ca9a76b5d08d8f316b4 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:20:00 +0800
-Subject: [PATCH 17/29] fix(web,client): close stale WebSocket on hot-swap +
+Subject: [PATCH 17/31] fix(web,client): close stale WebSocket on hot-swap +
  crash telemetry
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3896,7 +3896,7 @@ index 5b4f167..e767efb 100644
 From 923e3f1ffe8145d946e5a58b7c8afb9f985e215a Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:59:13 +0800
-Subject: [PATCH 18/29] =?UTF-8?q?fix(web):=20SW=20v7=20=E2=80=94=20network?=
+Subject: [PATCH 18/31] =?UTF-8?q?fix(web):=20SW=20v7=20=E2=80=94=20network?=
  =?UTF-8?q?-first=20for=20zusage=20injected=20scripts?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3957,7 +3957,7 @@ index 829e60f..b13d167 100644
 From 53f07053a90070fad64c8bdc06bf53ca0b21b7f2 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 16:32:20 +0800
-Subject: [PATCH 19/29] =?UTF-8?q?fix(rpc,client,web):=20replay=20buffered?=
+Subject: [PATCH 19/31] =?UTF-8?q?fix(rpc,client,web):=20replay=20buffered?=
  =?UTF-8?q?=20frames=20on=20hot-swap=20=E2=80=94=20fixes=20handshake=20dea?=
  =?UTF-8?q?dlock?=
 MIME-Version: 1.0
@@ -4110,7 +4110,7 @@ index e767efb..4576c8e 100644
 From 933328973d2f59fe0a025a66fdc7d84b2fdaae44 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 16:43:24 +0800
-Subject: [PATCH 20/29] chore(services): log handshake rejection details for
+Subject: [PATCH 20/31] chore(services): log handshake rejection details for
  intermittent fault diagnosis
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4151,7 +4151,7 @@ index 9fa3233..675de02 100644
 From d2324dd4a548205ae06b50d73f31fa8d68ba26e2 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 17:17:41 +0800
-Subject: [PATCH 21/29] fix(server,ui): stop killing live connections + silent
+Subject: [PATCH 21/31] fix(server,ui): stop killing live connections + silent
  bounded retry on subscribe failure
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4258,7 +4258,7 @@ index 95cac80..bc4ef5e 100644
 From 00414c17fc77aab796aa359b713121309e73041b Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 17:59:57 +0800
-Subject: [PATCH 22/29] chore(services): log hello/initialize arrival on
+Subject: [PATCH 22/31] chore(services): log hello/initialize arrival on
  connection scope
 
 ---
@@ -4314,7 +4314,7 @@ index 675de02..2bed75f 100644
 From e5b7c3f605b4f95c6d55315f05831707d5cc353b Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 18:10:02 +0800
-Subject: [PATCH 23/29] =?UTF-8?q?fix(ui):=20handshake=20cache=20invalidati?=
+Subject: [PATCH 23/31] =?UTF-8?q?fix(ui):=20handshake=20cache=20invalidati?=
  =?UTF-8?q?on=20actually=20works=20=E2=80=94=20epoch=20compared=20on=20loo?=
  =?UTF-8?q?kup?=
 MIME-Version: 1.0
@@ -4384,7 +4384,7 @@ index 467ed58..121d219 100644
 From 75d7ec9e1db5b7c0c572b0bc85904fc345344ec0 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 18:47:59 +0800
-Subject: [PATCH 24/29] =?UTF-8?q?fix(rpc):=20re-send=20active=20event=20su?=
+Subject: [PATCH 24/31] =?UTF-8?q?fix(rpc):=20re-send=20active=20event=20su?=
  =?UTF-8?q?bscriptions=20on=20resetTransport=20=E2=80=94=20restores=20UI?=
  =?UTF-8?q?=20data=20stream?=
 MIME-Version: 1.0
@@ -4567,7 +4567,7 @@ index 0000000..d5f9e5f
 From 99b33bd49325cfb5e65555c7623b03095cbacb40 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 19:03:31 +0800
-Subject: [PATCH 25/29] fix(ui): handshake RPC timeout + extended retry budget
+Subject: [PATCH 25/31] fix(ui): handshake RPC timeout + extended retry budget
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -4664,7 +4664,7 @@ index 5515fa1..adc61c2 100644
 From 006dc2d9e2c7067638cbe56e4aca0fa8c05e838f Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 19:16:52 +0800
-Subject: [PATCH 26/29] fix(ui): retry schedule tuned to handshake-timeout
+Subject: [PATCH 26/31] fix(ui): retry schedule tuned to handshake-timeout
  rhythm; sessions store budget aligned
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4723,7 +4723,7 @@ index 7e8a36f..a195807 100644
 From 7d09a5995b05adbce584d9bbdc1ee4f45e6f70bc Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 20:29:12 +0800
-Subject: [PATCH 27/29] chore(web): drop dead reconnect-storm counter +
+Subject: [PATCH 27/31] chore(web): drop dead reconnect-storm counter +
  orphaned root test
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4851,7 +4851,7 @@ index 4576c8e..211be8c 100644
 From 8653043f7caeb8490946be163a6cf9757bee7e8f Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 21:14:43 +0800
-Subject: [PATCH 28/29] test(e2e): add connection-recovery browser scripts
+Subject: [PATCH 28/31] test(e2e): add connection-recovery browser scripts
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -5296,7 +5296,7 @@ index 0000000..2f9c324
 From 44b8212b5e3627e235ed5abbc629fe4ae6ca63a8 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 21:18:14 +0800
-Subject: [PATCH 29/29] docs: point E2E reference at published e2e/ directory
+Subject: [PATCH 29/31] docs: point E2E reference at published e2e/ directory
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -5731,6 +5731,284 @@ index bd6247f..42db58b 100644
 +  are the highest-value next step.
  
 -功能与优惠范围、维护规则、执行与数据风险，以及许可和第三方版权说明，详见 [NOTICE.md](NOTICE.md)。
+-- 
+2.53.0
+
+
+From a3768012f671bc84aa85a2a671fb42c099c326da Mon Sep 17 00:00:00 2001
+From: xhwxt <197754549+xhwxt@users.noreply.github.com>
+Date: Fri, 9 Oct 2026 09:25:50 +0800
+Subject: [PATCH 30/31] fix(ui): drawer mutual exclusion via state owner +
+ wide-web overlay title offset
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+两个用户实测缺口（2026-10-09 截图）：
+
+① 手机 web 右抽屉打开时，左上角侧栏按钮/新建对话按钮仍可点击——
+   0005 的互斥只覆盖了两个入口（展开右抽屉收左栏、左抽屉开时藏
+   header 的右面板按钮），漏了 DesktopTopOverlay 左上角浮层按钮
+   （z-40 高于抽屉 z-30，任一抽屉打开时都悬在最上层可点）。
+   点侧栏按钮 → 左抽屉打开、右抽屉浮层因 DOM 顺序靠后盖在其上
+   （用户截图1：打开标签页 picker 下透出左抽屉内容）。
+   修复收敛到状态所有者（spec 规则 6 的正确落点）：handleToggleSidebar
+   打开左栏时同步收起右侧面板（含 owner 偏好持久化），与反向互斥对称；
+   关闭方向不联动。非抽屉视口行为不变（桌面端侧栏/面板本就可同开）。
+
+② 宽屏 web（含桌面窗口里的 web 入口）侧栏收起时，左上角浮层按钮组
+   （z-40）压住会话标题起点（用户截图2）。桌面端收起态由
+   shouldOffsetHeaderForWindowControls 命中 pl-38+ 留白；web 此前只有
+   窄视口分支 pl-20，宽视口收起侧栏时无任何留白。补 web 收起态对称
+   分支：!isSidebarVisible 且非窄视口 → pl-20（浮层按钮组宽度内）。
+   桌面端路径逐字节不变。
+
+spec: packages/ui/specs/app-shell-drawer.md 规则 6 扩为双向互斥 + 验收补充。
+typecheck/lint(78 warnings, 0 errors)/architecture:check 全过。
+---
+ packages/ui/specs/app-shell-drawer.md |  9 +++++++++
+ packages/ui/src/WorkspaceHeader.tsx   | 12 ++++++++++--
+ packages/ui/src/hooks/useAppPanels.ts | 27 ++++++++++++++++++++++++++-
+ 3 files changed, 45 insertions(+), 3 deletions(-)
+
+diff --git a/packages/ui/specs/app-shell-drawer.md b/packages/ui/specs/app-shell-drawer.md
+index cd17dd9..805b219 100644
+--- a/packages/ui/specs/app-shell-drawer.md
++++ b/packages/ui/specs/app-shell-drawer.md
+@@ -21,11 +21,20 @@
+    交互与右上角 WorkspaceSidePaneToggleButton 对称。
+ 6. 状态所有者不变：isSidebarVisible / isSidePaneOpen 仍由 useAppPanels
+    拥有；抽屉化只改渲染形态，不新增可见性状态、不复制开关命令。
++   互斥收敛在状态所有者内部，双向对称：
++   - 展开右侧面板（handleToggleSidePaneCollapse → !collapsed）时收起左栏；
++   - 打开左栏（handleToggleSidebar → visible=true）时收起右侧面板
++     （setIsSidePaneCollapsed(true) + owner 偏好持久化，与顶部收起语义一致）。
++   关闭方向（收起任一浮层）不做联动。理由：DesktopTopOverlay（z-40）
++   悬在抽屉（z-30）之上，浮层按钮在任一抽屉打开时都可点击，
++   互斥若只挂在部分入口上，按钮路径会重新造出双浮层叠加。
+ 7. 自动收起逻辑（CONVERSATION_AUTO_COLLAPSE_*）在抽屉模式下天然不触发
+    （会话区恒全宽），保留原实现不动。
+ 8. 桌面（isNarrowViewport=false）渲染路径与现状逐字节等价。
+ 
+ ## 验收
+ - 390×844 视口：左右抽屉互斥不挤压会话区；点遮罩/按钮均可收起。
++  任一抽屉打开时，左上角侧栏按钮/新建对话按钮点击后不产生双浮层叠加
++  （开左栏 = 右抽屉收起；开右抽屉 = 左栏收起）。
+ - 桌面 1280×800：布局与改动前一致（截图对比）。
+ - typecheck / lint / architecture:check 通过。
+diff --git a/packages/ui/src/WorkspaceHeader.tsx b/packages/ui/src/WorkspaceHeader.tsx
+index ccdfd85..dd33248 100644
+--- a/packages/ui/src/WorkspaceHeader.tsx
++++ b/packages/ui/src/WorkspaceHeader.tsx
+@@ -126,14 +126,22 @@ export function WorkspaceHeader({
+   // web 宽屏无窗控也无浮层，不加空垫。
+   // 注意：web 入口不传 isDesktop（undefined ≠ false），判定必须用真值判断而非
+   // isDesktop === false，否则手机分支永不命中。
++  //
++  // 追加（用户实测 2026-10-09：宽屏 web 侧栏收起时左上角浮层按钮压住会话标题）：
++  // 侧栏收起后 DesktopTopOverlay（z-40，w-fit）悬在标题上方——桌面端由
++  // shouldOffsetHeaderForWindowControls 命中 pl-38+ 留白；web 此前只有窄视口
++  // 分支（pl-20），宽视口 + 侧栏收起时无任何留白。web 收起态与桌面对称：
++  // 非窄视口也命中 pl-20（浮层按钮组 = 侧栏开关+新建+更新，80px 覆盖其宽）。
+   const isDesktopPlatform = isDesktop === true;
+-  const shouldOffsetHeaderForWindowControls = !isSidebarVisible && isDesktopPlatform;
+   const isWebDrawerHeaderViewport = !isDesktopPlatform && Boolean(useIsNarrowViewport());
++  const shouldOffsetHeaderForWindowControls = !isSidebarVisible && isDesktopPlatform;
++  const shouldOffsetHeaderForTopOverlay =
++    !isDesktopPlatform && !isSidebarVisible && !isWebDrawerHeaderViewport;
+   // Linux 与 Windows 共用内联窗控，不再预留旧悬浮窗控的标题栏区域。
+   const usesInlineWindowControls = Boolean(isWindowsDesktop || (isDesktop && !isMacDesktop));
+ 
+   let headerWindowControlsPaddingClass: string | false = false;
+-  if (isWebDrawerHeaderViewport) {
++  if (isWebDrawerHeaderViewport || shouldOffsetHeaderForTopOverlay) {
+     headerWindowControlsPaddingClass = "pl-20";
+   } else if (shouldOffsetHeaderForWindowControls) {
+     if (isMacDesktop) {
+diff --git a/packages/ui/src/hooks/useAppPanels.ts b/packages/ui/src/hooks/useAppPanels.ts
+index f751e82..6fd32bb 100644
+--- a/packages/ui/src/hooks/useAppPanels.ts
++++ b/packages/ui/src/hooks/useAppPanels.ts
+@@ -1246,7 +1246,32 @@ export function useAppPanels(options: {
+   }, [isOfficeMode, workspaceAbsPath]);
+ 
+   const handleToggleSidebar = useCallback(() => {
+-    setIsSidebarVisible((visible) => !visible);
++    setIsSidebarVisible((visible) => {
++      const next = !visible;
++      // 手机抽屉互斥（spec: packages/ui/specs/app-shell-drawer.md 规则 6）：
++      // DesktopTopOverlay（z-40）悬在抽屉（z-30）之上，右抽屉开着时左上角
++      // 侧栏按钮仍可点击——若这里只翻自己的开关，会重新叠出双浮层
++      //（用户实机截图 2026-10-09：右抽屉上再开左抽屉，左抽屉被盖住）。
++      // 与 handleToggleSidePaneCollapse 展开时收左栏对称：打开左栏时收起右侧面板；
++      // 收起左栏（next=false）不联动。侧栏打开属用户对当前布局的明确选择，
++      // 与顶部收起共用 owner 偏好语义，避免切对话后被可见 tab 自动展开覆盖。
++      if (next) {
++        setIsSidePaneCollapsed((collapsed) => {
++          if (collapsed) return collapsed;
++          saveTaskSidePaneCollapsedPreference(
++            activeSidePaneMemoryKeyRef.current,
++            sidePaneOwnerIdRef.current,
++            true,
++          );
++          latestSidePaneMemoryRef.current = {
++            ...latestSidePaneMemoryRef.current,
++            isSidePaneCollapsed: true,
++          };
++          return true;
++        });
++      }
++      return next;
++    });
+   }, []);
+ 
+   // 手机抽屉互斥（spec: packages/ui/specs/app-shell-drawer.md）：一屏只承载一个浮层。
+-- 
+2.53.0
+
+
+From 11ec4c0a44fa1610152a8dd9adcc35f841332949 Mon Sep 17 00:00:00 2001
+From: xhwxt <197754549+xhwxt@users.noreply.github.com>
+Date: Fri, 9 Oct 2026 09:40:15 +0800
+Subject: [PATCH 31/31] fix(ui): mutex scoped to drawer viewport + unified top
+ overlay alignment
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+两个用户实测反馈（2026-10-09）：
+
+① 抽屉互斥误伤宽视口：上一轮互斥无条件命中，桌面/平板下先开左栏再开
+   右面板会把左栏强制收起（反之亦然），破坏桌面「侧栏+面板同开」的
+   分栏语义。两个 handler（handleToggleSidebar/handleToggleSidePaneCollapse）
+   的互斥分支均改为事件回调内实时读 NARROW_VIEWPORT_QUERY——只在抽屉
+   视口生效，两个方向行为一致；关闭方向不联动（不变）。
+
+② DesktopTopOverlay 与右上角 Header 按钮不对齐：非 caption 平台容器
+   此前 h-14 top-0（按钮中心线 28），Header h-12 带 1px 边框内按钮
+   中心线 25，错位 3px。统一为 h-12 top-px（中心 25），与手机分支一致；
+   Windows/Linux caption 平台的 top-1 mt-px 特例保持。
+
+spec: packages/ui/specs/app-shell-drawer.md 规则 6 补「只在抽屉视口生效」。
+typecheck 0 错误 / lint 78 warnings 0 errors / architecture:check 通过。
+---
+ packages/ui/specs/app-shell-drawer.md | 19 ++++++++++++-------
+ packages/ui/src/DesktopTopOverlay.tsx | 13 +++++--------
+ packages/ui/src/hooks/useAppPanels.ts | 20 +++++++++++++++-----
+ 3 files changed, 32 insertions(+), 20 deletions(-)
+
+diff --git a/packages/ui/specs/app-shell-drawer.md b/packages/ui/specs/app-shell-drawer.md
+index 805b219..3a6ba96 100644
+--- a/packages/ui/specs/app-shell-drawer.md
++++ b/packages/ui/specs/app-shell-drawer.md
+@@ -21,13 +21,18 @@
+    交互与右上角 WorkspaceSidePaneToggleButton 对称。
+ 6. 状态所有者不变：isSidebarVisible / isSidePaneOpen 仍由 useAppPanels
+    拥有；抽屉化只改渲染形态，不新增可见性状态、不复制开关命令。
+-   互斥收敛在状态所有者内部，双向对称：
+-   - 展开右侧面板（handleToggleSidePaneCollapse → !collapsed）时收起左栏；
+-   - 打开左栏（handleToggleSidebar → visible=true）时收起右侧面板
+-     （setIsSidePaneCollapsed(true) + owner 偏好持久化，与顶部收起语义一致）。
+-   关闭方向（收起任一浮层）不做联动。理由：DesktopTopOverlay（z-40）
+-   悬在抽屉（z-30）之上，浮层按钮在任一抽屉打开时都可点击，
+-   互斥若只挂在部分入口上，按钮路径会重新造出双浮层叠加。
++   互斥收敛在状态所有者内部，双向对称，且**只在抽屉视口生效**
++   （事件回调内实时读 NARROW_VIEWPORT_QUERY，非 hook）：
++   - 抽屉视口下展开右侧面板（handleToggleSidePaneCollapse → !collapsed）
++     时收起左栏；
++   - 抽屉视口下打开左栏（handleToggleSidebar → visible=true）时收起
++     右侧面板（setIsSidePaneCollapsed(true) + owner 偏好持久化，
++     与顶部收起语义一致）。
++   关闭方向（收起任一浮层）不做联动；宽视口（桌面/平板）左右可同开，
++   与桌面分栏语义一致。理由：DesktopTopOverlay（z-40）悬在抽屉（z-30）
++   之上，浮层按钮在任一抽屉打开时都可点击，互斥若只挂在部分入口上，
++   按钮路径会重新造出双浮层叠加；而宽视口下不存在浮层抽屉，
++   强制互斥反而破坏桌面「侧栏 + 面板同开」的原有行为。
+ 7. 自动收起逻辑（CONVERSATION_AUTO_COLLAPSE_*）在抽屉模式下天然不触发
+    （会话区恒全宽），保留原实现不动。
+ 8. 桌面（isNarrowViewport=false）渲染路径与现状逐字节等价。
+diff --git a/packages/ui/src/DesktopTopOverlay.tsx b/packages/ui/src/DesktopTopOverlay.tsx
+index 6e5f356..9702c93 100644
+--- a/packages/ui/src/DesktopTopOverlay.tsx
++++ b/packages/ui/src/DesktopTopOverlay.tsx
+@@ -113,10 +113,10 @@ export function DesktopTopOverlay({
+       className={cn(
+         // z-40：手机抽屉视口里抽屉浮层是 z-30，左上角按钮必须悬在其上才能
+         // 在抽屉展开时仍可点击（也充当第二个关闭入口）。
+-        // 手机 web：顶带 h-14 → h-12 + top-px，与 WorkspaceHeader（h-12，会话框
+-        // 1px 边框内 y=1..49，中心线 25）完全对齐；此前 h-14 中心线 28 错位 3px。
+-        "@container/topoverlayer pointer-events-none absolute h-14 flex left-0 top-0 z-40 w-fit",
+-        isWebDrawerViewport && "h-12 top-px",
++        // 与 WorkspaceHeader（h-12，会话框 1px 边框内 y=1..49，按钮中心线 25）
++        // 对齐：所有非 caption 平台统一 h-12 + top-px（此前 h-14 top-0 中心线 28，
++        // 错位 3px——用户实测 2026-10-09：桌面版左上角按钮与右上角不齐）。
++        "@container/topoverlayer pointer-events-none absolute h-12 left-0 top-px z-40 w-fit flex",
+         // Windows/Linux 主面板新增 4px 留白及 1px 边框，左侧工具组需同步偏移才能对齐 Header 中心线。
+         usesCustomCaptionArea && "top-1 mt-px",
+       )}
+@@ -127,10 +127,7 @@ export function DesktopTopOverlay({
+           ...windowsTopOverlayPaddingStyle,
+         }}
+         className={cn(
+-          "flex items-center",
+-          isMacDesktop && "h-14",
+-          usesCustomCaptionArea && "h-12",
+-          isWebDrawerViewport && "h-12",
++          "flex h-12 items-center",
+           // Windows/Linux 工具组计入 4px 外沿留白和 1px 边框，较 8px 左边距右移 5px。
+           usesCustomCaptionArea && "pl-3 ml-px",
+           isMacDesktop &&
+diff --git a/packages/ui/src/hooks/useAppPanels.ts b/packages/ui/src/hooks/useAppPanels.ts
+index 6fd32bb..cbef6c5 100644
+--- a/packages/ui/src/hooks/useAppPanels.ts
++++ b/packages/ui/src/hooks/useAppPanels.ts
+@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+ import { createUuid } from "@zcode/shared";
+ import type { EmbeddedBrowserOpenUrlRequest, IPlatformService } from "@zcode/shared";
+ import type { CodeViewerSource } from "@/lib/codeViewer.js";
++import { NARROW_VIEWPORT_QUERY } from "@/hooks/useIsNarrowViewport.js";
+ // 保活：side pane terminal 跨 workspace 会话上移到模块级 registry。
+ // 关闭 terminal tab 时必须显式 release，杀掉 PTY，避免常驻 registry 造成孤儿进程。
+ import { sidePaneTerminalSessionRegistry } from "@/terminal/sidePaneTerminalSessionRegistry.js";
+@@ -1246,16 +1247,23 @@ export function useAppPanels(options: {
+   }, [isOfficeMode, workspaceAbsPath]);
+ 
+   const handleToggleSidebar = useCallback(() => {
++    // 互斥只在抽屉视口生效（spec: packages/ui/specs/app-shell-drawer.md 规则 6）：
++    // 事件回调内实时读 matchMedia（非 hook，合法）。宽视口（桌面/平板）侧栏与
++    // 右侧面板本可同开（桌面分栏语义），强制互斥会破坏原行为——用户实测反馈
++    // 「先开左再开右 / 先开右再开左」行为不一致的根源即此前互斥无条件命中。
++    const isDrawerViewport =
++      typeof window !== "undefined" &&
++      typeof window.matchMedia === "function" &&
++      window.matchMedia(NARROW_VIEWPORT_QUERY).matches;
+     setIsSidebarVisible((visible) => {
+       const next = !visible;
+-      // 手机抽屉互斥（spec: packages/ui/specs/app-shell-drawer.md 规则 6）：
+-      // DesktopTopOverlay（z-40）悬在抽屉（z-30）之上，右抽屉开着时左上角
+-      // 侧栏按钮仍可点击——若这里只翻自己的开关，会重新叠出双浮层
++      // 抽屉互斥：DesktopTopOverlay（z-40）悬在抽屉（z-30）之上，右抽屉开着时
++      // 左上角侧栏按钮仍可点击——若这里只翻自己的开关，会重新叠出双浮层
+       //（用户实机截图 2026-10-09：右抽屉上再开左抽屉，左抽屉被盖住）。
+       // 与 handleToggleSidePaneCollapse 展开时收左栏对称：打开左栏时收起右侧面板；
+       // 收起左栏（next=false）不联动。侧栏打开属用户对当前布局的明确选择，
+       // 与顶部收起共用 owner 偏好语义，避免切对话后被可见 tab 自动展开覆盖。
+-      if (next) {
++      if (isDrawerViewport && next) {
+         setIsSidePaneCollapsed((collapsed) => {
+           if (collapsed) return collapsed;
+           saveTaskSidePaneCollapsedPreference(
+@@ -1295,7 +1303,9 @@ export function useAppPanels(options: {
+         isSidePaneCollapsed: nextCollapsed,
+       };
+       // 手机抽屉互斥：展开右抽屉时收起左抽屉，避免两个浮层互相覆盖。
+-      if (!nextCollapsed) {
++      // 只在抽屉视口生效（与 handleToggleSidebar 对称，见其注释）；
++      // 宽视口下侧栏与面板可同开，不联动。
++      if (!nextCollapsed && typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia(NARROW_VIEWPORT_QUERY).matches) {
+         setIsSidebarVisible(false);
+       }
+       logger.info(
 -- 
 2.53.0
 
