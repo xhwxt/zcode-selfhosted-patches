@@ -1,7 +1,7 @@
 From de68d20b699ddcb30f64f6237153c96a13aab14f Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:13:39 +0800
-Subject: [PATCH 01/39] fix(rpc,client,server): websocket keepalive liveness
+Subject: [PATCH 01/40] fix(rpc,client,server): websocket keepalive liveness
  for half-open detection
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1061,7 +1061,7 @@ index 8a8a827..95cac80 100644
 From 114e9d43071f3a3c8ba7b813022c1bc848822734 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:38:20 +0800
-Subject: [PATCH 02/39] fix(client,web): heartbeat deadline fires
+Subject: [PATCH 02/40] fix(client,web): heartbeat deadline fires
  onHeartbeatDead before close
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1147,7 +1147,7 @@ index 305ea3f..7c36e7d 100644
 From 99fb8f4e201e5b5e0b1a1ca20237730f177483cf Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 08:34:01 +0800
-Subject: [PATCH 03/39] perf(web,client): seamless background returns, faster
+Subject: [PATCH 03/40] perf(web,client): seamless background returns, faster
  reconnect, lazy banner
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1423,7 +1423,7 @@ index 7c36e7d..ae5c3bb 100644
 From 368a50b1b68be87966fced31424aef5486bf39d0 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 09:24:05 +0800
-Subject: [PATCH 04/39] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
+Subject: [PATCH 04/40] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
  =?UTF-8?q?=E2=80=94=20no=20React=20remount=20on=20soft=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1847,7 +1847,7 @@ index ae5c3bb..dcdef96 100644
 From 07843f5a5f00afa71faea45282c31bf59150970a Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:16:18 +0800
-Subject: [PATCH 05/39] fix(ui): md preview text fences invisible on dark UI +
+Subject: [PATCH 05/40] fix(ui): md preview text fences invisible on dark UI +
  mobile settings row squeeze
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2010,7 +2010,7 @@ index 25cd56d..63e8439 100644
 From eb1e5605eeeb99b042ae219b009abd4e91451973 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:40:45 +0800
-Subject: [PATCH 06/39] fix(web): remove ALL page reloads from connection paths
+Subject: [PATCH 06/40] fix(web): remove ALL page reloads from connection paths
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -2294,7 +2294,7 @@ index dcdef96..4311a39 100644
 From 354f07061e285014e1004b93b91e60af98dc2c82 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:56:25 +0800
-Subject: [PATCH 07/39] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20navi?=
+Subject: [PATCH 07/40] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20navi?=
  =?UTF-8?q?gation=20=E2=80=94=20zero=20network=20on=20foreground=20return?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2435,7 +2435,7 @@ index 980b78e..4ab2def 100644
 From db282af6c0f949f2f3bfd4b6850b8475c4851c0e Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 11:34:06 +0800
-Subject: [PATCH 08/39] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transp?=
+Subject: [PATCH 08/40] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transp?=
  =?UTF-8?q?ort=20=E2=80=94=20zero=20visual=20change=20on=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2817,7 +2817,7 @@ index 4311a39..7790234 100644
 From 1575737a4f601d74e09dc19894da96d19ed797b6 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:04:53 +0800
-Subject: [PATCH 09/39] =?UTF-8?q?fix(ui,web):=20re-subscribe=20stores=20af?=
+Subject: [PATCH 09/40] =?UTF-8?q?fix(ui,web):=20re-subscribe=20stores=20af?=
  =?UTF-8?q?ter=20hot-swap=20=E2=80=94=20data=20flows=20again?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3170,7 +3170,7 @@ index 7790234..e5a91b0 100644
 From 1f43dc774e46a27205dfe0a0ea6d03b0eec51640 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:25:49 +0800
-Subject: [PATCH 10/39] =?UTF-8?q?fix(ui):=20model=20submenu=20squeeze=20on?=
+Subject: [PATCH 10/40] =?UTF-8?q?fix(ui):=20model=20submenu=20squeeze=20on?=
  =?UTF-8?q?=20mobile=20=E2=80=94=20wrap=20names,=20width=20follows=20viewp?=
  =?UTF-8?q?ort?=
 MIME-Version: 1.0
@@ -3236,7 +3236,7 @@ index c2387ed..61943f9 100644
 From 1b11d905c0e6eab7a26ae2240fa0f0ff405ac961 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:31:29 +0800
-Subject: [PATCH 11/39] =?UTF-8?q?fix(ui,web):=20re-handshake=20after=20hot?=
+Subject: [PATCH 11/40] =?UTF-8?q?fix(ui,web):=20re-handshake=20after=20hot?=
  =?UTF-8?q?-swap=20=E2=80=94=20fixes=20fault.connection.handshakeRequired?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3360,7 +3360,7 @@ index e5a91b0..ea4c885 100644
 From 02f5be69a51cf66104acb5a2d8fef4ab9b7e4a29 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 13:51:57 +0800
-Subject: [PATCH 12/39] fix(web): SW v3 cache bust + /sw-reset.html escape
+Subject: [PATCH 12/40] fix(web): SW v3 cache bust + /sw-reset.html escape
  hatch
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3464,7 +3464,7 @@ index 4ab2def..6338372 100644
 From 08dcd3f515dc280d359409e6b364daaa385fdd22 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:19:51 +0800
-Subject: [PATCH 13/39] =?UTF-8?q?fix(web):=20SW=20v4=20=E2=80=94=20drop=20?=
+Subject: [PATCH 13/40] =?UTF-8?q?fix(web):=20SW=20v4=20=E2=80=94=20drop=20?=
  =?UTF-8?q?dirty=20/assets/=20prefetch=20key=20from=20install?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3527,7 +3527,7 @@ index 6338372..3ea1938 100644
 From 201e0c331c779b39c463fd436c4ae22ea39497c7 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:35:37 +0800
-Subject: [PATCH 14/39] =?UTF-8?q?fix(web):=20ignore=20stale=20close=20even?=
+Subject: [PATCH 14/40] =?UTF-8?q?fix(web):=20ignore=20stale=20close=20even?=
  =?UTF-8?q?ts=20=E2=80=94=20stops=20reconnect=20loop=20after=20hot-swap?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3598,7 +3598,7 @@ index ea4c885..5b4f167 100644
 From c5306790dd763477ee4c1ed5b018f83cff5104b6 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:58:29 +0800
-Subject: [PATCH 15/39] =?UTF-8?q?fix(web):=20SW=20v5=20=E2=80=94=20backgro?=
+Subject: [PATCH 15/40] =?UTF-8?q?fix(web):=20SW=20v5=20=E2=80=94=20backgro?=
  =?UTF-8?q?und=20revalidate=20navigations=20(deploy=20path=20restored)?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3723,7 +3723,7 @@ index 3ea1938..e7d6769 100644
 From 4e768ffd1beacdd2b2bd299796e6845124ca84e6 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:13:29 +0800
-Subject: [PATCH 16/39] =?UTF-8?q?fix(ui):=20usage=20stats=20readability=20?=
+Subject: [PATCH 16/40] =?UTF-8?q?fix(ui):=20usage=20stats=20readability=20?=
  =?UTF-8?q?on=20mobile=20=E2=80=94=20short=20axis=20dates,=20scrollable=20?=
  =?UTF-8?q?heatmap?=
 MIME-Version: 1.0
@@ -3804,7 +3804,7 @@ index 74f4374..4d0119e 100644
 From d56f5f9faf78d9dda1d28ca9a76b5d08d8f316b4 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:20:00 +0800
-Subject: [PATCH 17/39] fix(web,client): close stale WebSocket on hot-swap +
+Subject: [PATCH 17/40] fix(web,client): close stale WebSocket on hot-swap +
  crash telemetry
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3896,7 +3896,7 @@ index 5b4f167..e767efb 100644
 From 923e3f1ffe8145d946e5a58b7c8afb9f985e215a Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:59:13 +0800
-Subject: [PATCH 18/39] =?UTF-8?q?fix(web):=20SW=20v7=20=E2=80=94=20network?=
+Subject: [PATCH 18/40] =?UTF-8?q?fix(web):=20SW=20v7=20=E2=80=94=20network?=
  =?UTF-8?q?-first=20for=20zusage=20injected=20scripts?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3957,7 +3957,7 @@ index 829e60f..b13d167 100644
 From 53f07053a90070fad64c8bdc06bf53ca0b21b7f2 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 16:32:20 +0800
-Subject: [PATCH 19/39] =?UTF-8?q?fix(rpc,client,web):=20replay=20buffered?=
+Subject: [PATCH 19/40] =?UTF-8?q?fix(rpc,client,web):=20replay=20buffered?=
  =?UTF-8?q?=20frames=20on=20hot-swap=20=E2=80=94=20fixes=20handshake=20dea?=
  =?UTF-8?q?dlock?=
 MIME-Version: 1.0
@@ -4110,7 +4110,7 @@ index e767efb..4576c8e 100644
 From 933328973d2f59fe0a025a66fdc7d84b2fdaae44 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 16:43:24 +0800
-Subject: [PATCH 20/39] chore(services): log handshake rejection details for
+Subject: [PATCH 20/40] chore(services): log handshake rejection details for
  intermittent fault diagnosis
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4151,7 +4151,7 @@ index 9fa3233..675de02 100644
 From d2324dd4a548205ae06b50d73f31fa8d68ba26e2 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 17:17:41 +0800
-Subject: [PATCH 21/39] fix(server,ui): stop killing live connections + silent
+Subject: [PATCH 21/40] fix(server,ui): stop killing live connections + silent
  bounded retry on subscribe failure
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4258,7 +4258,7 @@ index 95cac80..bc4ef5e 100644
 From 00414c17fc77aab796aa359b713121309e73041b Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 17:59:57 +0800
-Subject: [PATCH 22/39] chore(services): log hello/initialize arrival on
+Subject: [PATCH 22/40] chore(services): log hello/initialize arrival on
  connection scope
 
 ---
@@ -4314,7 +4314,7 @@ index 675de02..2bed75f 100644
 From e5b7c3f605b4f95c6d55315f05831707d5cc353b Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 18:10:02 +0800
-Subject: [PATCH 23/39] =?UTF-8?q?fix(ui):=20handshake=20cache=20invalidati?=
+Subject: [PATCH 23/40] =?UTF-8?q?fix(ui):=20handshake=20cache=20invalidati?=
  =?UTF-8?q?on=20actually=20works=20=E2=80=94=20epoch=20compared=20on=20loo?=
  =?UTF-8?q?kup?=
 MIME-Version: 1.0
@@ -4384,7 +4384,7 @@ index 467ed58..121d219 100644
 From 75d7ec9e1db5b7c0c572b0bc85904fc345344ec0 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 18:47:59 +0800
-Subject: [PATCH 24/39] =?UTF-8?q?fix(rpc):=20re-send=20active=20event=20su?=
+Subject: [PATCH 24/40] =?UTF-8?q?fix(rpc):=20re-send=20active=20event=20su?=
  =?UTF-8?q?bscriptions=20on=20resetTransport=20=E2=80=94=20restores=20UI?=
  =?UTF-8?q?=20data=20stream?=
 MIME-Version: 1.0
@@ -4567,7 +4567,7 @@ index 0000000..d5f9e5f
 From 99b33bd49325cfb5e65555c7623b03095cbacb40 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 19:03:31 +0800
-Subject: [PATCH 25/39] fix(ui): handshake RPC timeout + extended retry budget
+Subject: [PATCH 25/40] fix(ui): handshake RPC timeout + extended retry budget
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -4664,7 +4664,7 @@ index 5515fa1..adc61c2 100644
 From 006dc2d9e2c7067638cbe56e4aca0fa8c05e838f Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 19:16:52 +0800
-Subject: [PATCH 26/39] fix(ui): retry schedule tuned to handshake-timeout
+Subject: [PATCH 26/40] fix(ui): retry schedule tuned to handshake-timeout
  rhythm; sessions store budget aligned
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4723,7 +4723,7 @@ index 7e8a36f..a195807 100644
 From 7d09a5995b05adbce584d9bbdc1ee4f45e6f70bc Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 20:29:12 +0800
-Subject: [PATCH 27/39] chore(web): drop dead reconnect-storm counter +
+Subject: [PATCH 27/40] chore(web): drop dead reconnect-storm counter +
  orphaned root test
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4851,7 +4851,7 @@ index 4576c8e..211be8c 100644
 From 8653043f7caeb8490946be163a6cf9757bee7e8f Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 21:14:43 +0800
-Subject: [PATCH 28/39] test(e2e): add connection-recovery browser scripts
+Subject: [PATCH 28/40] test(e2e): add connection-recovery browser scripts
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -5296,7 +5296,7 @@ index 0000000..2f9c324
 From 44b8212b5e3627e235ed5abbc629fe4ae6ca63a8 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 21:18:14 +0800
-Subject: [PATCH 29/39] docs: point E2E reference at published e2e/ directory
+Subject: [PATCH 29/40] docs: point E2E reference at published e2e/ directory
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -5738,7 +5738,7 @@ index bd6247f..42db58b 100644
 From a3768012f671bc84aa85a2a671fb42c099c326da Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 09:25:50 +0800
-Subject: [PATCH 30/39] fix(ui): drawer mutual exclusion via state owner +
+Subject: [PATCH 30/40] fix(ui): drawer mutual exclusion via state owner +
  wide-web overlay title offset
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -5870,7 +5870,7 @@ index f751e82..6fd32bb 100644
 From df7190a61285de2c4e851a8aad17fd8351b502b7 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 09:40:15 +0800
-Subject: [PATCH 31/39] fix(ui): mutex scoped to drawer viewport + unified top
+Subject: [PATCH 31/40] fix(ui): mutex scoped to drawer viewport + unified top
  overlay alignment
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -6049,7 +6049,7 @@ index 6fd32bb..cbef6c5 100644
 From ff4a2a2660b0b20bb7abd91cb9a8a0b4b038926f Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 10:51:59 +0800
-Subject: [PATCH 32/39] feat(services,server): cross-client task list live
+Subject: [PATCH 32/40] feat(services,server): cross-client task list live
  refresh + cron icon cleanup
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -6492,7 +6492,7 @@ index 9b33c71..aca6f3a 100644
 From 6b7cd806ba3aa05a55dfd3e2481dbb108a7b6c3c Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 11:24:23 +0800
-Subject: [PATCH 33/39] diag(ui): record welcome-gate decision trace to
+Subject: [PATCH 33/40] diag(ui): record welcome-gate decision trace to
  localStorage
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -6550,7 +6550,7 @@ index 4633505..df9a88d 100644
 From 9f40e356fafddfa85bce725c9a1e3bd4c2a76737 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 11:42:13 +0800
-Subject: [PATCH 34/39] fix(services): reconcile stale cron/off-peak markers on
+Subject: [PATCH 34/40] fix(services): reconcile stale cron/off-peak markers on
  startup
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -6923,7 +6923,7 @@ index e0c10cb..c1df1d8 100644
 From c5d110b78166875be2069da7779708b65253ee5a Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 12:28:46 +0800
-Subject: [PATCH 35/39] feat(services,desktop,server): port live overlays to
+Subject: [PATCH 35/40] feat(services,desktop,server): port live overlays to
  server window controller
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -7297,7 +7297,7 @@ index c4fcff1..dcd9f85 100644
 From 1b38d154f1d99c84bd1d058b1b1642f41176bbe1 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 13:03:49 +0800
-Subject: [PATCH 36/39] refactor(services,desktop,server): sink window
+Subject: [PATCH 36/40] refactor(services,desktop,server): sink window
  controller core, shim becomes thin wiring
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -7871,7 +7871,7 @@ index 0000000..cd902d9
 From c43b0f2ac83c0b74c96be9811abdc97b3f9fca6c Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 13:55:12 +0800
-Subject: [PATCH 37/39] chore(server): fix stale shim comment after refactor
+Subject: [PATCH 37/40] chore(server): fix stale shim comment after refactor
 
 ---
  packages/server/src/entry-http.ts | 2 +-
@@ -7897,7 +7897,7 @@ index 04fa0f6..a0b5087 100644
 From a10c098728dc573cfbccdc07acab1f0169960274 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 14:44:29 +0800
-Subject: [PATCH 38/39] fix(ui): attachment upload survives disconnect during
+Subject: [PATCH 38/40] fix(ui): attachment upload survives disconnect during
  file picking
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -8022,7 +8022,7 @@ index 1e0377c..1060990 100644
 From f04885b2cc6c4b8acc22d6f91216d62fdbae617b Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Sat, 10 Oct 2026 01:52:05 +0800
-Subject: [PATCH 39/39] feat(web): tab title pinned to Zcode + SW v8
+Subject: [PATCH 39/40] feat(web): tab title pinned to Zcode + SW v8
  network-first for boot-probe
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -8134,6 +8134,369 @@ index cd902d9..4cdee17 100644
          .catch(function () {});
      } catch (e) {}
    }
+-- 
+2.53.0
+
+
+From 6bb0b4dd47aa2ec2c011f54e745b243f17bc6bf9 Mon Sep 17 00:00:00 2001
+From: xhwxt <197754549+xhwxt@users.noreply.github.com>
+Date: Sat, 10 Oct 2026 08:21:18 +0800
+Subject: [PATCH 40/40] =?UTF-8?q?feat(server):=20pairing=20login=20?=
+ =?UTF-8?q?=E2=80=94=20one-time=20code=20=E2=86=92=2090d=20cookie,=20URL?=
+ =?UTF-8?q?=20token=20direct-connect=20kill=20switch?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+自托管 Web 配对登录（spec: packages/server/specs/selfhosted-web-pairing.md）。
+
+动机：--token 模式下唯一进入方式是把 token 放 URL，凭证长期暴露在
+浏览器历史/截图/分享链里，且换来的 Cookie 是会话级。配对码换长期
+Cookie 是治本方案，但若 token 直连仍放行，配对只是形式——因此两者
+绑定在一个开关里。
+
+行为（ZCODE_PAIRING=1 时）：
+- URL ?token= 对 /api/*、/ws 一律 401（静态资源与 /ws/host 不受影响）
+- /api/pairing/page  配对页（未配对者的自救通道，注册在中间件之前）
+- /api/pairing/pair  一次性码 → 90 天 HttpOnly+Secure Cookie → 303 /
+  （码仅存 SHA-256 摘要、10 分钟、单次、常量时间比较；每 IP 限速）
+- /api/pairing/code  生成配对码（仅持 token 者，明文只回显一次）
+- /api/pairing/status 设备可观测性（(IP,UA) 指纹 lastSeen，仅持 token）
+
+未设置 ZCODE_PAIRING 时行为与原生逐字节一致（回归保护）。
+路由注册顺序是本次的关键：配对路由在 token 中间件之前注册，
+否则未配对浏览器被 /api/* 中间件锁死在自己门外。
+
+验证：测试实例全链路验收（直连 401 / 配对页 200 / 生成 403+200 /
+303+Set-Cookie / 重放 403 / Cookie 通道 200 / 设备接口 403+200）；
+pnpm typecheck、lint、architecture:check --changed 全过。
+---
+ .../server/specs/selfhosted-web-pairing.md    |  62 +++++
+ packages/server/src/http.ts                   | 220 +++++++++++++++++-
+ 2 files changed, 280 insertions(+), 2 deletions(-)
+ create mode 100644 packages/server/specs/selfhosted-web-pairing.md
+
+diff --git a/packages/server/specs/selfhosted-web-pairing.md b/packages/server/specs/selfhosted-web-pairing.md
+new file mode 100644
+index 0000000..38e42c2
+--- /dev/null
++++ b/packages/server/specs/selfhosted-web-pairing.md
+@@ -0,0 +1,62 @@
++# 自托管 Web 配对登录（Pairing Login）
++
++## 背景与问题
++
++ZCode 自托管 Web 在 `--token` 模式下只有一种进入方式：把 token 放进 URL
++（`/?token=<64hex>`）。由此产生两个问题：
++
++1. **凭证长期暴露在 URL 中**——浏览器历史、同步、截图、误分享都会扩散这把
++   永不过期的服务端唯一凭证。
++2. token 换来的 Cookie 是**会话级**（无 Max-Age），浏览器一关就丢，用户只能
++   反复使用带 token 的长链接，形成路径依赖。
++
++目标：日常入口收敛为「无 token 的站点根 URL + 长期安全 Cookie」，
++一次性配对码换 90 天登录；**同时让 URL 携带 token 的直连方式可关闭**
++（这是引入配对的意义所在：若 token 直连仍然放行，配对只是形式）。
++
++## 产品规则
++
++- **凭证通道（优先级从高到低）**：
++  1. `ZCODE_PAIRING=1` 时：仅接受 Cookie（`zcode_lite_token`）与配对码换取流程；
++     URL `?token=` 对 `/api/*`、`/ws` 一律 401（静态资源不受影响）。
++  2. `ZCODE_PAIRING=0` 或未设置：保持原生行为（`?token=` 或 Cookie 均可），
++     已有部署升级零风险。
++- **配对码**：服务端生成，仅存 SHA-256 摘要于内存；10 分钟有效、单次使用、
++  常量时间比较。生成接口 `/api/pairing/code` 仅持 token 者可调（即管理员/
++  AI 代理通道），响应明文码只出现一次，不落日志。
++- **配对成功**：种 90 天 Cookie（`HttpOnly; Secure; SameSite=Lax`）并 303 回 `/`。
++  已持有有效 Cookie 的浏览器访问配对页时仍展示表单（允许升级临时会话），
++  不做 302 弹回（历史教训：弹回会让持有旧会话 Cookie 的用户永远无法配对）。
++- **设备可观测性**：按 (IP, User-Agent) 指纹记录 firstSeen/lastSeen/hits，
++  仅供持 token 的 `/api/pairing/status` 查询；单 token 架构下这是近似识别，
++  语义是「哪些浏览器环境在用」，不是精确设备身份。
++- **限速**：配对提交每 IP 每窗口 10 次，超限 429（纵深防御；72-bit 随机码
++  本身不可爆破）。
++- **降级**：`ZCODE_PAIRING=1` 但未配对且无 Cookie 时，`/api/*` 与 `/ws` 返回
++  401，与 token 模式原生行为一致；配对页本身永远可访问（它是自救通道）。
++
++## 接口
++
++| 方法/路径 | 鉴权 | 行为 |
++|---|---|---|
++| `GET /api/pairing/page` | 无 | 配对页 HTML（无依赖单页） |
++| `POST /api/pairing/pair` | 配对码 | 校验通过 → Set-Cookie(90d) + 303 `/`；失败 403 |
++| `POST /api/pairing/code` | token | 生成一次性码，返回明文一次 |
++| `GET /api/pairing/status` | token | 设备清单 + 活跃配对码数 |
++
++## 验收场景
++
++1. `ZCODE_PAIRING=1`：旧链接 `/?token=X` → 页面可开但 `/api/server-info` 401，
++   `/ws` 升级 401 → 直连被拦。
++2. `ZCODE_PAIRING=1`：输码 → Cookie 种下 → `/api/server-info` 200、`/ws` 正常。
++3. 配对码 10 分钟后过期；同码第二次提交 403。
++4. `ZCODE_PAIRING` 未设置：一切行为与原生 token 模式逐字节一致（回归保护）。
++5. 远控链路（relay 下发 `/ws?token=`）：`ZCODE_PAIRING=1` 时同样被拦——
++   relay 场景应保持 `ZCODE_PAIRING` 关闭，或由 relay 改发 Cookie（超出本 spec）。
++
++## 状态所有者
++
++- 配对码与设备表：`packages/server/src/http.ts` 内模块级内存态
++  （重启即清，配对码本就 10 分钟寿命；设备表为观测数据，可接受）。
++- Cookie 值仍为服务端 `--token` 本体（ZCode 单 token 架构上限，
++  单设备吊销需改协议，超出本 spec）。
+diff --git a/packages/server/src/http.ts b/packages/server/src/http.ts
+index f76f257..b4e613f 100644
+--- a/packages/server/src/http.ts
++++ b/packages/server/src/http.ts
+@@ -1,5 +1,5 @@
+ /* eslint-disable max-lines -- HTTP、WebSocket 与静态资源路由集中注册，保持同一鉴权顺序。 */
+-import { randomUUID } from "node:crypto";
++import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
+ import { readFile, stat } from "node:fs/promises";
+ import { basename, extname, relative, resolve, sep } from "node:path";
+ import { hostname } from "node:os";
+@@ -250,6 +250,155 @@ function createServerInfo(options: HttpServerOptions): ServerRemoteInfo {
+ 
+ const zcodeLiteTokenCookieName = "zcode_lite_token";
+ 
++/* ---------- 自托管 Web 配对登录（spec: packages/server/specs/selfhosted-web-pairing.md）----------
++ * ZCODE_PAIRING=1 时：URL ?token= 直连对 /api/*、/ws 一律 401（这是配对的意义：
++ * 若 token 直连仍放行，配对只是形式）；进入通道收敛为「一次性配对码换 90 天 Cookie」。
++ * 未设置时保持原生行为，已有部署升级零风险。
++ * 配对码仅存 SHA-256 摘要于内存，10 分钟有效、单次使用、常量时间比较；
++ * 设备表按 (IP, UA) 指纹记录 lastSeen（单 token 架构下的近似识别）。 */
++const PAIRING_ENABLED = readTrimmedEnv("ZCODE_PAIRING") === "1";
++const PAIRING_TTL_MS = 10 * 60 * 1000;
++const PAIRING_COOKIE_MAX_AGE = 90 * 24 * 3600;
++const PAIRING_RATE_WINDOW_MS = 10 * 60 * 1000;
++const PAIRING_RATE_MAX = 10;
++
++interface PairingChallenge {
++  digest: Buffer;
++  expiresAt: number;
++}
++const pairingChallenges: PairingChallenge[] = [];
++const pairingDevices = new Map<string, { ip: string; ua: string; firstSeenAt: number; lastSeenAt: number; hits: number }>();
++const pairingAttempts = new Map<string, number[]>();
++
++function sha256Hex(input: string): string {
++  return createHash("sha256").update(input).digest("hex");
++}
++
++function constantTimeEqual(a: string, b: string): boolean {
++  const ba = Buffer.from(a);
++  const bb = Buffer.from(b);
++  return ba.length === bb.length && ba.length > 0 && timingSafeEqual(ba, bb);
++}
++
++function createPairingChallenge(): { code: string; expiresAt: number } {
++  const code = randomBytes(9).toString("base64url"); // 12 字符、72 bit 熵
++  const expiresAt = Date.now() + PAIRING_TTL_MS;
++  pairingChallenges.push({ digest: Buffer.from(sha256Hex(code), "hex"), expiresAt });
++  const now = Date.now();
++  for (let i = pairingChallenges.length - 1; i >= 0; i--) {
++    if (pairingChallenges[i]!.expiresAt <= now) {
++      pairingChallenges.splice(i, 1);
++    }
++  }
++  return { code, expiresAt };
++}
++
++function consumePairingCode(input: string): boolean {
++  const now = Date.now();
++  const digest = Buffer.from(sha256Hex(String(input || "")), "hex");
++  for (let i = 0; i < pairingChallenges.length; i++) {
++    const entry = pairingChallenges[i]!;
++    if (entry.expiresAt <= now) {
++      continue;
++    }
++    if (digest.length === entry.digest.length && timingSafeEqual(digest, entry.digest)) {
++      pairingChallenges.splice(i, 1); // 单次使用：命中即焚
++      return true;
++    }
++  }
++  return false;
++}
++
++function clientIpFrom(c: Context): string {
++  const header = c.req.header("x-real-ip");
++  return header?.trim() || c.env?.incoming?.socket?.remoteAddress || "unknown";
++}
++
++function notePairingDevice(c: Context): void {
++  const key = sha256Hex(clientIpFrom(c) + "\n" + (c.req.header("user-agent") || ""));
++  const now = Date.now();
++  const record = pairingDevices.get(key);
++  if (!record) {
++    pairingDevices.set(key, {
++      ip: clientIpFrom(c),
++      ua: (c.req.header("user-agent") || "").slice(0, 60),
++      firstSeenAt: now,
++      lastSeenAt: now,
++      hits: 1,
++    });
++    return;
++  }
++  record.lastSeenAt = now;
++  record.hits += 1;
++}
++
++function pairingRateLimited(ip: string): boolean {
++  const now = Date.now();
++  const recent = (pairingAttempts.get(ip) || []).filter((t) => now - t < PAIRING_RATE_WINDOW_MS);
++  pairingAttempts.set(ip, recent);
++  return recent.length >= PAIRING_RATE_MAX;
++}
++
++/** 配对页：零依赖单页，移动优先（用户一生只用一两次）。 */
++const PAIRING_PAGE_HTML = `<!doctype html>
++<html lang="zh-CN">
++<head>
++<meta charset="utf-8">
++<meta name="viewport" content="width=device-width, initial-scale=1">
++<title>Zcode 配对</title>
++<style>
++  :root { color-scheme: light dark; }
++  body { font-family: system-ui, -apple-system, "PingFang SC", sans-serif; display: flex;
++         min-height: 100vh; margin: 0; align-items: center; justify-content: center; }
++  main { max-width: 22rem; padding: 2rem; width: 100%; }
++  h1 { font-size: 1.15rem; margin: 0 0 .5rem; }
++  p { font-size: .85rem; opacity: .65; line-height: 1.6; margin: 0 0 1.25rem; }
++  input { width: 100%; box-sizing: border-box; font-size: 1.05rem; letter-spacing: .08em;
++          padding: .7rem .9rem; border-radius: .6rem; border: 1px solid #8886;
++          background: transparent; }
++  button { width: 100%; margin-top: .9rem; font-size: 1rem; padding: .7rem;
++           border-radius: .6rem; border: 0; cursor: pointer;
++           background: #4f6ef2; color: #fff; }
++  button:disabled { opacity: .5; cursor: default; }
++  #msg { font-size: .85rem; margin-top: .9rem; min-height: 1.2em; }
++  .err { color: #e5484d; }
++</style>
++</head>
++<body>
++<main>
++  <h1>配对 Zcode</h1>
++  <p>输入 AI 代理给你的一次性配对码（10 分钟内有效，只能用一次）。成功后这台浏览器保持登录 90 天，日常访问就是本站首页，URL 里不再有 token。</p>
++  <form id="f">
++    <input id="code" name="code" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="配对码" required>
++    <button type="submit" id="go">配对</button>
++    <div id="msg"></div>
++  </form>
++</main>
++<script>
++  var f = document.getElementById('f'), b = document.getElementById('go'),
++      m = document.getElementById('msg'), c = document.getElementById('code');
++  f.addEventListener('submit', function (ev) {
++    ev.preventDefault();
++    b.disabled = true; m.textContent = '验证中…'; m.className = '';
++    fetch('/api/pairing/pair', {
++      method: 'POST',
++      headers: { 'Content-Type': 'application/json' },
++      body: JSON.stringify({ code: c.value.trim() })
++    }).then(function (r) {
++      if (r.ok) { location.replace('/'); return; }
++      return r.json().then(function (d) { throw new Error(d.error || ('HTTP ' + r.status)); });
++    }).catch(function (e) {
++      m.textContent = e.message || '配对失败'; m.className = 'err';
++      b.disabled = false;
++    });
++  });
++  c.focus();
++</script>
++</body>
++</html>`;
++
++
++
+ const staticMimeTypes: Record<string, string> = {
+   ".css": "text/css; charset=utf-8",
+   ".gif": "image/gif",
+@@ -290,7 +439,13 @@ function parseCookieHeader(header: string | undefined): Map<string, string> {
+ 
+ function hasValidLiteToken(c: Context, token: string): boolean {
+   const url = new URL(c.req.url);
+-  if (url.searchParams.get("token") === token) {
++  const queryToken = url.searchParams.get("token");
++  if (queryToken === token) {
++    // 配对模式下拒绝 token 直连（spec 验收场景 1）——配对的意义正在于此：
++    // 若 URL 带 token 仍放行，凭证还是会留在浏览器历史/截图/分享链里。
++    if (PAIRING_ENABLED) {
++      return false;
++    }
+     c.header(
+       "Set-Cookie",
+       `${zcodeLiteTokenCookieName}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax`,
+@@ -369,9 +524,70 @@ export function createHttpServer(
+   const hostCapabilities = createHostCapabilityStore();
+ 
+   const authToken = options.authToken?.trim();
++
++  /* ---------- 配对登录路由（仅 ZCODE_PAIRING=1 时挂载）----------
++   * 必须注册在 token 中间件**之前**：配对页与配对提交是未持凭证浏览器的
++   * 自救通道，被 /api/* 中间件拦住就死锁了（自己把自己锁在门外）。
++   * code/status 两个端点自带 token 校验，不依赖外层中间件。 */
++  if (authToken && PAIRING_ENABLED) {
++    app.get("/api/pairing/page", (c) => c.html(PAIRING_PAGE_HTML));
++
++    app.post("/api/pairing/pair", async (c) => {
++      const ip = clientIpFrom(c);
++      if (pairingRateLimited(ip)) {
++        return c.json({ error: "尝试次数过多，请稍后再试" }, 429);
++      }
++      const recent = pairingAttempts.get(ip) || [];
++      recent.push(Date.now());
++      pairingAttempts.set(ip, recent);
++
++      const body = await c.req.json().catch(() => ({}));
++      const code = String((body as { code?: unknown }).code || "");
++      if (!consumePairingCode(code)) {
++        return c.json({ error: "配对码无效或已过期" }, 403);
++      }
++      notePairingDevice(c);
++      c.header(
++        "Set-Cookie",
++        `${zcodeLiteTokenCookieName}=${encodeURIComponent(authToken)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${PAIRING_COOKIE_MAX_AGE}`,
++      );
++      c.status(303);
++      c.header("Location", "/");
++      return c.body(null);
++    });
++
++    // 生成一次性配对码：仅持 token 者（管理员/AI 代理通道）可调；明文只回显一次
++    app.post("/api/pairing/code", (c) => {
++      if (!constantTimeEqual(c.req.header("x-zcode-lite-token") || "", authToken)) {
++        return c.json({ error: "forbidden" }, 403);
++      }
++      const { code, expiresAt } = createPairingChallenge();
++      return c.json({ ok: true, code, expiresAt: new Date(expiresAt).toISOString(), oneTime: true });
++    });
++
++    // 设备可观测性：仅持 token 者可查
++    app.get("/api/pairing/status", (c) => {
++      if (!constantTimeEqual(c.req.header("x-zcode-lite-token") || "", authToken)) {
++        return c.json({ error: "forbidden" }, 403);
++      }
++      const now = Date.now();
++      return c.json({
++        ok: true,
++        activeChallenges: pairingChallenges.filter((e) => e.expiresAt > now).length,
++        devices: [...pairingDevices.values()].sort((a, b) => b.lastSeenAt - a.lastSeenAt),
++      });
++    });
++  }
++
+   if (authToken) {
+     app.use("*", async (c, next) => {
+       const pathname = new URL(c.req.url).pathname;
++      // 配对四路由自带鉴权（page/pair 面向未配对者，code/status 持 token），
++      // 跳过外层中间件，避免未配对浏览器被锁死在门外。
++      if (PAIRING_ENABLED && pathname.startsWith("/api/pairing/")) {
++        await next();
++        return;
++      }
+       const validToken = hasValidLiteToken(c, authToken);
+       if (!isTokenProtectedPath(pathname) || validToken) {
+         await next();
 -- 
 2.53.0
 

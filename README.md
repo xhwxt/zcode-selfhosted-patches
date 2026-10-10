@@ -122,7 +122,7 @@ self-hosted install is complete:
 - `0005-fix-ui-web-round2-mobile-fixes.patch` — item i
 - `0006-fix-ui-web-mobile-header-window-controls-padding-per.patch` — item j
 - `0007-fix-rpc-client-server-websocket-keepalive-liveness.patch` — item k
-  (the full keepalive → hot-swap → SW v8 evolution, 39 commits in one file —
+  (the full keepalive → hot-swap → SW v8 → pairing login evolution, 40 commits in one file —
   the intermediate commits are debugging iterations of the same feature line,
   not individually usable states. This file is a multi-commit mbox: apply it
   with the bundled script, or `git am`; a single `git apply` on the whole
@@ -193,6 +193,16 @@ iteration. Current recovery architecture (all inside patch 0007):
    (`ZCode - Web`, `ZCode - Sign In`, …). The injected probe pins it to
    `Zcode` (set once + `MutationObserver`, idempotent, silent on failure), so
    the title no longer varies with the entry mode.
+6. **Pairing login (opt-in, `ZCODE_PAIRING=1`)** — one-time code (from the
+   admin, digest-only server-side, 10 min, single use) exchanges for a
+   90-day `HttpOnly; Secure` cookie via `POST /api/pairing/pair`. With the
+   pairing mode on, the URL `?token=` direct-connect form returns 401 on
+   `/api/*` and `/ws` — the point is that a pairing login is meaningless
+   while token-in-URL still works. Admin endpoints (`/api/pairing/code`,
+   `/api/pairing/status`) require the server token; submit is per-IP
+   rate-limited; devices are tracked by (IP, UA) fingerprint for observability.
+   Default off — deployments without the flag behave byte-for-byte like
+   upstream token mode.
 
 Known behavioral notes:
 - `document.wasDiscarded` reloads (Android Chrome memory management) still

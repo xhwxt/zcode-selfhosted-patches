@@ -1925,6 +1925,74 @@ index 0000000..3eaa17a
 +  assert.equal(echoedFrame.readUInt32BE(5), 1, "回显帧 ack 必须为 1");
 +  void b;
 +});
+diff --git a/packages/server/specs/selfhosted-web-pairing.md b/packages/server/specs/selfhosted-web-pairing.md
+new file mode 100644
+index 0000000..38e42c2
+--- /dev/null
++++ b/packages/server/specs/selfhosted-web-pairing.md
+@@ -0,0 +1,62 @@
++# 自托管 Web 配对登录（Pairing Login）
++
++## 背景与问题
++
++ZCode 自托管 Web 在 `--token` 模式下只有一种进入方式：把 token 放进 URL
++（`/?token=<64hex>`）。由此产生两个问题：
++
++1. **凭证长期暴露在 URL 中**——浏览器历史、同步、截图、误分享都会扩散这把
++   永不过期的服务端唯一凭证。
++2. token 换来的 Cookie 是**会话级**（无 Max-Age），浏览器一关就丢，用户只能
++   反复使用带 token 的长链接，形成路径依赖。
++
++目标：日常入口收敛为「无 token 的站点根 URL + 长期安全 Cookie」，
++一次性配对码换 90 天登录；**同时让 URL 携带 token 的直连方式可关闭**
++（这是引入配对的意义所在：若 token 直连仍然放行，配对只是形式）。
++
++## 产品规则
++
++- **凭证通道（优先级从高到低）**：
++  1. `ZCODE_PAIRING=1` 时：仅接受 Cookie（`zcode_lite_token`）与配对码换取流程；
++     URL `?token=` 对 `/api/*`、`/ws` 一律 401（静态资源不受影响）。
++  2. `ZCODE_PAIRING=0` 或未设置：保持原生行为（`?token=` 或 Cookie 均可），
++     已有部署升级零风险。
++- **配对码**：服务端生成，仅存 SHA-256 摘要于内存；10 分钟有效、单次使用、
++  常量时间比较。生成接口 `/api/pairing/code` 仅持 token 者可调（即管理员/
++  AI 代理通道），响应明文码只出现一次，不落日志。
++- **配对成功**：种 90 天 Cookie（`HttpOnly; Secure; SameSite=Lax`）并 303 回 `/`。
++  已持有有效 Cookie 的浏览器访问配对页时仍展示表单（允许升级临时会话），
++  不做 302 弹回（历史教训：弹回会让持有旧会话 Cookie 的用户永远无法配对）。
++- **设备可观测性**：按 (IP, User-Agent) 指纹记录 firstSeen/lastSeen/hits，
++  仅供持 token 的 `/api/pairing/status` 查询；单 token 架构下这是近似识别，
++  语义是「哪些浏览器环境在用」，不是精确设备身份。
++- **限速**：配对提交每 IP 每窗口 10 次，超限 429（纵深防御；72-bit 随机码
++  本身不可爆破）。
++- **降级**：`ZCODE_PAIRING=1` 但未配对且无 Cookie 时，`/api/*` 与 `/ws` 返回
++  401，与 token 模式原生行为一致；配对页本身永远可访问（它是自救通道）。
++
++## 接口
++
++| 方法/路径 | 鉴权 | 行为 |
++|---|---|---|
++| `GET /api/pairing/page` | 无 | 配对页 HTML（无依赖单页） |
++| `POST /api/pairing/pair` | 配对码 | 校验通过 → Set-Cookie(90d) + 303 `/`；失败 403 |
++| `POST /api/pairing/code` | token | 生成一次性码，返回明文一次 |
++| `GET /api/pairing/status` | token | 设备清单 + 活跃配对码数 |
++
++## 验收场景
++
++1. `ZCODE_PAIRING=1`：旧链接 `/?token=X` → 页面可开但 `/api/server-info` 401，
++   `/ws` 升级 401 → 直连被拦。
++2. `ZCODE_PAIRING=1`：输码 → Cookie 种下 → `/api/server-info` 200、`/ws` 正常。
++3. 配对码 10 分钟后过期；同码第二次提交 403。
++4. `ZCODE_PAIRING` 未设置：一切行为与原生 token 模式逐字节一致（回归保护）。
++5. 远控链路（relay 下发 `/ws?token=`）：`ZCODE_PAIRING=1` 时同样被拦——
++   relay 场景应保持 `ZCODE_PAIRING` 关闭，或由 relay 改发 Cookie（超出本 spec）。
++
++## 状态所有者
++
++- 配对码与设备表：`packages/server/src/http.ts` 内模块级内存态
++  （重启即清，配对码本就 10 分钟寿命；设备表为观测数据，可接受）。
++- Cookie 值仍为服务端 `--token` 本体（ZCode 单 token 架构上限，
++  单设备吊销需改协议，超出本 spec）。
 diff --git a/packages/server/src/entry-http.ts b/packages/server/src/entry-http.ts
 index fa44e29..a0b5087 100644
 --- a/packages/server/src/entry-http.ts
@@ -1966,9 +2034,16 @@ index fa44e29..a0b5087 100644
      ...(host ? { host } : {}),
      ...(staticRoot ? { staticRoot, spaFallback: true } : {}),
 diff --git a/packages/server/src/http.ts b/packages/server/src/http.ts
-index 9af1bb1..f76f257 100644
+index 9af1bb1..b4e613f 100644
 --- a/packages/server/src/http.ts
 +++ b/packages/server/src/http.ts
+@@ -1,5 +1,5 @@
+ /* eslint-disable max-lines -- HTTP、WebSocket 与静态资源路由集中注册，保持同一鉴权顺序。 */
+-import { randomUUID } from "node:crypto";
++import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
+ import { readFile, stat } from "node:fs/promises";
+ import { basename, extname, relative, resolve, sep } from "node:path";
+ import { hostname } from "node:os";
 @@ -26,6 +26,7 @@ import {
    IBotsService,
    IProviderProvisioningTargetService,
@@ -2063,7 +2138,249 @@ index 9af1bb1..f76f257 100644
      },
    ];
  }
-@@ -454,10 +518,14 @@ export function createHttpServer(
+@@ -186,6 +250,155 @@ function createServerInfo(options: HttpServerOptions): ServerRemoteInfo {
+ 
+ const zcodeLiteTokenCookieName = "zcode_lite_token";
+ 
++/* ---------- 自托管 Web 配对登录（spec: packages/server/specs/selfhosted-web-pairing.md）----------
++ * ZCODE_PAIRING=1 时：URL ?token= 直连对 /api/*、/ws 一律 401（这是配对的意义：
++ * 若 token 直连仍放行，配对只是形式）；进入通道收敛为「一次性配对码换 90 天 Cookie」。
++ * 未设置时保持原生行为，已有部署升级零风险。
++ * 配对码仅存 SHA-256 摘要于内存，10 分钟有效、单次使用、常量时间比较；
++ * 设备表按 (IP, UA) 指纹记录 lastSeen（单 token 架构下的近似识别）。 */
++const PAIRING_ENABLED = readTrimmedEnv("ZCODE_PAIRING") === "1";
++const PAIRING_TTL_MS = 10 * 60 * 1000;
++const PAIRING_COOKIE_MAX_AGE = 90 * 24 * 3600;
++const PAIRING_RATE_WINDOW_MS = 10 * 60 * 1000;
++const PAIRING_RATE_MAX = 10;
++
++interface PairingChallenge {
++  digest: Buffer;
++  expiresAt: number;
++}
++const pairingChallenges: PairingChallenge[] = [];
++const pairingDevices = new Map<string, { ip: string; ua: string; firstSeenAt: number; lastSeenAt: number; hits: number }>();
++const pairingAttempts = new Map<string, number[]>();
++
++function sha256Hex(input: string): string {
++  return createHash("sha256").update(input).digest("hex");
++}
++
++function constantTimeEqual(a: string, b: string): boolean {
++  const ba = Buffer.from(a);
++  const bb = Buffer.from(b);
++  return ba.length === bb.length && ba.length > 0 && timingSafeEqual(ba, bb);
++}
++
++function createPairingChallenge(): { code: string; expiresAt: number } {
++  const code = randomBytes(9).toString("base64url"); // 12 字符、72 bit 熵
++  const expiresAt = Date.now() + PAIRING_TTL_MS;
++  pairingChallenges.push({ digest: Buffer.from(sha256Hex(code), "hex"), expiresAt });
++  const now = Date.now();
++  for (let i = pairingChallenges.length - 1; i >= 0; i--) {
++    if (pairingChallenges[i]!.expiresAt <= now) {
++      pairingChallenges.splice(i, 1);
++    }
++  }
++  return { code, expiresAt };
++}
++
++function consumePairingCode(input: string): boolean {
++  const now = Date.now();
++  const digest = Buffer.from(sha256Hex(String(input || "")), "hex");
++  for (let i = 0; i < pairingChallenges.length; i++) {
++    const entry = pairingChallenges[i]!;
++    if (entry.expiresAt <= now) {
++      continue;
++    }
++    if (digest.length === entry.digest.length && timingSafeEqual(digest, entry.digest)) {
++      pairingChallenges.splice(i, 1); // 单次使用：命中即焚
++      return true;
++    }
++  }
++  return false;
++}
++
++function clientIpFrom(c: Context): string {
++  const header = c.req.header("x-real-ip");
++  return header?.trim() || c.env?.incoming?.socket?.remoteAddress || "unknown";
++}
++
++function notePairingDevice(c: Context): void {
++  const key = sha256Hex(clientIpFrom(c) + "\n" + (c.req.header("user-agent") || ""));
++  const now = Date.now();
++  const record = pairingDevices.get(key);
++  if (!record) {
++    pairingDevices.set(key, {
++      ip: clientIpFrom(c),
++      ua: (c.req.header("user-agent") || "").slice(0, 60),
++      firstSeenAt: now,
++      lastSeenAt: now,
++      hits: 1,
++    });
++    return;
++  }
++  record.lastSeenAt = now;
++  record.hits += 1;
++}
++
++function pairingRateLimited(ip: string): boolean {
++  const now = Date.now();
++  const recent = (pairingAttempts.get(ip) || []).filter((t) => now - t < PAIRING_RATE_WINDOW_MS);
++  pairingAttempts.set(ip, recent);
++  return recent.length >= PAIRING_RATE_MAX;
++}
++
++/** 配对页：零依赖单页，移动优先（用户一生只用一两次）。 */
++const PAIRING_PAGE_HTML = `<!doctype html>
++<html lang="zh-CN">
++<head>
++<meta charset="utf-8">
++<meta name="viewport" content="width=device-width, initial-scale=1">
++<title>Zcode 配对</title>
++<style>
++  :root { color-scheme: light dark; }
++  body { font-family: system-ui, -apple-system, "PingFang SC", sans-serif; display: flex;
++         min-height: 100vh; margin: 0; align-items: center; justify-content: center; }
++  main { max-width: 22rem; padding: 2rem; width: 100%; }
++  h1 { font-size: 1.15rem; margin: 0 0 .5rem; }
++  p { font-size: .85rem; opacity: .65; line-height: 1.6; margin: 0 0 1.25rem; }
++  input { width: 100%; box-sizing: border-box; font-size: 1.05rem; letter-spacing: .08em;
++          padding: .7rem .9rem; border-radius: .6rem; border: 1px solid #8886;
++          background: transparent; }
++  button { width: 100%; margin-top: .9rem; font-size: 1rem; padding: .7rem;
++           border-radius: .6rem; border: 0; cursor: pointer;
++           background: #4f6ef2; color: #fff; }
++  button:disabled { opacity: .5; cursor: default; }
++  #msg { font-size: .85rem; margin-top: .9rem; min-height: 1.2em; }
++  .err { color: #e5484d; }
++</style>
++</head>
++<body>
++<main>
++  <h1>配对 Zcode</h1>
++  <p>输入 AI 代理给你的一次性配对码（10 分钟内有效，只能用一次）。成功后这台浏览器保持登录 90 天，日常访问就是本站首页，URL 里不再有 token。</p>
++  <form id="f">
++    <input id="code" name="code" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="配对码" required>
++    <button type="submit" id="go">配对</button>
++    <div id="msg"></div>
++  </form>
++</main>
++<script>
++  var f = document.getElementById('f'), b = document.getElementById('go'),
++      m = document.getElementById('msg'), c = document.getElementById('code');
++  f.addEventListener('submit', function (ev) {
++    ev.preventDefault();
++    b.disabled = true; m.textContent = '验证中…'; m.className = '';
++    fetch('/api/pairing/pair', {
++      method: 'POST',
++      headers: { 'Content-Type': 'application/json' },
++      body: JSON.stringify({ code: c.value.trim() })
++    }).then(function (r) {
++      if (r.ok) { location.replace('/'); return; }
++      return r.json().then(function (d) { throw new Error(d.error || ('HTTP ' + r.status)); });
++    }).catch(function (e) {
++      m.textContent = e.message || '配对失败'; m.className = 'err';
++      b.disabled = false;
++    });
++  });
++  c.focus();
++</script>
++</body>
++</html>`;
++
++
++
+ const staticMimeTypes: Record<string, string> = {
+   ".css": "text/css; charset=utf-8",
+   ".gif": "image/gif",
+@@ -226,7 +439,13 @@ function parseCookieHeader(header: string | undefined): Map<string, string> {
+ 
+ function hasValidLiteToken(c: Context, token: string): boolean {
+   const url = new URL(c.req.url);
+-  if (url.searchParams.get("token") === token) {
++  const queryToken = url.searchParams.get("token");
++  if (queryToken === token) {
++    // 配对模式下拒绝 token 直连（spec 验收场景 1）——配对的意义正在于此：
++    // 若 URL 带 token 仍放行，凭证还是会留在浏览器历史/截图/分享链里。
++    if (PAIRING_ENABLED) {
++      return false;
++    }
+     c.header(
+       "Set-Cookie",
+       `${zcodeLiteTokenCookieName}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax`,
+@@ -305,9 +524,70 @@ export function createHttpServer(
+   const hostCapabilities = createHostCapabilityStore();
+ 
+   const authToken = options.authToken?.trim();
++
++  /* ---------- 配对登录路由（仅 ZCODE_PAIRING=1 时挂载）----------
++   * 必须注册在 token 中间件**之前**：配对页与配对提交是未持凭证浏览器的
++   * 自救通道，被 /api/* 中间件拦住就死锁了（自己把自己锁在门外）。
++   * code/status 两个端点自带 token 校验，不依赖外层中间件。 */
++  if (authToken && PAIRING_ENABLED) {
++    app.get("/api/pairing/page", (c) => c.html(PAIRING_PAGE_HTML));
++
++    app.post("/api/pairing/pair", async (c) => {
++      const ip = clientIpFrom(c);
++      if (pairingRateLimited(ip)) {
++        return c.json({ error: "尝试次数过多，请稍后再试" }, 429);
++      }
++      const recent = pairingAttempts.get(ip) || [];
++      recent.push(Date.now());
++      pairingAttempts.set(ip, recent);
++
++      const body = await c.req.json().catch(() => ({}));
++      const code = String((body as { code?: unknown }).code || "");
++      if (!consumePairingCode(code)) {
++        return c.json({ error: "配对码无效或已过期" }, 403);
++      }
++      notePairingDevice(c);
++      c.header(
++        "Set-Cookie",
++        `${zcodeLiteTokenCookieName}=${encodeURIComponent(authToken)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${PAIRING_COOKIE_MAX_AGE}`,
++      );
++      c.status(303);
++      c.header("Location", "/");
++      return c.body(null);
++    });
++
++    // 生成一次性配对码：仅持 token 者（管理员/AI 代理通道）可调；明文只回显一次
++    app.post("/api/pairing/code", (c) => {
++      if (!constantTimeEqual(c.req.header("x-zcode-lite-token") || "", authToken)) {
++        return c.json({ error: "forbidden" }, 403);
++      }
++      const { code, expiresAt } = createPairingChallenge();
++      return c.json({ ok: true, code, expiresAt: new Date(expiresAt).toISOString(), oneTime: true });
++    });
++
++    // 设备可观测性：仅持 token 者可查
++    app.get("/api/pairing/status", (c) => {
++      if (!constantTimeEqual(c.req.header("x-zcode-lite-token") || "", authToken)) {
++        return c.json({ error: "forbidden" }, 403);
++      }
++      const now = Date.now();
++      return c.json({
++        ok: true,
++        activeChallenges: pairingChallenges.filter((e) => e.expiresAt > now).length,
++        devices: [...pairingDevices.values()].sort((a, b) => b.lastSeenAt - a.lastSeenAt),
++      });
++    });
++  }
++
+   if (authToken) {
+     app.use("*", async (c, next) => {
+       const pathname = new URL(c.req.url).pathname;
++      // 配对四路由自带鉴权（page/pair 面向未配对者，code/status 持 token），
++      // 跳过外层中间件，避免未配对浏览器被锁死在门外。
++      if (PAIRING_ENABLED && pathname.startsWith("/api/pairing/")) {
++        await next();
++        return;
++      }
+       const validToken = hasValidLiteToken(c, authToken);
+       if (!isTokenProtectedPath(pathname) || validToken) {
+         await next();
+@@ -454,10 +734,14 @@ export function createHttpServer(
        if (!filePath) {
          return c.notFound();
        }
