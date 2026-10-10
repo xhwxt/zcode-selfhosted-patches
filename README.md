@@ -122,7 +122,7 @@ self-hosted install is complete:
 - `0005-fix-ui-web-round2-mobile-fixes.patch` — item i
 - `0006-fix-ui-web-mobile-header-window-controls-padding-per.patch` — item j
 - `0007-fix-rpc-client-server-websocket-keepalive-liveness.patch` — item k
-  (the full keepalive → hot-swap → SW v8 → pairing login evolution, 41 commits in one file —
+  (the full keepalive → hot-swap → SW v8 → pairing login evolution, 42 commits in one file —
   the intermediate commits are debugging iterations of the same feature line,
   not individually usable states. This file is a multi-commit mbox: apply it
   with the bundled script, or `git am`; a single `git apply` on the whole
