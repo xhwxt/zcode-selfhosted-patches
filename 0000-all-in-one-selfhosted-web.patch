@@ -1927,10 +1927,10 @@ index 0000000..3eaa17a
 +});
 diff --git a/packages/server/specs/selfhosted-web-pairing.md b/packages/server/specs/selfhosted-web-pairing.md
 new file mode 100644
-index 0000000..38e42c2
+index 0000000..40d3f29
 --- /dev/null
 +++ b/packages/server/specs/selfhosted-web-pairing.md
-@@ -0,0 +1,62 @@
+@@ -0,0 +1,66 @@
 +# 自托管 Web 配对登录（Pairing Login）
 +
 +## 背景与问题
@@ -1982,6 +1982,10 @@ index 0000000..38e42c2
 +1. `ZCODE_PAIRING=1`：旧链接 `/?token=X` → 页面可开但 `/api/server-info` 401，
 +   `/ws` 升级 401 → 直连被拦。
 +2. `ZCODE_PAIRING=1`：输码 → Cookie 种下 → `/api/server-info` 200、`/ws` 正常。
++2b. `ZCODE_PAIRING=1`：未持 Cookie 的浏览器打开 `/`（或任意 SPA 路由，即解析落到
++    index.html 的导航）→ 302 `/api/pairing/page`——用户被引导到登录页，而不是
++    卡在「连接断开」的报错界面（2026-10-10 用户反馈：被拦应该跳登录页）。静态
++    资源（bundle/sw.js/图标）与 API/WS 的 401 语义不变。
 +3. 配对码 10 分钟后过期；同码第二次提交 403。
 +4. `ZCODE_PAIRING` 未设置：一切行为与原生 token 模式逐字节一致（回归保护）。
 +5. 远控链路（relay 下发 `/ws?token=`）：`ZCODE_PAIRING=1` 时同样被拦——
@@ -2034,7 +2038,7 @@ index fa44e29..a0b5087 100644
      ...(host ? { host } : {}),
      ...(staticRoot ? { staticRoot, spaFallback: true } : {}),
 diff --git a/packages/server/src/http.ts b/packages/server/src/http.ts
-index 9af1bb1..b4e613f 100644
+index 9af1bb1..6778a2e 100644
 --- a/packages/server/src/http.ts
 +++ b/packages/server/src/http.ts
 @@ -1,5 +1,5 @@
@@ -2380,10 +2384,21 @@ index 9af1bb1..b4e613f 100644
        const validToken = hasValidLiteToken(c, authToken);
        if (!isTokenProtectedPath(pathname) || validToken) {
          await next();
-@@ -454,10 +734,14 @@ export function createHttpServer(
+@@ -454,10 +734,25 @@ export function createHttpServer(
        if (!filePath) {
          return c.notFound();
        }
++      // 配对模式下，SPA 入口页（根路径与 SPA fallback 落到的 index.html）在
++      // 未持凭证时跳转登录页，而不是让用户卡在"连接断开"的报错界面上。
++      // 真实静态资源（bundle/sw.js/图标）不受影响；API 与 WS 保持 401 原语义。
++      // 判定用"解析结果是否 index.html"而非路径名——SPA 任意路由都落同一入口。
++      if (
++        PAIRING_ENABLED &&
++        filePath.endsWith("index.html") &&
++        !hasValidLiteToken(c, authToken)
++      ) {
++        return c.redirect("/api/pairing/page", 302);
++      }
 +      // sw.js 必须返回 no-cache：SW 更新检查依赖浏览器字节对比，immutable 会让
 +      // 缓存版本永远无法失效（shell 缓存随之僵死）。
 +      const isServiceWorker = filePath.endsWith("sw.js");

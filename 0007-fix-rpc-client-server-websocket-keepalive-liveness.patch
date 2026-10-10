@@ -1,7 +1,7 @@
 From de68d20b699ddcb30f64f6237153c96a13aab14f Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:13:39 +0800
-Subject: [PATCH 01/40] fix(rpc,client,server): websocket keepalive liveness
+Subject: [PATCH 01/41] fix(rpc,client,server): websocket keepalive liveness
  for half-open detection
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1061,7 +1061,7 @@ index 8a8a827..95cac80 100644
 From 114e9d43071f3a3c8ba7b813022c1bc848822734 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 02:38:20 +0800
-Subject: [PATCH 02/40] fix(client,web): heartbeat deadline fires
+Subject: [PATCH 02/41] fix(client,web): heartbeat deadline fires
  onHeartbeatDead before close
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1147,7 +1147,7 @@ index 305ea3f..7c36e7d 100644
 From 99fb8f4e201e5b5e0b1a1ca20237730f177483cf Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 08:34:01 +0800
-Subject: [PATCH 03/40] perf(web,client): seamless background returns, faster
+Subject: [PATCH 03/41] perf(web,client): seamless background returns, faster
  reconnect, lazy banner
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1423,7 +1423,7 @@ index 7c36e7d..ae5c3bb 100644
 From 368a50b1b68be87966fced31424aef5486bf39d0 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 09:24:05 +0800
-Subject: [PATCH 04/40] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
+Subject: [PATCH 04/41] =?UTF-8?q?feat(ui,web):=20in-place=20recovery=20?=
  =?UTF-8?q?=E2=80=94=20no=20React=20remount=20on=20soft=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1847,7 +1847,7 @@ index ae5c3bb..dcdef96 100644
 From 07843f5a5f00afa71faea45282c31bf59150970a Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:16:18 +0800
-Subject: [PATCH 05/40] fix(ui): md preview text fences invisible on dark UI +
+Subject: [PATCH 05/41] fix(ui): md preview text fences invisible on dark UI +
  mobile settings row squeeze
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2010,7 +2010,7 @@ index 25cd56d..63e8439 100644
 From eb1e5605eeeb99b042ae219b009abd4e91451973 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:40:45 +0800
-Subject: [PATCH 06/40] fix(web): remove ALL page reloads from connection paths
+Subject: [PATCH 06/41] fix(web): remove ALL page reloads from connection paths
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -2294,7 +2294,7 @@ index dcdef96..4311a39 100644
 From 354f07061e285014e1004b93b91e60af98dc2c82 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 10:56:25 +0800
-Subject: [PATCH 07/40] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20navi?=
+Subject: [PATCH 07/41] =?UTF-8?q?fix(web):=20SW=20cache-first=20for=20navi?=
  =?UTF-8?q?gation=20=E2=80=94=20zero=20network=20on=20foreground=20return?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2435,7 +2435,7 @@ index 980b78e..4ab2def 100644
 From db282af6c0f949f2f3bfd4b6850b8475c4851c0e Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 11:34:06 +0800
-Subject: [PATCH 08/40] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transp?=
+Subject: [PATCH 08/41] =?UTF-8?q?feat(rpc,client,web):=20hot-swap=20transp?=
  =?UTF-8?q?ort=20=E2=80=94=20zero=20visual=20change=20on=20reconnect?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2817,7 +2817,7 @@ index 4311a39..7790234 100644
 From 1575737a4f601d74e09dc19894da96d19ed797b6 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:04:53 +0800
-Subject: [PATCH 09/40] =?UTF-8?q?fix(ui,web):=20re-subscribe=20stores=20af?=
+Subject: [PATCH 09/41] =?UTF-8?q?fix(ui,web):=20re-subscribe=20stores=20af?=
  =?UTF-8?q?ter=20hot-swap=20=E2=80=94=20data=20flows=20again?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3170,7 +3170,7 @@ index 7790234..e5a91b0 100644
 From 1f43dc774e46a27205dfe0a0ea6d03b0eec51640 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:25:49 +0800
-Subject: [PATCH 10/40] =?UTF-8?q?fix(ui):=20model=20submenu=20squeeze=20on?=
+Subject: [PATCH 10/41] =?UTF-8?q?fix(ui):=20model=20submenu=20squeeze=20on?=
  =?UTF-8?q?=20mobile=20=E2=80=94=20wrap=20names,=20width=20follows=20viewp?=
  =?UTF-8?q?ort?=
 MIME-Version: 1.0
@@ -3236,7 +3236,7 @@ index c2387ed..61943f9 100644
 From 1b11d905c0e6eab7a26ae2240fa0f0ff405ac961 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 12:31:29 +0800
-Subject: [PATCH 11/40] =?UTF-8?q?fix(ui,web):=20re-handshake=20after=20hot?=
+Subject: [PATCH 11/41] =?UTF-8?q?fix(ui,web):=20re-handshake=20after=20hot?=
  =?UTF-8?q?-swap=20=E2=80=94=20fixes=20fault.connection.handshakeRequired?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3360,7 +3360,7 @@ index e5a91b0..ea4c885 100644
 From 02f5be69a51cf66104acb5a2d8fef4ab9b7e4a29 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 13:51:57 +0800
-Subject: [PATCH 12/40] fix(web): SW v3 cache bust + /sw-reset.html escape
+Subject: [PATCH 12/41] fix(web): SW v3 cache bust + /sw-reset.html escape
  hatch
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3464,7 +3464,7 @@ index 4ab2def..6338372 100644
 From 08dcd3f515dc280d359409e6b364daaa385fdd22 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:19:51 +0800
-Subject: [PATCH 13/40] =?UTF-8?q?fix(web):=20SW=20v4=20=E2=80=94=20drop=20?=
+Subject: [PATCH 13/41] =?UTF-8?q?fix(web):=20SW=20v4=20=E2=80=94=20drop=20?=
  =?UTF-8?q?dirty=20/assets/=20prefetch=20key=20from=20install?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3527,7 +3527,7 @@ index 6338372..3ea1938 100644
 From 201e0c331c779b39c463fd436c4ae22ea39497c7 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:35:37 +0800
-Subject: [PATCH 14/40] =?UTF-8?q?fix(web):=20ignore=20stale=20close=20even?=
+Subject: [PATCH 14/41] =?UTF-8?q?fix(web):=20ignore=20stale=20close=20even?=
  =?UTF-8?q?ts=20=E2=80=94=20stops=20reconnect=20loop=20after=20hot-swap?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3598,7 +3598,7 @@ index ea4c885..5b4f167 100644
 From c5306790dd763477ee4c1ed5b018f83cff5104b6 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 14:58:29 +0800
-Subject: [PATCH 15/40] =?UTF-8?q?fix(web):=20SW=20v5=20=E2=80=94=20backgro?=
+Subject: [PATCH 15/41] =?UTF-8?q?fix(web):=20SW=20v5=20=E2=80=94=20backgro?=
  =?UTF-8?q?und=20revalidate=20navigations=20(deploy=20path=20restored)?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3723,7 +3723,7 @@ index 3ea1938..e7d6769 100644
 From 4e768ffd1beacdd2b2bd299796e6845124ca84e6 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:13:29 +0800
-Subject: [PATCH 16/40] =?UTF-8?q?fix(ui):=20usage=20stats=20readability=20?=
+Subject: [PATCH 16/41] =?UTF-8?q?fix(ui):=20usage=20stats=20readability=20?=
  =?UTF-8?q?on=20mobile=20=E2=80=94=20short=20axis=20dates,=20scrollable=20?=
  =?UTF-8?q?heatmap?=
 MIME-Version: 1.0
@@ -3804,7 +3804,7 @@ index 74f4374..4d0119e 100644
 From d56f5f9faf78d9dda1d28ca9a76b5d08d8f316b4 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:20:00 +0800
-Subject: [PATCH 17/40] fix(web,client): close stale WebSocket on hot-swap +
+Subject: [PATCH 17/41] fix(web,client): close stale WebSocket on hot-swap +
  crash telemetry
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3896,7 +3896,7 @@ index 5b4f167..e767efb 100644
 From 923e3f1ffe8145d946e5a58b7c8afb9f985e215a Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 15:59:13 +0800
-Subject: [PATCH 18/40] =?UTF-8?q?fix(web):=20SW=20v7=20=E2=80=94=20network?=
+Subject: [PATCH 18/41] =?UTF-8?q?fix(web):=20SW=20v7=20=E2=80=94=20network?=
  =?UTF-8?q?-first=20for=20zusage=20injected=20scripts?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -3957,7 +3957,7 @@ index 829e60f..b13d167 100644
 From 53f07053a90070fad64c8bdc06bf53ca0b21b7f2 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 16:32:20 +0800
-Subject: [PATCH 19/40] =?UTF-8?q?fix(rpc,client,web):=20replay=20buffered?=
+Subject: [PATCH 19/41] =?UTF-8?q?fix(rpc,client,web):=20replay=20buffered?=
  =?UTF-8?q?=20frames=20on=20hot-swap=20=E2=80=94=20fixes=20handshake=20dea?=
  =?UTF-8?q?dlock?=
 MIME-Version: 1.0
@@ -4110,7 +4110,7 @@ index e767efb..4576c8e 100644
 From 933328973d2f59fe0a025a66fdc7d84b2fdaae44 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 16:43:24 +0800
-Subject: [PATCH 20/40] chore(services): log handshake rejection details for
+Subject: [PATCH 20/41] chore(services): log handshake rejection details for
  intermittent fault diagnosis
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4151,7 +4151,7 @@ index 9fa3233..675de02 100644
 From d2324dd4a548205ae06b50d73f31fa8d68ba26e2 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 17:17:41 +0800
-Subject: [PATCH 21/40] fix(server,ui): stop killing live connections + silent
+Subject: [PATCH 21/41] fix(server,ui): stop killing live connections + silent
  bounded retry on subscribe failure
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4258,7 +4258,7 @@ index 95cac80..bc4ef5e 100644
 From 00414c17fc77aab796aa359b713121309e73041b Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 17:59:57 +0800
-Subject: [PATCH 22/40] chore(services): log hello/initialize arrival on
+Subject: [PATCH 22/41] chore(services): log hello/initialize arrival on
  connection scope
 
 ---
@@ -4314,7 +4314,7 @@ index 675de02..2bed75f 100644
 From e5b7c3f605b4f95c6d55315f05831707d5cc353b Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 18:10:02 +0800
-Subject: [PATCH 23/40] =?UTF-8?q?fix(ui):=20handshake=20cache=20invalidati?=
+Subject: [PATCH 23/41] =?UTF-8?q?fix(ui):=20handshake=20cache=20invalidati?=
  =?UTF-8?q?on=20actually=20works=20=E2=80=94=20epoch=20compared=20on=20loo?=
  =?UTF-8?q?kup?=
 MIME-Version: 1.0
@@ -4384,7 +4384,7 @@ index 467ed58..121d219 100644
 From 75d7ec9e1db5b7c0c572b0bc85904fc345344ec0 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 18:47:59 +0800
-Subject: [PATCH 24/40] =?UTF-8?q?fix(rpc):=20re-send=20active=20event=20su?=
+Subject: [PATCH 24/41] =?UTF-8?q?fix(rpc):=20re-send=20active=20event=20su?=
  =?UTF-8?q?bscriptions=20on=20resetTransport=20=E2=80=94=20restores=20UI?=
  =?UTF-8?q?=20data=20stream?=
 MIME-Version: 1.0
@@ -4567,7 +4567,7 @@ index 0000000..d5f9e5f
 From 99b33bd49325cfb5e65555c7623b03095cbacb40 Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 19:03:31 +0800
-Subject: [PATCH 25/40] fix(ui): handshake RPC timeout + extended retry budget
+Subject: [PATCH 25/41] fix(ui): handshake RPC timeout + extended retry budget
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -4664,7 +4664,7 @@ index 5515fa1..adc61c2 100644
 From 006dc2d9e2c7067638cbe56e4aca0fa8c05e838f Mon Sep 17 00:00:00 2001
 From: xhwxt <xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 19:16:52 +0800
-Subject: [PATCH 26/40] fix(ui): retry schedule tuned to handshake-timeout
+Subject: [PATCH 26/41] fix(ui): retry schedule tuned to handshake-timeout
  rhythm; sessions store budget aligned
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4723,7 +4723,7 @@ index 7e8a36f..a195807 100644
 From 7d09a5995b05adbce584d9bbdc1ee4f45e6f70bc Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 20:29:12 +0800
-Subject: [PATCH 27/40] chore(web): drop dead reconnect-storm counter +
+Subject: [PATCH 27/41] chore(web): drop dead reconnect-storm counter +
  orphaned root test
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4851,7 +4851,7 @@ index 4576c8e..211be8c 100644
 From 8653043f7caeb8490946be163a6cf9757bee7e8f Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 21:14:43 +0800
-Subject: [PATCH 28/40] test(e2e): add connection-recovery browser scripts
+Subject: [PATCH 28/41] test(e2e): add connection-recovery browser scripts
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -5296,7 +5296,7 @@ index 0000000..2f9c324
 From 44b8212b5e3627e235ed5abbc629fe4ae6ca63a8 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Thu, 8 Oct 2026 21:18:14 +0800
-Subject: [PATCH 29/40] docs: point E2E reference at published e2e/ directory
+Subject: [PATCH 29/41] docs: point E2E reference at published e2e/ directory
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -5738,7 +5738,7 @@ index bd6247f..42db58b 100644
 From a3768012f671bc84aa85a2a671fb42c099c326da Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 09:25:50 +0800
-Subject: [PATCH 30/40] fix(ui): drawer mutual exclusion via state owner +
+Subject: [PATCH 30/41] fix(ui): drawer mutual exclusion via state owner +
  wide-web overlay title offset
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -5870,7 +5870,7 @@ index f751e82..6fd32bb 100644
 From df7190a61285de2c4e851a8aad17fd8351b502b7 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 09:40:15 +0800
-Subject: [PATCH 31/40] fix(ui): mutex scoped to drawer viewport + unified top
+Subject: [PATCH 31/41] fix(ui): mutex scoped to drawer viewport + unified top
  overlay alignment
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -6049,7 +6049,7 @@ index 6fd32bb..cbef6c5 100644
 From ff4a2a2660b0b20bb7abd91cb9a8a0b4b038926f Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 10:51:59 +0800
-Subject: [PATCH 32/40] feat(services,server): cross-client task list live
+Subject: [PATCH 32/41] feat(services,server): cross-client task list live
  refresh + cron icon cleanup
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -6492,7 +6492,7 @@ index 9b33c71..aca6f3a 100644
 From 6b7cd806ba3aa05a55dfd3e2481dbb108a7b6c3c Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 11:24:23 +0800
-Subject: [PATCH 33/40] diag(ui): record welcome-gate decision trace to
+Subject: [PATCH 33/41] diag(ui): record welcome-gate decision trace to
  localStorage
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -6550,7 +6550,7 @@ index 4633505..df9a88d 100644
 From 9f40e356fafddfa85bce725c9a1e3bd4c2a76737 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 11:42:13 +0800
-Subject: [PATCH 34/40] fix(services): reconcile stale cron/off-peak markers on
+Subject: [PATCH 34/41] fix(services): reconcile stale cron/off-peak markers on
  startup
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -6923,7 +6923,7 @@ index e0c10cb..c1df1d8 100644
 From c5d110b78166875be2069da7779708b65253ee5a Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 12:28:46 +0800
-Subject: [PATCH 35/40] feat(services,desktop,server): port live overlays to
+Subject: [PATCH 35/41] feat(services,desktop,server): port live overlays to
  server window controller
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -7297,7 +7297,7 @@ index c4fcff1..dcd9f85 100644
 From 1b38d154f1d99c84bd1d058b1b1642f41176bbe1 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 13:03:49 +0800
-Subject: [PATCH 36/40] refactor(services,desktop,server): sink window
+Subject: [PATCH 36/41] refactor(services,desktop,server): sink window
  controller core, shim becomes thin wiring
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -7871,7 +7871,7 @@ index 0000000..cd902d9
 From c43b0f2ac83c0b74c96be9811abdc97b3f9fca6c Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 13:55:12 +0800
-Subject: [PATCH 37/40] chore(server): fix stale shim comment after refactor
+Subject: [PATCH 37/41] chore(server): fix stale shim comment after refactor
 
 ---
  packages/server/src/entry-http.ts | 2 +-
@@ -7897,7 +7897,7 @@ index 04fa0f6..a0b5087 100644
 From a10c098728dc573cfbccdc07acab1f0169960274 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 14:44:29 +0800
-Subject: [PATCH 38/40] fix(ui): attachment upload survives disconnect during
+Subject: [PATCH 38/41] fix(ui): attachment upload survives disconnect during
  file picking
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -8022,7 +8022,7 @@ index 1e0377c..1060990 100644
 From f04885b2cc6c4b8acc22d6f91216d62fdbae617b Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Sat, 10 Oct 2026 01:52:05 +0800
-Subject: [PATCH 39/40] feat(web): tab title pinned to Zcode + SW v8
+Subject: [PATCH 39/41] feat(web): tab title pinned to Zcode + SW v8
  network-first for boot-probe
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -8141,7 +8141,7 @@ index cd902d9..4cdee17 100644
 From 6bb0b4dd47aa2ec2c011f54e745b243f17bc6bf9 Mon Sep 17 00:00:00 2001
 From: xhwxt <197754549+xhwxt@users.noreply.github.com>
 Date: Sat, 10 Oct 2026 08:21:18 +0800
-Subject: [PATCH 40/40] =?UTF-8?q?feat(server):=20pairing=20login=20?=
+Subject: [PATCH 40/41] =?UTF-8?q?feat(server):=20pairing=20login=20?=
  =?UTF-8?q?=E2=80=94=20one-time=20code=20=E2=86=92=2090d=20cookie,=20URL?=
  =?UTF-8?q?=20token=20direct-connect=20kill=20switch?=
 MIME-Version: 1.0
@@ -8497,6 +8497,74 @@ index f76f257..b4e613f 100644
        const validToken = hasValidLiteToken(c, authToken);
        if (!isTokenProtectedPath(pathname) || validToken) {
          await next();
+-- 
+2.53.0
+
+
+From 1741549b95fcd23e6f9f866ec49baec943ba62dd Mon Sep 17 00:00:00 2001
+From: xhwxt <197754549+xhwxt@users.noreply.github.com>
+Date: Sat, 10 Oct 2026 08:55:01 +0800
+Subject: [PATCH 41/41] fix(server): pairing mode redirects unauthenticated
+ page navigations to the login page
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+被拦后用户卡在「连接断开」报错界面动不了（用户反馈）。现在配对模式下，
+解析落到 index.html 的页面导航（根路径与 SPA 任意路由）在未持 Cookie 时
+302 到 /api/pairing/page；真实静态资源、API、WS 的 401 语义不变。
+
+实现位置在静态处理器（判定"解析结果是否 index.html"而非路径名），而不是
+token 中间件——中间件对非保护路径本就放行，放那里永远不触发（第一版因此
+无效，已删除）。
+
+部署教训：构建后必须 cp + restart 一起做；第一次只 cp 没重启，zcode-web
+自动重启加载的还是旧代码，redirect 不生效（已复盘）。
+
+验证：生产实测 未配对 / → 302 login、SPA 路由 302、/login 200、
+已配对 200、/sw.js 200、旧 token API 401。
+---
+ packages/server/specs/selfhosted-web-pairing.md |  4 ++++
+ packages/server/src/http.ts                     | 11 +++++++++++
+ 2 files changed, 15 insertions(+)
+
+diff --git a/packages/server/specs/selfhosted-web-pairing.md b/packages/server/specs/selfhosted-web-pairing.md
+index 38e42c2..40d3f29 100644
+--- a/packages/server/specs/selfhosted-web-pairing.md
++++ b/packages/server/specs/selfhosted-web-pairing.md
+@@ -49,6 +49,10 @@ ZCode 自托管 Web 在 `--token` 模式下只有一种进入方式：把 token
+ 1. `ZCODE_PAIRING=1`：旧链接 `/?token=X` → 页面可开但 `/api/server-info` 401，
+    `/ws` 升级 401 → 直连被拦。
+ 2. `ZCODE_PAIRING=1`：输码 → Cookie 种下 → `/api/server-info` 200、`/ws` 正常。
++2b. `ZCODE_PAIRING=1`：未持 Cookie 的浏览器打开 `/`（或任意 SPA 路由，即解析落到
++    index.html 的导航）→ 302 `/api/pairing/page`——用户被引导到登录页，而不是
++    卡在「连接断开」的报错界面（2026-10-10 用户反馈：被拦应该跳登录页）。静态
++    资源（bundle/sw.js/图标）与 API/WS 的 401 语义不变。
+ 3. 配对码 10 分钟后过期；同码第二次提交 403。
+ 4. `ZCODE_PAIRING` 未设置：一切行为与原生 token 模式逐字节一致（回归保护）。
+ 5. 远控链路（relay 下发 `/ws?token=`）：`ZCODE_PAIRING=1` 时同样被拦——
+diff --git a/packages/server/src/http.ts b/packages/server/src/http.ts
+index b4e613f..6778a2e 100644
+--- a/packages/server/src/http.ts
++++ b/packages/server/src/http.ts
+@@ -734,6 +734,17 @@ export function createHttpServer(
+       if (!filePath) {
+         return c.notFound();
+       }
++      // 配对模式下，SPA 入口页（根路径与 SPA fallback 落到的 index.html）在
++      // 未持凭证时跳转登录页，而不是让用户卡在"连接断开"的报错界面上。
++      // 真实静态资源（bundle/sw.js/图标）不受影响；API 与 WS 保持 401 原语义。
++      // 判定用"解析结果是否 index.html"而非路径名——SPA 任意路由都落同一入口。
++      if (
++        PAIRING_ENABLED &&
++        filePath.endsWith("index.html") &&
++        !hasValidLiteToken(c, authToken)
++      ) {
++        return c.redirect("/api/pairing/page", 302);
++      }
+       // sw.js 必须返回 no-cache：SW 更新检查依赖浏览器字节对比，immutable 会让
+       // 缓存版本永远无法失效（shell 缓存随之僵死）。
+       const isServiceWorker = filePath.endsWith("sw.js");
 -- 
 2.53.0
 
