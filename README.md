@@ -1,233 +1,125 @@
-<h1 align="center">Z÷</h1>
+# ZCode 自托管 web 补丁
 
-<div align="center"><pre>
-                      /´¯/)
-                    ,/¯../
-                   /..../
-             /´¯/'...'/´¯¯`·¸
-          /'/.../..../......./¨¯\
-        ('(...´...´.... ¯~/'...')
-         \.................'..../
-          ''...\.......... _.·´
-            \..............(
-             \.............\
-</pre></div>
+让 [ZCode](https://github.com/zai-org/ZCode)（v3.14.3，commit `29628c9`）的自托管
+web 部署在手机浏览器上真正可用的一组源码改动。
 
-# ZCode Self-Hosted Web Parity Patches
+**全部功能打在同一个文件里**：`zcode-selfhosted-web.patch`。
+一次 `git apply` 装完，装完的代码与维护者分支逐字节一致。
 
-Enhancements that make a self-hosted [ZCode](https://github.com/zai-org/ZCode) web
-deployment work as a standalone service (no desktop app required), for both the
-built-in web UI ("direct page") and the official mobile remote-control page.
-
-Base: ZCode v3.14.3 (commit `29628c9`).
-
-## What's included
-
-| # | Area | Problem | Fix |
-|---|------|---------|-----|
-| a | Remote page `@` menu | Official remote page (v3.14.0) calls the pre-3.14.3 one-shot `file.listWorkspaceFiles`; server only implements the `Length`/`Range` chunked API → `Method not found` | Add a compat method that reuses the host-side workspace file index cache and unpacks it to the legacy array shape |
-| b | Direct page sidebar task list | The sidebar "Tasks" section queries the `window-controller` RPC channel, which is only registered by the desktop Host → queries time out, list stays empty | Register a minimal server-side `IWindowControllerService` that forwards to the in-process `IZCodeTaskService` (same tasks-index.sqlite source as desktop) |
-| c | Token-mode server-info | The web entry fetches `/api/server-info` without credentials → always 401 when the server runs with `--token`, workspace announcement never reaches the page | Forward the URL `?token=` query to the fetch (same credential the WebSocket already uses) |
-| d | Session restore | Web entry never enabled `restoreSession`, so no workspace tabs are restored at startup and scoped task queries have no data source | Enable the same `useTabPersistence` restore path the desktop app uses |
-| e | Workspace purpose | `server-info` workspaces carry no purpose; the conversation backing workspace can't be distinguished from user projects | Add optional `workspacePurpose` to the workspace info schema (backward compatible) |
-| f | Mobile background disconnects (direct page) | Mobile browsers freeze/kill the page's WebSocket within seconds of backgrounding; on return the socket is dead with no indication and RPC calls fail silently | Connection guard: a real `close` event marks the socket dead; a dead socket on return to foreground triggers recovery (see item j for the in-page reconnect that replaced the original full-page reload) |
-| g | Mobile drawer layout (direct page) | Below 768px the sidebar and right side pane are in-flow split columns; opening either squeezes the conversation area | Drawer viewport: sidebar and side pane become sliding overlays (min(85vw,480px), 200ms transition) over a click-to-dismiss backdrop; sidebar drag handle not rendered; drawers are mutually exclusive; the top-left sidebar toggle (web branch of `DesktopTopOverlay`) sits at z-40 above the drawers so it always works |
-| h | Directory browser create folder | The server-side directory browser could only pick existing directories — no way to create a project folder on a phone | `IFileService.createDirectory` (server-side single-segment mkdir, `recursive: false`, path separators rejected in the name; final path is joined server-side); inline "New folder" form in `DirectoryBrowser` refreshes the listing on success; i18n zh-CN/en-US |
-| i | Mobile header offset & touch affordances (direct page) | (1) The header applied a desktop window-controls left padding (152px) whenever the sidebar was collapsed — on the drawer viewport the sidebar is collapsed by default, so the conversation title and buttons were pushed off-screen/clipped; (2) message action bars (time/copy) were hover-only, i.e. permanently invisible on touch devices; (3) a false-positive guard marked the socket dead on every background/foreground cycle, forcing a reload on each quick tab switch; (4) `AskUserQuestion` answers rendered as "未提供回答" because the CLI serializes them as text while the parser only accepted JSON | Gate the window-controls padding on the desktop platform and reserve 80px on the web drawer viewport for the floating overlay buttons (mobile title cap 46vw); make action bars always visible under `@media (hover: none)`; only a real `close` event marks the socket dead; parse the CLI's `"Q"="A"` text form in addition to JSON |
-| j | Reconnect without page reload + scroll-position restore (direct page) | A real disconnect reloaded the entire page: blank screen, ~7MB of JS re-downloaded and re-parsed (2s+); the reload also lost the reading position, and the late restore could yank the scroll position while the user was already scrolling | Soft reconnect with short backoff — no page reload, the old UI stays readable under a top banner, and recovery semantics are unchanged (server remains the source of truth). Originally re-mounted the React tree under a `connectionEpoch` key; item k later replaced that with a hot transport swap (no re-render at all). Scroll memory is mirrored to `sessionStorage` (LRU 40) and restored by **distance-from-bottom** with a bounded 4s convergence pass; any real user scroll intent cancels the restore immediately |
-
-All changes are source-level, protocol-compatible additions — no desktop behavior
-changes, no environment-specific values.
-
-## Applying
+## 一键安装
 
 ```bash
-# inside a checkout of zai-org/ZCode at v3.14.3
-bash apply-selfhosted-web-patches.sh
+# 在 zai-org/ZCode 的源码目录里（需 checkout 到 v3.14.3，即 commit 29628c9）
+git checkout 29628c9
+bash /path/to/install.sh          # 本目录中的 install.sh
 
-# build the distribution
+# 构建发行包
 pnpm install
-pnpm build:zcode --base-url https://your-dist-host/dist/
-# artifact: dist/zcode/releases/<version>/zcode-<version>.tar.gz
+pnpm build:zcode
+# 产物：dist/zcode/releases/<version>/zcode-<version>.tar.gz
+# 解压到部署目录，重启服务即可
 ```
 
-Run the server with a token (the web UI accepts `?token=<token>` on first visit):
+安装脚本自带三道保险：
+
+1. 基线核对——当前代码不是 `29628c9` 就拒绝安装（可 `STRICT=0` 强行跳过，自担风险）；
+2. 工作区干净核对——有未提交改动就拒绝安装；
+3. 预检——先在临时索引上试装一遍，任何失败都原样退出，绝不留半装状态。
+
+回滚：补丁改动在提交前随时可 `git checkout -- .` 全部丢弃；提交后可用
+`git revert`。
+
+运行服务（token 模式，页面首次访问可用 `?token=<token>`；开启配对登录后见功能 l）：
 
 ```bash
 node bin/zcode.mjs --web --workspace <dir> --host 127.0.0.1 --port 3030 --token <token>
 ```
 
-`--workspace` pointing at the app-managed conversation workspace
-(`<dataBaseDir>/.zcode/workspace/default`) is announced as
-`workspacePurpose: "conversation"` — the UI shows it as "not working in a
-project" (draft mode). Create real projects from the UI as needed.
+`--workspace` 指向应用管理的会话工作区（`<dataBaseDir>/.zcode/workspace/default`）
+时会被标注为 `workspacePurpose: "conversation"`——界面显示为"未在项目中工作"。
+真实项目在界面上按需新建。
 
-## Optional add-on: official mobile remote-control page
+## 功能清单
 
-The relay that lets the **official** mobile remote-control page run against a
-self-hosted server is published under [`relay/`](relay/) with its own README
-(endpoints, environment variables, systemd/nginx wiring, optional offline page
-mirror, version pinning). It is deployment tooling, not a source patch — the patch
-set above is what makes the server itself usable; the relay only adds the vendor
-page on top.
+源码级、协议兼容的增量改动，不影响桌面端，不含任何环境特定的值。
 
-## Notes
+| # | 功能 | 解决什么问题 |
+|---|------|--------------|
+| a | 远控页 `@` 菜单 | 官方远控页调用的是 3.14.3 之前的旧一次性文件列表接口，服务端只实现了新的分块接口 → 菜单报 `Method not found`。补一个兼容旧形状的接口，复用服务端工作区文件索引缓存 |
+| b | 直连页侧栏任务列表 | 侧栏"任务"区走的是桌面 Host 才有的 RPC 通道 → 永远超时空列表。在服务端补一个转发给内置任务服务的最小通道（与桌面同源 tasks-index.sqlite） |
+| c | token 模式 server-info | web 入口取 `/api/server-info` 不带凭据 → 服务端带 `--token` 时永远 401，工作区信息到不了页面。让该请求带上 URL 里的 `?token=`（与 WebSocket 同一凭据） |
+| d | 会话恢复 | web 入口从未开启会话恢复 → 启动时没有任何工作区标签页。开启与桌面端相同的恢复路径 |
+| e | 工作区用途标注 | server-info 的工作区信息没有用途字段 → 无法区分会话工作区和真实项目。加一个向后兼容的 `workspacePurpose` 字段 |
+| f | 手机后台断连守卫 | 手机浏览器切后台几秒就冻结/杀掉 WebSocket；回前台时连接已死且无提示，RPC 静默失败。真实 `close` 事件才判死；判死即进入恢复（见 j） |
+| g | 手机抽屉布局 | <768px 时侧栏和右侧面板把会话区挤成窄条。改成滑出式浮层（宽 min(85vw,480px)、200ms 动画、点遮罩关闭、互斥、左上角开关总在最上层） |
+| h | 目录浏览器新建文件夹 | 服务端目录浏览器原本只能选已有目录，手机上没法建项目目录。服务端新增单段 `createDirectory` 接口 + 目录浏览器内联"新建文件夹"表单，中英文文案齐备 |
+| i | 手机顶栏与触屏细节 | (1) 顶栏在侧栏收起时保留桌面窗控占位 → 手机上标题被挤出屏；(2) 消息操作栏（时间/复制）纯悬停触发 → 触屏上永远看不见；(3) 切后台回来被误判断连 → 每次快速切换都整页重载；(4) 问答框回答显示"未提供回答"（CLI 输出文本形态，解析器只认 JSON）。以上全部修复 |
+| j | 断线原地恢复 + 滚动记忆 | 断线原本整页重载：白屏、7MB 重新下载、丢失阅读位置。改为软重连——页面不重载，顶部横幅提示，恢复语义不变。滚动位置镜像到 `sessionStorage`（LRU 40），按"距底部距离"恢复，带 4 秒收敛；用户主动滚动立即取消恢复。另修复一个每次页面加载都会触发的潜在渲染崩溃（`useProviderSettingsView` 向 `getServerSnapshot` 重复传参，React 19 下抛 `TypeError`） |
+| k | WebSocket 存活检测 | 浏览器↔服务端 WebSocket 原本零存活探测：半开连接看起来一切正常，所有新请求却静默失败。两端心跳（15s 探测 / 30s 无帧判死）+ 服务端 RFC 6455 ping 循环，判死即触发 j 的原地恢复 |
+| l | 配对登录（可选，`ZCODE_PAIRING=1`） | URL 带 token 的直连方式会留在浏览器历史/日志里。开启后：管理员用 token 生成一次性配对码（12 字符、10 分钟有效、单次使用、服务端只存摘要），手机上输入配对码换 90 天 HttpOnly Secure cookie；此后 URL 直连在 `/api/*` 与 `/ws` 一律 401——配对登录才有意义。页面导航未登录时自动跳到配对页。默认关闭，不开时行为与官方版本逐字节一致 |
 
-- Item j also fixes a latent render crash that fired once per page load:
-  `useProviderSettingsView` passed `getServerSnapshot` a second time; under
-  React 19 the update path compared against an undefined hook slot and threw
-  `TypeError: Cannot read properties of undefined (reading 'length')`. The
-  parameter is redundant for client-only rendering and was dropped.
-- The official mobile remote-control page (`/remote/v4`) needs the relay in
-  [`relay/`](relay/) (plus TLS/reverse-proxy wiring); without it only the direct
-  page (built-in web UI) is reachable.
-- Known limitation: if the server is killed mid-conversation, the task row can
-  stay `running` in tasks-index.sqlite (no orphan cleanup on startup yet).
+规格与测试：keepalive 协议层 `packages/rpc/specs/socket-keepalive.md` +
+`packages/rpc/test/socket-keepalive.test.ts`；自托管 web 的验收场景
+`packages/server/specs/selfhosted-web-pairing.md`。
 
-## Self-hosting checklist (beyond the patch set)
+### 第 k/j 项的恢复架构（实机迭代后的现状）
 
-These are deployment steps, not source patches — they are listed here so a
-self-hosted install is complete:
+1. **热换底**——重连时新 WebSocket 原地换进同一个 `ChannelClient`：挂起请求
+   fail-closed、缓冲帧（含服务端 `Initialize`）重放、事件订阅重发、握手缓存按
+   纪元失效。React 树不重挂，页面零视觉变化。
+2. **有界静默重试**——订阅失败按 250ms→8s 退避（对齐 8s 握手超时，约 75s 预算），
+   瞬态抖动对用户不可见。
+3. **服务端连接卫生**——RFC 6455 ping 循环（宽松容忍 ≈2.5 分钟，照顾手机后台省电），
+   超时主动断开，触发浏览器侧 `close` 恢复路径。
+4. **Service Worker 缓存（v9）**——页面导航改为网络优先（只有 ok 响应进缓存，离线
+   才回退缓存），杜绝旧缓存 shell 拿过期凭据反复失败导致"启动失败"假象；其余静态
+   资源 immutable 缓存。注入脚本（状态栏 boot、探针）网络优先，修复永远能到达客户端。
+5. **稳定标签页标题**——打包产物会在运行时改标题；注入探针把它固定为 `Zcode`。
+6. **配对登录细节**——cookie 即主 token（单 token 架构）；换 token 即全员重新配对；
+   提交接口按 IP 限速 10 次/10 分钟；配对页不做重定向（有旧 cookie 的浏览器也总能
+   看到表单）；设备按 (IP, UA) 指纹记录用于观察。
 
-- **Plugin packages.** The plugin bundles that ship in the official release
-  (`skill-creator-plugin`, `zcode-guide-plugin`, `documents-plugin`,
-  `spreadsheets-plugin`, `pdf-plugin`, `presentations-plugin`,
-  `restore-legacy-sessions-plugin`, `browser-use-plugin`, …, plus
-  `bundled-skills`) are **not part of the source tree** and are not produced by
-  `pnpm build:zcode`. Make sure `<install>/packages/` contains them (copy from an
-  official release artifact / AppImage); otherwise the plugin store and the
-  skill/guide tooling are missing.
-- **Keep plugin copies and the agent bundle from the same release.** Official
-  plugin definitions declare `requiredSeedPaths` (for example `zcode-guide`
-  requires `commands/workflow.md` and `skills/dynamic-workflows/*`). At startup
-  the agent checks those paths against the plugin copy on disk; if any are
-  missing it logs `ZCODE_PLUGIN_SEED_INCOMPLETE` and **skips seeding that
-  plugin** (the guide skill silently stays absent). Source and plugin copies must
-  therefore come from a matching release: either use plugin directories that
-  contain the paths your `installed agent/zcode.cjs` requires, or install the
-  agent bundle that matches the plugin copies you have.
-- **Agent runtime bundle.** `<install>/agent/zcode.cjs` is the prebuilt agent
-  runtime. Rebuilding it from source replaces whatever the installer put there,
-  so re-check the point above after every agent-bundle update.
+### 已知边界
 
-## Patches
+- `document.wasDiscarded` 整页丢弃（Android 内存管理）仍会产生一次页面加载——本地
+  缓存秒开（约 1 秒），web 代码无法阻止。
+- 官方远控页 `/remote/v4` 是闭源页：无原生恢复协调器，靠注入 shim（横幅 + 不可恢复
+  时才重载）；且需要下面的 relay 才能用。
+- 服务端被杀时任务行可能停留在 `running`（启动时无孤儿清理）。
 
-- `0000-all-in-one-selfhosted-web.patch` — **all items (a–k) as one cumulative
-  patch** against a clean `29628c9`; the convenience choice when you want
-  everything
-- `0001-self-hosted-web-parity.patch` — items a–e (single commit)
-- `0002-web-connection-guard.patch` — item f (single commit)
-- `0003-feat-ui-mobile-drawer-layout-for-sidebar-and-side-pa.patch` — item g
-- `0004-fix-ui-mobile-drawer-polish-directory-browser-create.patch` — item h
-- `0005-fix-ui-web-round2-mobile-fixes.patch` — item i
-- `0006-fix-ui-web-mobile-header-window-controls-padding-per.patch` — item j
-- `0007-fix-rpc-client-server-websocket-keepalive-liveness.patch` — item k
-  (the full keepalive → hot-swap → SW v8 → pairing login evolution, 42 commits in one file —
-  the intermediate commits are debugging iterations of the same feature line,
-  not individually usable states. This file is a multi-commit mbox: apply it
-  with the bundled script, or `git am`; a single `git apply` on the whole
-  file cannot work, because later hunks for the same file expect the
-  intermediate state that earlier commits in the same file produce.)
-- `0003-0004-selfhosted-web-patches-mobile.patch` — items g+h combined (legacy convenience file)
+## 仓库结构（三件套）
 
-**Pick one route:** either `0000` alone, or 0001 → 0007 in order. Never mix
-the two routes, and do not apply the legacy combined files
-(`0003-0004-…`, or the historical `0001-0002-selfhosted-web-patches.patch`)
-together with their split counterparts. All variants are verified with
-`git apply --check`, and each route applied to a clean `29628c9` checkout
-reproduces the maintainer tree byte-for-byte. `apply-selfhosted-web-patches.sh`
-runs the 0001 → 0007 sequence.
+| 文件 | 作用 |
+|------|------|
+| `zcode-selfhosted-web.patch` | **唯一补丁**：全部功能，单文件，一次 `git apply` |
+| `install.sh` | 一键安装脚本（基线核对 → 预检 → 应用，任一失败不留半装状态） |
+| `README.md` | 本文档 |
 
-### Item k — WebSocket keepalive liveness (half-open detection)
+可选附加（部署工具，不是源码补丁）：
 
-The direct web page previously had zero liveness probes on its browser ↔ server
-WebSocket: `SocketProtocol` silently dropped `KeepAlive` frames, neither end sent
-heartbeats, and the foreground guard probed with an HTTP fetch — which opens a
-*different* connection and cannot detect a half-open one. A dead-but-open socket
-looked normal while every new RPC failed silently.
+- [`relay/`](relay/) — 官方手机远控页的自托管中转服务（端点、环境变量、
+  systemd/nginx 接线见其 README）。
+- [`e2e/`](e2e/) — 半开黑洞、原地恢复、重载遥测等实机验证脚本。
 
-- `packages/rpc` — `SocketProtocol` now answers a `KeepAlive` probe (`ack=0`)
-  with exactly one echo (`ack=1`); new `sendKeepAlive()` / `onKeepAlive`.
-  Queue/MessagePort transports moved to `port-protocol.ts` (line-limit split).
-- `packages/client` — `connectViaWebSocket` attaches a heartbeat monitor by
-  default (15 s probe / 30 s no-frame deadline). On deadline it closes the
-  socket so the existing guard + soft-reconnect take over; `onHeartbeat` exposes
-  a same-socket liveness handle to the host page.
-- `packages/web` — the visibility guard's foreground check now uses that
-  same-socket handle (fresh timestamp → healthy; stale → one probe + short wait
-  → dead ⇒ soft reconnect) instead of an HTTP fetch.
-- `packages/server` & `packages/zcode-server-cli` — `/ws` connections get an
-  RFC 6455 ping loop (30 s interval, terminate after 2 missed pongs), freeing
-  server-side half-open sockets and triggering the browser `close` path.
+## 自托管清单（补丁之外）
 
-Spec: `packages/rpc/specs/socket-keepalive.md`; unit tests:
-`packages/rpc/test/socket-keepalive.test.ts`.
+- **插件包**：官方发行版自带的插件包（`skill-creator-plugin`、`zcode-guide-plugin`、
+  `documents-plugin`、`spreadsheets-plugin`、`pdf-plugin`、`presentations-plugin`、
+  `restore-legacy-sessions-plugin`、`browser-use-plugin`、`bundled-skills` 等）**不在
+  源码树里**，`pnpm build:zcode` 不产出。`<install>/packages/` 需自行从官方发行物复制，
+  否则插件商店与技能/指南工具缺失。
+- **插件与 agent 产物同版**：插件定义声明了 `requiredSeedPaths`（如 `zcode-guide`
+  需要 `commands/workflow.md` 与 `skills/dynamic-workflows/*`）；启动时逐路径核对，
+  缺失则记 `ZCODE_PLUGIN_SEED_INCOMPLETE` 并**跳过该插件播种**。源码构建与插件副本
+  必须来自同一发行版。
+- **agent 运行时包**：`<install>/agent/zcode.cjs` 是预构建产物；从源码重建会覆盖它，
+  每次 agent 包更新后都要重新核对上一条。
 
-### Item k (evolved) — hot transport swap, in-place recovery
+## 维护者纪律
 
-Item k grew well past its original "heartbeat" scope through real-device
-iteration. Current recovery architecture (all inside patch 0007):
-
-1. **Hot transport swap** — on reconnect, the new WebSocket is swapped into
-   the *same* `ChannelClient` (`resetTransport`): pending Promise requests are
-   fail-closed, buffered frames (including the server's `Initialize`) are
-   replayed, **active event subscriptions are re-sent**, and the handshake
-   cache is invalidated by epoch. The React tree never re-mounts and
-   `IServiceAccessor` object identity never changes — the UI shows zero
-   visual change across a reconnect.
-2. **Bounded silent retry** — every subscribe failure runs a backoff
-   (250ms → 8s rhythm, aligned to the 8s handshake-RPC timeout, ~75s budget)
-   before any error surface. Transient races (handshake/session swap/network
-   jitter) are invisible to the user.
-3. **Server-side connection hygiene** — RFC 6455 ping loop with a relaxed
-   pong tolerance (4 misses ≈ 2.5 min): mobile Chrome stops answering pings
-   for backgrounded pages (power saving) while the connection is still alive.
-4. **Service Worker shell cache** (v8) — navigation and assets replay from
-   local cache on page discard (instant recovery), background revalidation
-   keeps deployments reaching clients; injected scripts (`/zusage/boot.js`,
-   `/zcode-boot-probe.js`) are network-first so they always update. The
-   probe was added to the network-first set in v8: the static handler serves
-   everything else with `immutable`, so a cache-first probe would freeze
-   shell fixes out of cached clients permanently.
-5. **Stable tab title** — the bundle rewrites `document.title` at runtime
-   (`ZCode - Web`, `ZCode - Sign In`, …). The injected probe pins it to
-   `Zcode` (set once + `MutationObserver`, idempotent, silent on failure), so
-   the title no longer varies with the entry mode.
-6. **Pairing login (opt-in, `ZCODE_PAIRING=1`)** — one-time code (from the
-   admin, digest-only server-side, 10 min, single use) exchanges for a
-   90-day `HttpOnly; Secure` cookie via `POST /api/pairing/pair`. With the
-   pairing mode on, the URL `?token=` direct-connect form returns 401 on
-   `/api/*` and `/ws` — the point is that a pairing login is meaningless
-   while token-in-URL still works. Admin endpoints (`/api/pairing/code`,
-   `/api/pairing/status`) require the server token; submit is per-IP
-   rate-limited; devices are tracked by (IP, UA) fingerprint for observability.
-   Default off — deployments without the flag behave byte-for-byte like
-   upstream token mode.
-
-Known behavioral notes:
-- `document.wasDiscarded` reloads (Android Chrome memory management) still
-  produce a page load — replayed from local cache in ~1s; not preventable
-  from web code.
-- The `/web-remote` official page is closed-source (token flow has no native
-  recovery coordinator); its recovery relies on the relay's injected shim
-  (banner + reload only on unrecoverable error screens).
-
-E2E scripts: [`e2e/`](e2e/) (half-open blackhole,
-in-place recovery, reload telemetry).
-
-### Release discipline (for maintainers)
-
-- **Patch application is atomic.** `apply-selfhosted-web-patches.sh` runs a
-  cumulative dry-run on a temp index before touching the worktree; any failure
-  leaves the worktree clean. Baseline mismatch is a hard error (`STRICT=0`
-  overrides at your own risk). Rollback is `git checkout -- .` or
-  `git apply -R`.
-- **Every patch-set update must re-verify the chain.** Apply 0001→000N to a
-  clean `29628c9` worktree; the resulting tree hash must equal the maintainer
-  HEAD tree hash. This is checked on every patch-repo push.
-- **Known verification gap (accepted for now):** unit tests cover the protocol
-  layer (keepalive echo, event re-send); end-to-end recovery was validated
-  against real devices via the E2E scripts above, but there is no automated
-  clean-baseline build + offline-recovery CI. Contributions in that direction
-  are the highest-value next step.
-
+- **应用原子性**：`install.sh` 在临时索引上累积试装，失败即原样退出；基线不符是硬
+  错误（`STRICT=0` 自担风险）。回滚 `git checkout -- .` 或 `git apply -R`。
+- **每次补丁更新必须重验整链**：干净 `29628c9` 工作树 + 本补丁 → 树哈希必须等于
+  维护者 HEAD 的树哈希。当前目标值：`33600321a9abf7a4e03203ffb694cbce64fae068`。
+- **已知验证缺口**：协议层有单元测试（心跳回显、事件重发）；端到端恢复靠上述 e2e
+  脚本在真机上验证，尚无自动化的干净基线构建 + 离线恢复 CI。这是最有价值的下一步。
